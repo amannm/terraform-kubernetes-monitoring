@@ -83,7 +83,7 @@ resource "kubernetes_persistent_volume_claim" "persistent_volume_claim" {
 }
 
 module "prometheus_config" {
-  source                          = "module/config"
+  source                          = "./module/config"
   namespace_name                  = var.namespace_name
   port                            = var.port
   kube_state_metrics_service_name = var.kube_state_metrics_service_name
