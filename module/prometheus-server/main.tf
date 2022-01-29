@@ -192,8 +192,8 @@ resource "kubernetes_deployment" "deployment" {
               path   = "/-/ready"
             }
             initial_delay_seconds = 30
-            period_seconds        = 5
-            timeout_seconds       = 4
+            period_seconds        = 30
+            timeout_seconds       = 5
             failure_threshold     = 3
             success_threshold     = 1
           }
@@ -203,9 +203,9 @@ resource "kubernetes_deployment" "deployment" {
               port   = var.server_container_port
               path   = "/-/healthy"
             }
-            initial_delay_seconds = 30
-            period_seconds        = 15
-            timeout_seconds       = 10
+            initial_delay_seconds = 90
+            period_seconds        = 30
+            timeout_seconds       = 5
             failure_threshold     = 3
             success_threshold     = 1
           }
