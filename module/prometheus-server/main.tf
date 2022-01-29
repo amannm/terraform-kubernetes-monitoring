@@ -115,7 +115,7 @@ resource "kubernetes_deployment" "deployment" {
   spec {
     replicas = "1"
     strategy {
-      type = "RollingUpdate"
+      type = "Recreate"
     }
     selector {
       match_labels = {
