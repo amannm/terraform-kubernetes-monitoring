@@ -1,25 +1,8 @@
 locals {
 
-  node_metrics_labels = {
-    for v in ["/metrics", "/metrics/cadvisor"] : v => [
-      {
-        action = "labelmap"
-        regex  = "__meta_kubernetes_node_label_(.+)"
-      },
-      {
-        replacement  = "kubernetes.default.svc:443"
-        target_label = "__address__"
-      },
-      {
-        source_labels = ["__meta_kubernetes_node_name"]
-        regex         = "(.+)"
-        replacement   = "/api/v1/nodes/$1/proxy${v}"
-        target_label  = "__metrics_path__"
-      },
-    ]
-  }
+  kubernetes_sd_config = { for v in ["endpoints", "pod", "service", "node"] : v => [{ role = v }] }
 
-  name_labels = {
+  kubernetes_sd_name_label_rename = {
     for k, v in {
       namespace     = "__meta_kubernetes_namespace"
       endpoint_node = "__meta_kubernetes_endpoint_node_name"
@@ -33,50 +16,40 @@ locals {
     }
   }
 
-  scraped_labels = {
-    for v in ["service", "node", "pod", "ingress"] : v => [
-      {
-        action        = "keep"
-        source_labels = ["__meta_kubernetes_${v}_annotation_prometheus_io_scrape"]
-        regex         = "true"
-      },
-      {
-        source_labels = ["__meta_kubernetes_${v}_annotation_prometheus_io_scheme"]
-        regex         = "(https?)"
-        target_label  = "__scheme__"
-      },
-      {
-        source_labels = ["__meta_kubernetes_${v}_annotation_prometheus_io_path"]
-        regex         = "(.+)"
-        target_label  = "__metrics_path__"
-      },
-      {
-        source_labels = [
-          "__address__",
-          "__meta_kubernetes_${v}_annotation_prometheus_io_port",
-        ]
-        regex        = "([^:]+)(?::\\d+)?;(\\d+)"
-        replacement  = "$1:$2"
-        target_label = "__address__"
-      },
-      {
-        action      = "labelmap"
-        regex       = "__meta_kubernetes_${v}_annotation_prometheus_io_param_(.+)"
-        replacement = "__param_$1"
-      },
-      {
-        action = "labelmap"
-        regex  = "__meta_kubernetes_${v}_label_(.+)"
-      }
-    ]
+  kubernetes_sd_label_remap = {
+    for v in ["service", "node", "pod", "ingress"] : v =>
+    {
+      action = "labelmap"
+      regex  = "__meta_kubernetes_${v}_label_(.+)"
+    }
   }
-  sd_config = { for v in ["endpoints", "pod", "service", "node"] : v => [{ role = v }] }
 
+  kubernetes_sd_node_jobs = {
+    for v in ["/metrics", "/metrics/cadvisor"] : v => {
+      job_name              = "kubernetes-nodes${replace(v, "/", "-")}"
+      scheme                = "https"
+      bearer_token_file     = local.auth_token_path
+      tls_config            = local.auth_tls_config
+      kubernetes_sd_configs = local.kubernetes_sd_config["node"]
+      relabel_configs = [
+        local.kubernetes_sd_label_remap["node"],
+        {
+          replacement  = "kubernetes.default.svc:443"
+          target_label = "__address__"
+        },
+        {
+          source_labels = ["__meta_kubernetes_node_name"]
+          regex         = "(.+)"
+          replacement   = "/api/v1/nodes/$1/proxy${v}"
+          target_label  = "__metrics_path__"
+        },
+      ]
+    }
+  }
 }
 
 locals {
   auth_token_path = "/var/run/secrets/kubernetes.io/serviceaccount/token"
-  auth_scheme     = "https"
   auth_tls_config = {
     ca_file              = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
     insecure_skip_verify = true
@@ -85,93 +58,63 @@ locals {
 
 locals {
 
-  self_job = {
-    job_name = "prometheus"
-    static_configs = [
-      {
-        targets = [
-          "localhost:${var.port}"
-        ]
-      }
-    ]
-  }
+  # monitor Node metrics
+  node_job = local.kubernetes_sd_node_jobs["/metrics"]
 
-  kube_state_metrics_job = {
-    job_name = "kube-state-metrics"
-    static_configs = [
-      {
-        targets = [
-          "${var.kube_state_metrics_service_name}.${var.namespace_name}.svc.cluster.localhost:${var.kube_state_metrics_service_port}"
-        ]
-      }
-    ]
-  }
+  # monitor Node cAdvisor metrics
+  node_cadvisor_job = local.kubernetes_sd_node_jobs["/metrics/cadvisor"]
 
-  api_server_job = {
-    job_name              = "kubernetes-apiservers"
-    kubernetes_sd_configs = local.sd_config["endpoints"]
+  # monitor Kubernetes API endpoints
+  api_service_endpoint_job = {
+    job_name              = "kubernetes-api-endpoints"
+    scheme                = "https"
+    metrics_path          = "/metrics"
+    bearer_token_file     = local.auth_token_path
+    tls_config            = local.auth_tls_config
+    kubernetes_sd_configs = local.kubernetes_sd_config["endpoints"]
     relabel_configs = [
       {
         action = "keep"
         source_labels = [
-          "__meta_kubernetes_namespace",
           "__meta_kubernetes_service_name",
+          "__meta_kubernetes_namespace",
           "__meta_kubernetes_endpoint_port_name",
         ]
-        regex = "default;kubernetes;https"
+        regex = "kubernetes;default;https"
       },
     ]
-    bearer_token_file = local.auth_token_path
-    scheme            = local.auth_scheme
-    tls_config        = local.auth_tls_config
   }
 
-  node_job = {
-    job_name              = "kubernetes-nodes"
-    kubernetes_sd_configs = local.sd_config["node"]
-    relabel_configs       = local.node_metrics_labels["/metrics"]
-    bearer_token_file     = local.auth_token_path
-    scheme                = local.auth_scheme
-    tls_config            = local.auth_tls_config
+  # for each service endpoint, check at http://<ip:port>/metrics and associate any kubernetes labels with them
+  service_endpoints_job = {
+    job_name              = "kubernetes-service-endpoints"
+    scheme                = "http"
+    metrics_path          = "/metrics"
+    kubernetes_sd_configs = local.kubernetes_sd_config["endpoints"]
+    relabel_configs = [
+      local.kubernetes_sd_label_remap["service"],
+      local.kubernetes_sd_name_label_rename["namespace"],
+      local.kubernetes_sd_name_label_rename["service"],
+    ]
   }
 
-  node_cadvisor_job = {
-    job_name              = "kubernetes-nodes-cadvisor"
-    kubernetes_sd_configs = local.sd_config["node"]
-    relabel_configs       = local.node_metrics_labels["/metrics/cadvisor"]
-    bearer_token_file     = local.auth_token_path
-    scheme                = local.auth_scheme
-    tls_config            = local.auth_tls_config
-  }
-
+  # for each active pod, check at http://<ip:port>/metrics and associate any kubernetes labels with them
   pods_job = {
     job_name              = "kubernetes-pods"
-    kubernetes_sd_configs = local.sd_config["pod"]
-    relabel_configs = concat(
-      local.scraped_labels["pod"],
-      [
-        {
-          action        = "drop"
-          source_labels = ["__meta_kubernetes_pod_phase"]
-          regex         = "Pending|Succeeded|Failed|Completed"
-        },
-        local.name_labels["namespace"],
-        local.name_labels["pod_node"],
-        local.name_labels["pod"],
-      ]
-    )
-  }
-
-  endpoints_job = {
-    job_name              = "kubernetes-service-endpoints"
-    kubernetes_sd_configs = local.sd_config["endpoints"]
-    relabel_configs = concat(
-      local.scraped_labels["service"],
-      [
-        local.name_labels["namespace"],
-        local.name_labels["service"],
-      ]
-    )
+    scheme                = "http"
+    metrics_path          = "/metrics"
+    kubernetes_sd_configs = local.kubernetes_sd_config["pod"]
+    relabel_configs = [
+      {
+        action        = "drop"
+        source_labels = ["__meta_kubernetes_pod_phase"]
+        regex         = "Pending|Succeeded|Failed|Completed"
+      },
+      local.kubernetes_sd_label_remap["pod"],
+      local.kubernetes_sd_name_label_rename["namespace"],
+      local.kubernetes_sd_name_label_rename["pod_node"],
+      local.kubernetes_sd_name_label_rename["pod"],
+    ]
   }
 }
 
@@ -187,15 +130,11 @@ locals {
       "/etc/config/alerting_rules.yml",
     ]
     scrape_configs = [
-      local.self_job,
-      local.kube_state_metrics_job,
-      local.api_server_job,
       local.node_job,
       local.node_cadvisor_job,
+      local.api_service_endpoint_job,
+      local.service_endpoints_job,
       local.pods_job,
-      local.endpoints_job,
     ]
   })
 }
-
-

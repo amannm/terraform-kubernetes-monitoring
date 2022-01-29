@@ -1,5 +1,4 @@
 locals {
-  component_name = "kube-state-metrics"
   enabled_resources = {
     certificatesigningrequests      = ["certificates.k8s.io"]
     configmaps                      = [""]
@@ -33,37 +32,33 @@ locals {
 
 resource "kubernetes_service" "service" {
   metadata {
-    name      = local.component_name
+    name      = var.service_name
     namespace = var.namespace_name
-    annotations = {
-      "prometheus.io/scrape" = true
-    }
   }
   spec {
     type             = "ClusterIP"
     session_affinity = "None"
     port {
-      name        = "http"
-      port        = var.port
       protocol    = "TCP"
-      target_port = var.port
+      port        = var.service_port
+      target_port = var.container_port
     }
     selector = {
-      component = local.component_name
+      component = var.service_name
     }
   }
 }
 
 resource "kubernetes_service_account" "service_account" {
   metadata {
-    name      = local.component_name
+    name      = var.service_name
     namespace = var.namespace_name
   }
 }
 
 resource "kubernetes_cluster_role" "cluster_role" {
   metadata {
-    name = local.component_name
+    name = var.service_name
   }
   dynamic "rule" {
     for_each = local.enabled_resources
@@ -77,7 +72,7 @@ resource "kubernetes_cluster_role" "cluster_role" {
 
 resource "kubernetes_cluster_role_binding" "cluster_role_binding" {
   metadata {
-    name = local.component_name
+    name = var.service_name
   }
   subject {
     kind      = "ServiceAccount"
@@ -93,23 +88,23 @@ resource "kubernetes_cluster_role_binding" "cluster_role_binding" {
 
 resource "kubernetes_deployment" "deployment" {
   metadata {
-    name      = local.component_name
+    name      = var.service_name
     namespace = var.namespace_name
   }
   spec {
-    selector {
-      match_labels = {
-        component = local.component_name
-      }
-    }
     replicas = "1"
     strategy {
       type = "RollingUpdate"
     }
+    selector {
+      match_labels = {
+        component = var.service_name
+      }
+    }
     template {
       metadata {
         labels = {
-          component = local.component_name
+          component = var.service_name
         }
       }
       spec {
@@ -120,32 +115,46 @@ resource "kubernetes_deployment" "deployment" {
           fs_group     = "65534"
         }
         container {
-          name              = local.component_name
-          image             = "k8s.gcr.io/kube-state-metrics/kube-state-metrics:v2.3.0"
+          name              = var.service_name
+          image             = var.container_image
           image_pull_policy = "IfNotPresent"
           args = [
-            "--port=${var.port}",
-            "--resources=${join(",", keys(local.enabled_resources))}"
+            "--port=${var.container_port}",
+            "--resources=${join(",", keys(local.enabled_resources))}",
+            "--telemetry-port=${var.container_metrics_port}"
           ]
           port {
-            name           = "http"
-            container_port = var.port
             protocol       = "TCP"
+            container_port = var.container_port
+          }
+          port {
+            protocol       = "TCP"
+            container_port = var.container_metrics_port
+          }
+          resources {
+            requests = {
+              cpu : "50m"
+              memory : "125Mi"
+            }
+            limits = {
+              cpu : "125m"
+              memory : "250Mi"
+            }
           }
           readiness_probe {
             http_get {
-              path   = "/"
-              port   = var.port
               scheme = "HTTP"
+              port   = var.container_port
+              path   = "/"
             }
             timeout_seconds       = 5
             initial_delay_seconds = 5
           }
           liveness_probe {
             http_get {
-              path   = "/healthz"
-              port   = var.port
               scheme = "HTTP"
+              port   = var.container_port
+              path   = "/healthz"
             }
             timeout_seconds       = 5
             initial_delay_seconds = 5

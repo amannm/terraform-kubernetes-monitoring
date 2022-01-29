@@ -1,12 +1,9 @@
 variable "namespace_name" {
   type = string
 }
-variable "port" {
+variable "server_container_port" {
   type = number
 }
-variable "kube_state_metrics_service_name" {
-  type = string
-}
-variable "kube_state_metrics_service_port" {
+variable "configmap_reload_container_port" {
   type = number
 }

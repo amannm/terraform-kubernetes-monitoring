@@ -1,52 +1,65 @@
 locals {
-  component_name = "grafana"
+  health_check_path = "/api/health"
+
+  config_volume_name       = "config"
+  config_volume_mount_path = "/etc/grafana"
+
+  storage_volume_name       = "storage"
+  storage_volume_mount_path = "/var/lib/grafana"
 }
 
 resource "kubernetes_service" "service" {
   metadata {
-    name      = local.component_name
+    name      = var.service_name
     namespace = var.namespace_name
-    annotations = {
-      "prometheus.io/scrape" = true
-    }
   }
   spec {
     type             = "ClusterIP"
     session_affinity = "None"
     port {
-      name        = "http"
-      port        = var.port
       protocol    = "TCP"
-      target_port = var.port
+      port        = var.service_port
+      target_port = var.container_port
     }
     selector = {
-      component = local.component_name
+      component = var.service_name
     }
   }
 }
 
+// TODO: break out all config
 resource "kubernetes_config_map" "config_map" {
   metadata {
-    name      = local.component_name
+    name      = var.service_name
     namespace = var.namespace_name
   }
   data = {
     "grafana.ini" = <<-EOT
 
     [paths]
-    data = /var/lib/grafana/
-    logs = /var/log/grafana
-    plugins = /var/lib/grafana/plugins
-    provisioning = /etc/grafana/provisioning
+    data = ${local.storage_volume_mount_path}
+    temp_data_lifetime = 24h
+    logs = ${local.storage_volume_mount_path}/log
+    plugins = ${local.storage_volume_mount_path}/plugins
+    provisioning = ${local.config_volume_mount_path}/provisioning
+
+    [server]
+    protocol = http
+    http_port = ${var.container_port}
 
     [analytics]
+    reporting_enabled = false
     check_for_updates = true
+
+    [snapshots]
+    external_enabled = false
 
     [log]
     mode = console
+    level = info
 
-    [grafana_net]
-    url = https://grafana.net
+    [metrics]
+    enabled = true
 
     EOT
   }
@@ -54,13 +67,13 @@ resource "kubernetes_config_map" "config_map" {
 
 resource "kubernetes_persistent_volume_claim" "persistent_volume_claim" {
   metadata {
-    name      = local.component_name
+    name      = var.service_name
     namespace = var.namespace_name
   }
   spec {
     resources {
       requests = {
-        storage = "2Gi"
+        storage = "${var.storage_volume_size}Gi"
       }
     }
     access_modes = [
@@ -71,23 +84,23 @@ resource "kubernetes_persistent_volume_claim" "persistent_volume_claim" {
 
 resource "kubernetes_deployment" "deployment" {
   metadata {
-    name      = local.component_name
+    name      = var.service_name
     namespace = var.namespace_name
   }
   spec {
-    selector {
-      match_labels = {
-        component = local.component_name
-      }
-    }
     replicas = "1"
     strategy {
       type = "RollingUpdate"
     }
+    selector {
+      match_labels = {
+        component = var.service_name
+      }
+    }
     template {
       metadata {
         labels = {
-          component = local.component_name
+          component = var.service_name
         }
       }
       spec {
@@ -98,49 +111,48 @@ resource "kubernetes_deployment" "deployment" {
           supplemental_groups = [0]
         }
         volume {
-          name = "config"
+          name = local.config_volume_name
           config_map {
             name = kubernetes_config_map.config_map.metadata[0].name
           }
         }
         volume {
-          name = "storage"
+          name = local.storage_volume_name
           persistent_volume_claim {
             claim_name = kubernetes_persistent_volume_claim.persistent_volume_claim.metadata[0].name
           }
         }
         container {
-          name              = local.component_name
-          image             = "grafana/grafana:8.3.4"
+          name              = var.service_name
+          image             = var.container_image
           image_pull_policy = "IfNotPresent"
           resources {
             requests = {
-              cpu    = "125m"
-              memory = "384Mi"
+              cpu    = "100m"
+              memory = "100Mi"
             }
             limits = {
               cpu    = "250m"
-              memory = "768Mi"
+              memory = "250Mi"
             }
           }
           port {
-            name           = "http"
-            container_port = var.port
             protocol       = "TCP"
+            container_port = var.container_port
           }
           volume_mount {
-            name       = "config"
-            mount_path = "/etc/grafana"
+            name       = local.config_volume_name
+            mount_path = local.config_volume_mount_path
           }
           volume_mount {
-            name       = "storage"
-            mount_path = "/var/lib/grafana"
+            name       = local.storage_volume_name
+            mount_path = local.storage_volume_mount_path
           }
           readiness_probe {
             http_get {
-              path   = "/api/health"
-              port   = var.port
               scheme = "HTTP"
+              port   = var.container_port
+              path   = local.health_check_path
             }
             timeout_seconds       = 2
             initial_delay_seconds = 10
@@ -150,9 +162,9 @@ resource "kubernetes_deployment" "deployment" {
           }
           liveness_probe {
             http_get {
-              path   = "/api/health"
-              port   = var.port
               scheme = "HTTP"
+              port   = var.container_port
+              path   = local.health_check_path
             }
             timeout_seconds       = 30
             initial_delay_seconds = 60

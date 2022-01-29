@@ -1,37 +1,43 @@
 locals {
-  component_name = "prometheus-server"
+
+  config_filename = "prometheus.yml"
+
+  config_volume_name       = "config"
+  config_volume_mount_path = "/etc/config"
+
+  storage_volume_name       = "storage"
+  storage_volume_mount_path = "/data"
 }
 
 resource "kubernetes_service" "service" {
   metadata {
-    name      = local.component_name
+    name      = var.service_name
     namespace = var.namespace_name
   }
   spec {
     type             = "ClusterIP"
     session_affinity = "None"
     port {
-      name        = "http"
-      port        = var.port
+      port        = var.service_port
       protocol    = "TCP"
-      target_port = var.port
+      target_port = var.server_container_port
     }
     selector = {
-      component = local.component_name
+      component = var.service_name
     }
   }
 }
 
 resource "kubernetes_service_account" "service_account" {
   metadata {
-    name      = local.component_name
+    name      = var.service_name
     namespace = var.namespace_name
   }
 }
 
 resource "kubernetes_cluster_role" "cluster_role" {
   metadata {
-    name = local.component_name
+    name = var.service_name
   }
   rule {
     api_groups = [""]
@@ -51,7 +57,7 @@ resource "kubernetes_cluster_role" "cluster_role" {
 
 resource "kubernetes_cluster_role_binding" "cluster_role_binding" {
   metadata {
-    name = local.component_name
+    name = var.service_name
   }
   subject {
     kind      = "ServiceAccount"
@@ -67,13 +73,13 @@ resource "kubernetes_cluster_role_binding" "cluster_role_binding" {
 
 resource "kubernetes_persistent_volume_claim" "persistent_volume_claim" {
   metadata {
-    name      = local.component_name
+    name      = var.service_name
     namespace = var.namespace_name
   }
   spec {
     resources {
       requests = {
-        storage = "8Gi"
+        storage = "${var.storage_volume_size}Gi"
       }
     }
     access_modes = [
@@ -85,26 +91,25 @@ resource "kubernetes_persistent_volume_claim" "persistent_volume_claim" {
 module "prometheus_config" {
   source                          = "./module/config"
   namespace_name                  = var.namespace_name
-  port                            = var.port
-  kube_state_metrics_service_name = var.kube_state_metrics_service_name
-  kube_state_metrics_service_port = var.kube_state_metrics_service_port
+  server_container_port           = var.server_container_port
+  configmap_reload_container_port = var.configmap_reload_container_port
 }
 
 resource "kubernetes_config_map" "config_map" {
   metadata {
-    name      = local.component_name
+    name      = var.service_name
     namespace = var.namespace_name
   }
   data = {
-    "prometheus.yml"      = module.prometheus_config.yaml
-    "recording_rules.yml" = ""
-    "alerting_rules.yml"  = ""
+    (local.config_filename) = module.prometheus_config.yaml
+    "recording_rules.yml"   = ""
+    "alerting_rules.yml"    = ""
   }
 }
 
 resource "kubernetes_deployment" "deployment" {
   metadata {
-    name      = local.component_name
+    name      = var.service_name
     namespace = var.namespace_name
   }
   spec {
@@ -114,18 +119,17 @@ resource "kubernetes_deployment" "deployment" {
     }
     selector {
       match_labels = {
-        component = local.component_name
+        component = var.service_name
       }
     }
     template {
       metadata {
         labels = {
-          component = local.component_name
+          component = var.service_name
         }
       }
       spec {
         termination_grace_period_seconds = 300
-        host_network                     = false
         dns_policy                       = "ClusterFirst"
         enable_service_links             = true
         service_account_name             = kubernetes_service_account.service_account.metadata[0].name
@@ -148,35 +152,34 @@ resource "kubernetes_deployment" "deployment" {
           }
         }
         container {
-          name              = local.component_name
-          image             = "quay.io/prometheus/prometheus:v2.31.1"
+          name              = var.service_name
+          image             = var.server_container_image
           image_pull_policy = "IfNotPresent"
           args = [
-            "--config.file=/etc/config/prometheus.yml",
-            "--storage.tsdb.path=/data",
-            "--storage.tsdb.retention=15d",
+            "--config.file=${local.config_volume_mount_path}/${local.config_filename}",
+            "--storage.tsdb.path=${local.storage_volume_mount_path}",
+            "--storage.tsdb.retention=${var.storage_retention_days}d",
             "--web.enable-lifecycle",
             "--web.console.libraries=/etc/prometheus/console_libraries",
             "--web.console.templates=/etc/prometheus/consoles",
           ]
           port {
-            name           = "http"
-            container_port = var.port
             protocol       = "TCP"
+            container_port = var.server_container_port
           }
           volume_mount {
-            name       = "config-volume"
-            mount_path = "/etc/config"
+            name       = local.config_volume_name
+            mount_path = local.config_volume_mount_path
           }
           volume_mount {
-            name       = "storage-volume"
-            mount_path = "/data"
+            name       = local.storage_volume_name
+            mount_path = local.storage_volume_mount_path
           }
           readiness_probe {
             http_get {
-              path   = "/-/ready"
-              port   = var.port
               scheme = "HTTP"
+              port   = var.server_container_port
+              path   = "/-/ready"
             }
             initial_delay_seconds = 30
             period_seconds        = 5
@@ -186,15 +189,38 @@ resource "kubernetes_deployment" "deployment" {
           }
           liveness_probe {
             http_get {
-              path   = "/-/healthy"
-              port   = var.port
               scheme = "HTTP"
+              port   = var.server_container_port
+              path   = "/-/healthy"
             }
             initial_delay_seconds = 30
             period_seconds        = 15
             timeout_seconds       = 10
             failure_threshold     = 3
             success_threshold     = 1
+          }
+        }
+        container {
+          name              = "${var.service_name}-configmap-reload"
+          image             = var.configmap_reload_container_image
+          image_pull_policy = "IfNotPresent"
+          args = [
+            "--volume-dir=${local.config_volume_mount_path}",
+            "--webhook-url=http://localhost:${var.server_container_port}/-/reload",
+            "--webhook-method=POST",
+            "--webhook-status-code=200",
+            "--webhook-retries=1",
+            "--web.listen-address=:${var.configmap_reload_container_port}",
+            "--web.telemetry-path=/metrics",
+          ]
+          port {
+            protocol       = "TCP"
+            container_port = var.configmap_reload_container_port
+          }
+          volume_mount {
+            name       = local.config_volume_name
+            mount_path = local.config_volume_mount_path
+            read_only  = true
           }
         }
       }
