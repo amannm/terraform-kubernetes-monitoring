@@ -167,6 +167,16 @@ resource "kubernetes_deployment" "deployment" {
             protocol       = "TCP"
             container_port = var.server_container_port
           }
+          resources {
+            requests = {
+              cpu    = "50m"
+              memory = "100Mi"
+            }
+            limits = {
+              cpu    = "150m"
+              memory = "250Mi"
+            }
+          }
           volume_mount {
             name       = local.config_volume_name
             mount_path = local.config_volume_mount_path
@@ -213,6 +223,16 @@ resource "kubernetes_deployment" "deployment" {
             "--web.listen-address=:${var.configmap_reload_container_port}",
             "--web.telemetry-path=/metrics",
           ]
+          resources {
+            requests = {
+              cpu    = "25m"
+              memory = "50Mi"
+            }
+            limits = {
+              cpu    = "50m"
+              memory = "100Mi"
+            }
+          }
           port {
             protocol       = "TCP"
             container_port = var.configmap_reload_container_port
