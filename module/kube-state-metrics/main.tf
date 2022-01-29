@@ -80,9 +80,9 @@ resource "kubernetes_cluster_role_binding" "cluster_role_binding" {
     namespace = var.namespace_name
   }
   role_ref {
-    api_group = "rbac.authorization.k8s.io"
     kind      = "ClusterRole"
     name      = kubernetes_cluster_role.cluster_role.metadata[0].name
+    api_group = "rbac.authorization.k8s.io"
   }
 }
 

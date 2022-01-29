@@ -65,9 +65,9 @@ resource "kubernetes_cluster_role_binding" "cluster_role_binding" {
     namespace = var.namespace_name
   }
   role_ref {
-    api_group = "rbac.authorization.k8s.io"
     kind      = "ClusterRole"
     name      = kubernetes_cluster_role.cluster_role.metadata[0].name
+    api_group = "rbac.authorization.k8s.io"
   }
 }
 
@@ -140,13 +140,13 @@ resource "kubernetes_deployment" "deployment" {
           run_as_user     = "65534"
         }
         volume {
-          name = "config-volume"
+          name = local.config_volume_name
           config_map {
             name = kubernetes_config_map.config_map.metadata[0].name
           }
         }
         volume {
-          name = "storage-volume"
+          name = local.storage_volume_name
           persistent_volume_claim {
             claim_name = kubernetes_persistent_volume_claim.persistent_volume_claim.metadata[0].name
           }
