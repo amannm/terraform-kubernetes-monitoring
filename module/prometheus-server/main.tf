@@ -169,12 +169,12 @@ resource "kubernetes_deployment" "deployment" {
           }
           resources {
             requests = {
-              cpu    = "50m"
+              cpu    = "100m"
               memory = "100Mi"
             }
             limits = {
-              cpu    = "150m"
-              memory = "250Mi"
+              cpu    = "200m"
+              memory = "500Mi"
             }
           }
           volume_mount {
