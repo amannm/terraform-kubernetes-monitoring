@@ -104,6 +104,7 @@ resource "kubernetes_deployment" "deployment" {
         }
       }
       spec {
+        termination_grace_period_seconds = 30
         security_context {
           run_as_user         = "472"
           run_as_group        = "472"

@@ -108,7 +108,8 @@ resource "kubernetes_deployment" "deployment" {
         }
       }
       spec {
-        service_account_name = kubernetes_service_account.service_account.metadata[0].name
+        termination_grace_period_seconds = 10
+        service_account_name             = kubernetes_service_account.service_account.metadata[0].name
         security_context {
           run_as_user  = "65534"
           run_as_group = "65534"

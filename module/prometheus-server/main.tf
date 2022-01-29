@@ -129,7 +129,7 @@ resource "kubernetes_deployment" "deployment" {
         }
       }
       spec {
-        termination_grace_period_seconds = 300
+        termination_grace_period_seconds = 30
         dns_policy                       = "ClusterFirst"
         enable_service_links             = true
         service_account_name             = kubernetes_service_account.service_account.metadata[0].name
