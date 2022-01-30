@@ -17,7 +17,7 @@ module "kube_state_metrics" {
   namespace_name  = var.namespace_name
   service_name    = "kube-state-metrics"
   service_port    = var.kube_state_metrics_port
-  container_image = "k8s.gcr.io/kube-state-metrics/kube-state-metrics:v2.3.0"
+  container_image = "k8s.gcr.io/kube-state-metrics/kube-state-metrics:latest"
 }
 
 module "prometheus_server" {
@@ -25,8 +25,8 @@ module "prometheus_server" {
   namespace_name                   = var.namespace_name
   service_name                     = "prometheus-server"
   service_port                     = var.prometheus_server_port
-  server_container_image           = "quay.io/prometheus/prometheus:v2.31.1"
-  configmap_reload_container_image = "jimmidyson/configmap-reload:v0.5.0"
+  server_container_image           = "quay.io/prometheus/prometheus:latest"
+  configmap_reload_container_image = "jimmidyson/configmap-reload:latest"
 }
 
 module "prometheus_node_exporter" {
@@ -34,7 +34,7 @@ module "prometheus_node_exporter" {
   namespace_name  = var.namespace_name
   service_name    = "prometheus-node-exporter"
   service_port    = var.prometheus_node_exporter_port
-  container_image = "quay.io/prometheus/node-exporter:v1.3.0"
+  container_image = "quay.io/prometheus/node-exporter:latest"
 }
 
 module "grafana" {
@@ -42,5 +42,5 @@ module "grafana" {
   namespace_name  = var.namespace_name
   service_name    = "grafana"
   service_port    = var.grafana_port
-  container_image = "grafana/grafana:8.3.4"
+  container_image = "grafana/grafana:latest"
 }
