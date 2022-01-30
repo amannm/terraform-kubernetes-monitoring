@@ -138,7 +138,6 @@ resource "kubernetes_deployment" "deployment" {
               memory : "125Mi"
             }
             limits = {
-              cpu : "125m"
               memory : "250Mi"
             }
           }

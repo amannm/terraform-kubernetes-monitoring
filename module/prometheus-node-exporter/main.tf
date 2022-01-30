@@ -136,7 +136,6 @@ resource "kubernetes_daemonset" "daemonset" {
               memory = "125Mi"
             }
             limits = {
-              cpu    = "125m"
               memory = "250Mi"
             }
           }
