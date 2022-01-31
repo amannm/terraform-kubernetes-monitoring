@@ -29,12 +29,11 @@ module "grafana_agent" {
 }
 
 module "prometheus_server" {
-  source                           = "./module/prometheus-server"
-  namespace_name                   = var.namespace_name
-  service_name                     = "prometheus-server"
-  service_port                     = var.prometheus_server_port
-  server_container_image           = "quay.io/prometheus/prometheus:latest"
-  configmap_reload_container_image = "jimmidyson/configmap-reload:latest"
+  source                 = "./module/prometheus-server"
+  namespace_name         = var.namespace_name
+  service_name           = "prometheus-server"
+  service_port           = var.prometheus_server_port
+  server_container_image = "quay.io/prometheus/prometheus:latest"
 }
 
 module "grafana" {
