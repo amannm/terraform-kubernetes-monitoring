@@ -190,10 +190,10 @@ resource "kubernetes_deployment" "deployment" {
               port   = var.server_container_port
               path   = "/-/ready"
             }
-            initial_delay_seconds = 300
+            initial_delay_seconds = 30
             period_seconds        = 30
             timeout_seconds       = 5
-            failure_threshold     = 3
+            failure_threshold     = 10
             success_threshold     = 1
           }
           liveness_probe {
@@ -202,10 +202,10 @@ resource "kubernetes_deployment" "deployment" {
               port   = var.server_container_port
               path   = "/-/healthy"
             }
-            initial_delay_seconds = 360
+            initial_delay_seconds = 330
             period_seconds        = 30
             timeout_seconds       = 5
-            failure_threshold     = 3
+            failure_threshold     = 1
             success_threshold     = 1
           }
         }
