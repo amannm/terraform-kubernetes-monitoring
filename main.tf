@@ -17,7 +17,7 @@ module "kube_state_metrics" {
   namespace_name  = var.namespace_name
   service_name    = "kube-state-metrics"
   service_port    = var.kube_state_metrics_port
-  container_image = "k8s.gcr.io/kube-state-metrics/kube-state-metrics:latest"
+  container_image = "k8s.gcr.io/kube-state-metrics/kube-state-metrics:v2.3.0"
 }
 
 module "grafana_agent" {
