@@ -149,7 +149,7 @@ resource "kubernetes_daemonset" "daemonset" {
           command           = ["/bin/agent"]
           args = [
             "-config.file=${local.config_volume_mount_path}/${local.config_filename}",
-            "-prometheus.wal-directory=${local.wal_volume_mount_path}",
+            #            "-prometheus.wal-directory=${local.wal_volume_mount_path}",
             "-enable-features=integrations-next",
           ]
           port {
@@ -158,11 +158,11 @@ resource "kubernetes_daemonset" "daemonset" {
           }
           resources {
             requests = {
-              cpu    = "100m"
-              memory = "125Mi"
+              cpu    = "75m"
+              memory = "75Mi"
             }
             limits = {
-              memory = "300Mi"
+              memory = "200Mi"
             }
           }
           security_context {

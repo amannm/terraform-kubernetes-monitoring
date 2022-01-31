@@ -173,7 +173,7 @@ resource "kubernetes_deployment" "deployment" {
               memory = "100Mi"
             }
             limits = {
-              memory = "500Mi"
+              memory = "300Mi"
             }
           }
           volume_mount {
@@ -190,7 +190,7 @@ resource "kubernetes_deployment" "deployment" {
               port   = var.server_container_port
               path   = "/-/ready"
             }
-            initial_delay_seconds = 30
+            initial_delay_seconds = 300
             period_seconds        = 30
             timeout_seconds       = 5
             failure_threshold     = 3
@@ -202,43 +202,11 @@ resource "kubernetes_deployment" "deployment" {
               port   = var.server_container_port
               path   = "/-/healthy"
             }
-            initial_delay_seconds = 90
+            initial_delay_seconds = 360
             period_seconds        = 30
             timeout_seconds       = 5
             failure_threshold     = 3
             success_threshold     = 1
-          }
-        }
-        container {
-          name              = "${var.service_name}-configmap-reload"
-          image             = var.configmap_reload_container_image
-          image_pull_policy = "IfNotPresent"
-          args = [
-            "--volume-dir=${local.config_volume_mount_path}",
-            "--webhook-url=http://localhost:${var.server_container_port}/-/reload",
-            "--webhook-method=POST",
-            "--webhook-status-code=200",
-            "--webhook-retries=1",
-            "--web.listen-address=:${var.configmap_reload_container_port}",
-            "--web.telemetry-path=/metrics",
-          ]
-          resources {
-            requests = {
-              cpu    = "25m"
-              memory = "50Mi"
-            }
-            limits = {
-              memory = "100Mi"
-            }
-          }
-          port {
-            protocol       = "TCP"
-            container_port = var.configmap_reload_container_port
-          }
-          volume_mount {
-            name       = local.config_volume_name
-            mount_path = local.config_volume_mount_path
-            read_only  = true
           }
         }
       }

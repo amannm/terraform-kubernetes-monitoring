@@ -10,11 +10,11 @@ variable "service_port" {
 }
 variable "storage_volume_size" {
   type    = number
-  default = 8
+  default = 4
 }
 variable "storage_retention_days" {
   type    = number
-  default = 15
+  default = 1
 }
 variable "server_container_image" {
   type    = string
@@ -23,12 +23,4 @@ variable "server_container_image" {
 variable "server_container_port" {
   type    = number
   default = 9090
-}
-variable "configmap_reload_container_image" {
-  type    = string
-  default = "jimmidyson/configmap-reload:v0.5.0"
-}
-variable "configmap_reload_container_port" {
-  type    = number
-  default = 9533
 }

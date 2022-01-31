@@ -129,8 +129,8 @@ resource "kubernetes_deployment" "deployment" {
           image_pull_policy = "IfNotPresent"
           resources {
             requests = {
-              cpu    = "100m"
-              memory = "100Mi"
+              cpu    = "75m"
+              memory = "75Mi"
             }
             limits = {
               memory = "250Mi"
