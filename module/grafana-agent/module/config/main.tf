@@ -144,9 +144,11 @@ locals {
       global = {
         scrape_interval = "1m"
         scrape_timeout  = "10s"
-        remote_write = {
-          url = var.metrics_remote_write_url
-        }
+        remote_write = [
+          {
+            url = var.metrics_remote_write_url
+          }
+        ]
       }
       configs : [
         {
