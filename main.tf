@@ -20,6 +20,14 @@ module "kube_state_metrics" {
   container_image = "k8s.gcr.io/kube-state-metrics/kube-state-metrics:latest"
 }
 
+module "grafana_agent" {
+  source                   = "./module/grafana-agent"
+  namespace_name           = var.namespace_name
+  resource_name            = "grafana-agent"
+  container_image          = "grafana/agent:latest"
+  metrics_remote_write_url = "http://${module.prometheus_server.service_name}.${var.namespace_name}.svc.cluster.local:${module.prometheus_server.service_port}/api/v1/write"
+}
+
 module "prometheus_server" {
   source                           = "./module/prometheus-server"
   namespace_name                   = var.namespace_name
@@ -27,14 +35,6 @@ module "prometheus_server" {
   service_port                     = var.prometheus_server_port
   server_container_image           = "quay.io/prometheus/prometheus:latest"
   configmap_reload_container_image = "jimmidyson/configmap-reload:latest"
-}
-
-module "prometheus_node_exporter" {
-  source          = "./module/prometheus-node-exporter"
-  namespace_name  = var.namespace_name
-  service_name    = "prometheus-node-exporter"
-  service_port    = var.prometheus_node_exporter_port
-  container_image = "quay.io/prometheus/node-exporter:latest"
 }
 
 module "grafana" {

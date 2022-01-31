@@ -88,12 +88,12 @@ resource "kubernetes_persistent_volume_claim" "persistent_volume_claim" {
   }
 }
 
-module "prometheus_config" {
-  source                          = "./module/config"
-  namespace_name                  = var.namespace_name
-  server_container_port           = var.server_container_port
-  configmap_reload_container_port = var.configmap_reload_container_port
-}
+#module "prometheus_config" {
+#  source                          = "./module/config"
+#  namespace_name                  = var.namespace_name
+#  server_container_port           = var.server_container_port
+#  configmap_reload_container_port = var.configmap_reload_container_port
+#}
 
 resource "kubernetes_config_map" "config_map" {
   metadata {
@@ -101,9 +101,8 @@ resource "kubernetes_config_map" "config_map" {
     namespace = var.namespace_name
   }
   data = {
-    (local.config_filename) = module.prometheus_config.yaml
-    "recording_rules.yml"   = ""
-    "alerting_rules.yml"    = ""
+    //  (local.config_filename) = module.prometheus_config.yaml
+    (local.config_filename) = ""
   }
 }
 
@@ -162,6 +161,7 @@ resource "kubernetes_deployment" "deployment" {
             "--web.enable-lifecycle",
             "--web.console.libraries=/etc/prometheus/console_libraries",
             "--web.console.templates=/etc/prometheus/consoles",
+            "--web.enable-remote-write-receiver",
           ]
           port {
             protocol       = "TCP"
