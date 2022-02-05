@@ -161,11 +161,11 @@ locals {
       configs : []
     }
     integrations = {
-      #      metrics = {
-      #        autoscrape = {
-      #          enable = true
-      #        }
-      #      }
+      metrics = {
+        autoscrape = {
+          enable = false
+        }
+      }
       node_exporter = {
         rootfs_path = var.host_root_volume_mount_path
         sysfs_path  = var.host_sys_volume_mount_path
