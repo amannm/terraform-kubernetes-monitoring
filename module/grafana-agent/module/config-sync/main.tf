@@ -14,7 +14,8 @@ resource "kubernetes_config_map" "config_map" {
 }
 resource "kubernetes_cron_job" "config_update_job" {
   metadata {
-    name = var.resource_name
+    name      = var.resource_name
+    namespace = var.namespace_name
   }
   spec {
     schedule                      = "*/5 * * * *"
