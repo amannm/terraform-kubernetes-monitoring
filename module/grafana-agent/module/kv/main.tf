@@ -12,6 +12,7 @@ locals {
   PEERS=$( \
   nslookup \
   ${local.headless_service_name}.${var.namespace_name}.svc.cluster.local \
+  2>/dev/null \
   | grep Address \
   | awk -F ": " '{print $2}' \
   | grep -v " " \
@@ -207,14 +208,14 @@ resource "kubernetes_daemonset" "daemonset" {
           security_context {
             privileged = true
           }
-          command = ["/bin/sh", "-ec", "tail -f /dev/null"]
-          #          lifecycle {
-          #            pre_stop {
-          #              exec {
-          #                command = ["/bin/sh", "-ec", "tail -f /dev/null"]
-          #              }
-          #            }
-          #          }
+          command = ["/bin/sh", "-ec", local.startup_script]
+          lifecycle {
+            pre_stop {
+              exec {
+                command = ["/bin/sh", "-ec", local.pre_stop_script]
+              }
+            }
+          }
           port {
             protocol       = "TCP"
             container_port = local.client_port
