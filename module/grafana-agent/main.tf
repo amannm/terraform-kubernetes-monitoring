@@ -130,7 +130,7 @@ resource "kubernetes_service" "service_headless" {
       target_port = var.agent_container_port
     }
     selector = {
-      "component" = var.resource_name
+      component = var.resource_name
     }
   }
 }
@@ -143,6 +143,9 @@ resource "kubernetes_daemonset" "daemonset" {
   spec {
     strategy {
       type = "RollingUpdate"
+      rolling_update {
+        max_unavailable = 1
+      }
     }
     selector {
       match_labels = {
@@ -151,6 +154,7 @@ resource "kubernetes_daemonset" "daemonset" {
     }
     template {
       metadata {
+        name = var.resource_name
         labels = {
           component = var.resource_name
         }
