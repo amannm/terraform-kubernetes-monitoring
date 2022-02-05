@@ -170,23 +170,6 @@ resource "kubernetes_service" "service_headless" {
   }
 }
 
-resource "kubernetes_persistent_volume_claim" "persistent_volume_claim" {
-  metadata {
-    name      = var.service_name
-    namespace = var.namespace_name
-  }
-  spec {
-    resources {
-      requests = {
-        storage = "${var.storage_volume_size}Gi"
-      }
-    }
-    access_modes = [
-      "ReadWriteOnce"
-    ]
-  }
-}
-
 resource "kubernetes_daemonset" "daemonset" {
   metadata {
     name      = var.service_name
@@ -214,9 +197,7 @@ resource "kubernetes_daemonset" "daemonset" {
       spec {
         volume {
           name = local.data_volume_name
-          persistent_volume_claim {
-            claim_name = var.service_name
-            read_only  = false
+          empty_dir {
           }
         }
         container {
@@ -226,11 +207,11 @@ resource "kubernetes_daemonset" "daemonset" {
           security_context {
             privileged = true
           }
-          command = ["/bin/sh", "-ec", local.startup_script]
+          command = ["/bin/sh", "-ec", "echo hey"]
           lifecycle {
             pre_stop {
               exec {
-                command = ["/bin/sh", "-ec", local.pre_stop_script]
+                command = ["/bin/sh", "-ec", "echo hey"]
               }
             }
           }
