@@ -150,14 +150,10 @@ resource "kubernetes_service" "service_headless" {
   metadata {
     name      = local.headless_service_name
     namespace = var.namespace_name
-    annotations = {
-      "service.alpha.kubernetes.io/tolerate-unready-endpoints" = "true"
-    }
   }
   spec {
-    type                        = "ClusterIP"
-    cluster_ip                  = "None"
-    publish_not_ready_addresses = true
+    type       = "ClusterIP"
+    cluster_ip = "None"
     port {
       name        = "client"
       port        = local.client_port
