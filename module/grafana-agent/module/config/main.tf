@@ -120,27 +120,26 @@ locals {
 
 locals {
   rendered = yamlencode({
-
     metrics = {
-      #      scraping_service = {
-      #        enabled = true
-      #        kvstore = {
-      #          store = "etcd"
-      #          etcd = {
-      #            endpoints = [var.etcd_endpoint]
-      #          }
-      #        }
-      #        lifecycler = {
-      #          ring = {
-      #            kvstore = {
-      #              store = "etcd"
-      #              etcd = {
-      #                endpoints = [var.etcd_endpoint]
-      #              }
-      #            }
-      #          }
-      #        }
-      #      }
+      scraping_service = {
+        enabled = true
+        kvstore = {
+          store = "etcd"
+          etcd = {
+            endpoints = [var.etcd_endpoint]
+          }
+        }
+        lifecycler = {
+          ring = {
+            kvstore = {
+              store = "etcd"
+              etcd = {
+                endpoints = [var.etcd_endpoint]
+              }
+            }
+          }
+        }
+      }
       global = {
         scrape_interval = "1m"
         scrape_timeout  = "10s"

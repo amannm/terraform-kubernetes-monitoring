@@ -16,3 +16,7 @@ variable "container_port" {
 variable "metrics_remote_write_url" {
   type = string
 }
+variable "etcd_container_image" {
+  type    = string
+  default = "quay.io/coreos/etcd:latest"
+}

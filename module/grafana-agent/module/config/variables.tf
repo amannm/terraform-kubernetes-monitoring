@@ -16,3 +16,6 @@ variable "host_sys_volume_mount_path" {
 variable "host_proc_volume_mount_path" {
   type = string
 }
+variable "etcd_endpoint" {
+  type = string
+}

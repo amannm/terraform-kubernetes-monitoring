@@ -1,27 +1,150 @@
-resource "kubernetes_service" "etcd" {
+locals {
+  client_port             = 2379
+  peer_port               = 2380
+  data_volume_name        = "data"
+  data_volume_mount_path  = "/var/run/etcd"
+  data_volume_host_path   = "/etcd/data"
+  headless_service_name   = "${var.service_name}-headless"
+  service_client_endpoint = "${var.service_name}.${var.namespace_name}.svc.cluster.local:${local.client_port}"
+  get_ip                  = <<-EOT
+  export IP=${"$"}(hostname -i)
+  EOT
+  member_hash_command     = <<-EOT
+  etcdctl member list | grep http://${"$"}{IP}:${local.peer_port} | cut -d':' -f1 | cut -d'[' -f1
+  EOT
+  get_peers_list          = <<-EOT
+  PEERS=${"$"}(nslookup ${local.headless_service_name}.${var.namespace_name}.svc.cluster.local | grep Address | awk -F ": " '{print ${"$"}2}' | grep -v " ")
+  EOT
+  list_peers_function     = <<-EOT
+  list_peers() {
+    EPS=""
+    for i in ${"$"}{PEERS}; do
+      EPS="${"$"}{EPS}${"$"}{EPS:+,}http://${"$"}{i}:${local.client_port}"
+    done
+    echo ${"$"}{EPS}
+  }
+  EOT
+  startup_script          = <<-EOT
+  mkdir -p ${local.data_volume_mount_path}
+  sleep 5
+  HOSTNAME=${"$"}(hostname)
+  ${local.get_ip}
+  ${local.get_peers_list}
+  echo "peers: ${"$"}PEERS"
+  ${local.list_peers_function}
+  list_servers() {
+    EPS=""
+    for i in ${"$"}{PEERS}; do
+      EPS="${"$"}{EPS}${"$"}{EPS:+,}${"$"}{i}=http://${"$"}{i}:${local.peer_port}"
+    done
+    echo ${"$"}{EPS},${"$"}{IP}=http://${"$"}{IP}:${local.peer_port}
+  }
+  collect_member() {
+    ETCDCTL_ENDPOINT=${"$"}(list_peers)
+    while ! etcdctl member list &>/dev/null; do sleep 1; done
+    ${local.member_hash_command} > ${local.data_volume_mount_path}/member_id
+    exit 0
+  }
+  member_hash() {
+    ETCDCTL_ENDPOINT=${"$"}(list_peers) ${local.member_hash_command}
+  }
+  check_cluster() {
+    ETCDCTL_ENDPOINT=${"$"}(list_peers) etcdctl member list > /dev/null
+    local exit_code=${"$"}?
+    echo "${"$"}exit_code"
+  }
+  if [ -e ${local.data_volume_mount_path}/default.etcd ]; then
+    echo "rejoining cluster"
+    member_id=${"$"}(cat ${local.data_volume_mount_path}/member_id)
+    ETCDCTL_ENDPOINT=${"$"}(list_peers) etcdctl member update ${"$"}{member_id} http://${"$"}{IP}:${local.peer_port}
+    exec etcd --name ${"$"}{IP} \
+        --listen-peer-urls http://${"$"}{IP}:${local.peer_port} \
+        --listen-client-urls http://${"$"}{IP}:${local.client_port},http://127.0.0.1:${local.client_port} \
+        --advertise-client-urls http://${"$"}{IP}:${local.client_port} \
+        --data-dir ${local.data_volume_mount_path}/default.etcd
+  fi
+  echo "checking for existing cluster"
+  CLUSTER=${"$"}(check_cluster)
+  if [[ "${"$"}CLUSTER" == "0" ]]; then
+    echo "joining existing cluster"
+    MEMBER_HASH=${"$"}(member_hash)
+    echo "member hash is ${"$"}MEMBER_HASH"
+    if [ -n "${"$"}{MEMBER_HASH}" ]; then
+        ETCDCTL_ENDPOINT=${"$"}(list_peers) etcdctl member remove ${"$"}{MEMBER_HASH}
+    fi
+    ETCDCTL_ENDPOINT=${"$"}(list_peers) etcdctl member add ${"$"}{IP} http://${"$"}{IP}:${local.peer_port} | grep "^ETCD_" > ${local.data_volume_mount_path}/new_member_envs
+    if [ ${"$"}? -ne 0 ]; then
+      echo "exiting"
+      rm -f ${local.data_volume_mount_path}/new_member_envs
+      exit 1
+    fi
+    cat ${local.data_volume_mount_path}/new_member_envs
+    source ${local.data_volume_mount_path}/new_member_envs
+    collect_member &
+    exec etcd --name ${"$"}{IP} \
+          --listen-peer-urls http://${"$"}{IP}:${local.peer_port} \
+          --listen-client-urls http://${"$"}{IP}:${local.client_port},http://127.0.0.1:${local.client_port} \
+          --advertise-client-urls http://${"$"}{IP}:${local.client_port} \
+          --data-dir ${local.data_volume_mount_path}/default.etcd \
+          --initial-advertise-peer-urls http://${"$"}{IP}:${local.peer_port} \
+          --initial-cluster ${"$"}{ETCD_INITIAL_CLUSTER} \
+          --initial-cluster-state ${"$"}{ETCD_INITIAL_CLUSTER_STATE}
+  fi
+  echo "pinging peers"
+  for i in ${"$"}PEERS; do
+    while true; do
+      echo "waiting for ${"$"}{i} to start..."
+      ping -W 1 -c 1 ${"$"}{i} > /dev/null && break
+      sleep 1s
+    done
+  done
+  collect_member &
+  echo "joining new cluster"
+  exec etcd --name ${"$"}{IP} \
+          --listen-peer-urls http://${"$"}{IP}:${local.peer_port} \
+          --listen-client-urls http://${"$"}{IP}:${local.client_port},http://127.0.0.1:${local.client_port} \
+          --advertise-client-urls http://${"$"}{IP}:${local.client_port} \
+          --data-dir ${local.data_volume_mount_path}/default.etcd \
+          --initial-advertise-peer-urls http://${"$"}{IP}:${local.peer_port} \
+          --initial-cluster ${"$"}(list_servers) \
+          --initial-cluster-state new \
+          --initial-cluster-token ${var.service_name}-cluster
+  EOT
+  pre_stop_script         = <<-EOT
+  ${local.get_ip}
+  ${local.get_peers_list}
+  ${local.list_peers_function}
+  echo "removing ${"$"}{IP} from cluster"
+  ETCDCTL_ENDPOINT=${"$"}(list_peers) etcdctl member remove ${"$"}(${local.member_hash_command})
+  if [ ${"$"}? -eq 0 ]; then
+    rm -rf ${local.data_volume_mount_path}/*
+  fi
+  EOT
+}
+resource "kubernetes_service" "service" {
   metadata {
-    name      = "etcd"
+    name      = var.service_name
     namespace = var.namespace_name
   }
   spec {
     type             = "ClusterIP"
     session_affinity = "None"
     port {
-      port        = 2379
-      target_port = "client"
+      port        = local.client_port
+      target_port = local.client_port
     }
     port {
-      port        = 2380
-      target_port = "peer"
+      port        = local.peer_port
+      target_port = local.peer_port
     }
     selector = {
-      "component" = "etcd"
+      "component" = var.service_name
     }
   }
 }
-resource "kubernetes_service" "etcd_headless" {
+resource "kubernetes_service" "service_headless" {
   metadata {
-    name      = "etcd-headless"
+    name      = local.headless_service_name
     namespace = var.namespace_name
     annotations = {
       "service.alpha.kubernetes.io/tolerate-unready-endpoints" = "true"
@@ -32,91 +155,72 @@ resource "kubernetes_service" "etcd_headless" {
     cluster_ip                  = "None"
     publish_not_ready_addresses = true
     port {
-      port        = 2379
-      target_port = "client"
+      port        = local.client_port
+      target_port = local.client_port
     }
     port {
-      port        = 2380
-      target_port = "peer"
+      port        = local.peer_port
+      target_port = local.peer_port
     }
     selector = {
-      "component" = "etcd"
+      "component" = var.service_name
     }
   }
 }
-resource "kubernetes_stateful_set" "etcd" {
+resource "kubernetes_daemonset" "daemonset" {
   metadata {
-    name      = "etcd"
+    name      = var.service_name
     namespace = var.namespace_name
-    labels = {
-      "component" = "etcd"
-    }
   }
   spec {
-    replicas              = 1
-    service_name          = "etcd"
-    pod_management_policy = "Parallel"
-    update_strategy {
+    strategy {
       type = "RollingUpdate"
+      rolling_update {
+        max_unavailable = 1
+      }
     }
     selector {
       match_labels = {
-        "component" = "etcd"
+        "component" = var.service_name
       }
     }
     template {
       metadata {
-        name = "etcd"
+        name = var.service_name
         labels = {
-          "component" = "etcd"
+          "component" = var.service_name
         }
       }
       spec {
+        volume {
+          name = local.data_volume_name
+          host_path {
+            path = local.data_volume_host_path
+          }
+        }
         container {
-          name              = "etcd"
-          image             = "quay.io/coreos/etcd:latest"
+          name              = var.service_name
+          image             = var.container_image
           image_pull_policy = "IfNotPresent"
-          command = [
-            "etcd",
-          ]
-          args = [
-            "--name ${"$"}{HOSTNAME}",
-            "--listen-peer-urls http://0.0.0.0:2380",
-            "--listen-client-urls http://0.0.0.0:2379",
-            "--advertise-client-urls http://${"$"}{HOSTNAME}.etcd:2379",
-            "--initial-advertise-peer-urls http://${"$"}{HOSTNAME}.etcd:2380",
-            "--initial-cluster-token etcd-cluster-1",
-            "--initial-cluster etcd-0=http://etcd-0.etcd:2380,etcd-1=http://etcd-1.etcd:2380,etcd-2=http://etcd-2.etcd:2380",
-            "--initial-cluster-state new",
-            "--data-dir /var/run/etcd/default.etcd",
-          ]
+          command           = ["/bin/sh", "-ec", local.startup_script]
+          lifecycle {
+            pre_stop {
+              exec {
+                command = ["/bin/sh", "-ec", local.pre_stop_script]
+              }
+            }
+          }
+          port {
+            protocol       = "TCP"
+            container_port = local.client_port
+          }
+          port {
+            protocol       = "TCP"
+            container_port = local.peer_port
+          }
           volume_mount {
-            name       = "data"
-            mount_path = "/var/run/etcd"
-          }
-          port {
-            name           = "client"
-            protocol       = "TCP"
-            container_port = 2379
-          }
-          port {
-            name           = "peer"
-            protocol       = "TCP"
-            container_port = 2380
-          }
-        }
-      }
-    }
-    volume_claim_template {
-      metadata {
-        name = "data"
-      }
-      spec {
-        storage_class_name = "ssd"
-        access_modes       = ["ReadWriteOnce"]
-        resources {
-          requests = {
-            storage = "1Gi"
+            name       = local.data_volume_name
+            mount_path = local.data_volume_mount_path
           }
         }
       }

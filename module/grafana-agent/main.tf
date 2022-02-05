@@ -12,8 +12,8 @@ locals {
       mount_path = "/var/log"
     }
     "host-containers-log" = {
-      host_path  = "/var/lob/docker/containers"
-      mount_path = "/var/lob/docker/containers"
+      host_path  = "/var/log/docker/containers"
+      mount_path = "/var/log/docker/containers"
     }
     "host-id" = {
       host_path  = "/etc/machine-id"
@@ -76,6 +76,12 @@ resource "kubernetes_cluster_role_binding" "cluster_role_binding" {
     api_group = "rbac.authorization.k8s.io"
   }
 }
+module "scraping_service_etcd" {
+  source          = "./module/kv"
+  namespace_name  = var.namespace_name
+  service_name    = "${var.resource_name}-etcd"
+  container_image = var.etcd_container_image
+}
 
 module "grafana_agent_config" {
   source                      = "./module/config"
@@ -85,6 +91,7 @@ module "grafana_agent_config" {
   host_root_volume_mount_path = local.host_volumes.root.mount_path
   host_sys_volume_mount_path  = local.host_volumes.sys.mount_path
   host_proc_volume_mount_path = local.host_volumes.proc.mount_path
+  etcd_endpoint               = module.scraping_service_etcd.client_endpoint
 }
 
 resource "kubernetes_config_map" "config_map" {
