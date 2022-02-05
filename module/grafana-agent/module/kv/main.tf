@@ -143,7 +143,7 @@ resource "kubernetes_service" "service" {
       target_port = local.peer_port
     }
     selector = {
-      "component" = var.service_name
+      component = var.service_name
     }
   }
 }
@@ -166,7 +166,7 @@ resource "kubernetes_service" "service_headless" {
       target_port = local.peer_port
     }
     selector = {
-      "component" = var.service_name
+      component = var.service_name
     }
   }
 }
@@ -185,14 +185,14 @@ resource "kubernetes_daemonset" "daemonset" {
     }
     selector {
       match_labels = {
-        "component" = var.service_name
+        component = var.service_name
       }
     }
     template {
       metadata {
         name = var.service_name
         labels = {
-          "component" = var.service_name
+          component = var.service_name
         }
       }
       spec {

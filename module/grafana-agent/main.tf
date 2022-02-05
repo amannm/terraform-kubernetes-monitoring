@@ -146,13 +146,13 @@ resource "kubernetes_daemonset" "daemonset" {
     }
     selector {
       match_labels = {
-        name = var.resource_name
+        component = var.resource_name
       }
     }
     template {
       metadata {
         labels = {
-          name = var.resource_name
+          component = var.resource_name
         }
       }
       spec {
