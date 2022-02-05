@@ -44,7 +44,7 @@ resource "kubernetes_cron_job" "config_update_job" {
               name              = var.resource_name
               image             = var.container_image
               image_pull_policy = "IfNotPresent"
-              command           = ["config-sync"]
+              command           = ["/bin/agentctl", "config-sync"]
               args = [
                 "--addr=http://${var.agent_api_host}",
                 local.config_volume_mount_path,
