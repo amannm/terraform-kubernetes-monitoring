@@ -9,7 +9,8 @@ locals {
   get_ip                  = "export IP=$(hostname -i)"
   member_hash_command     = "etcdctl member list | grep http://$${IP}:${local.peer_port} | cut -d':' -f1 | cut -d'[' -f1"
   get_peers_list          = <<-EOT
-  PEERS=$(dig +short ${local.headless_service_name}.${var.namespace_name}.svc.cluster.local)
+  PEERS=$(dig +short \
+  ${local.headless_service_name}.${var.namespace_name}.svc.cluster.local)
   EOT
   list_peers_function     = <<-EOT
   list_peers() {
