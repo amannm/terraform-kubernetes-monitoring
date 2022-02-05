@@ -163,7 +163,7 @@ locals {
     integrations = {
       metrics = {
         autoscrape = {
-          enabled = false
+          enable = false
         }
       }
       node_exporter = {
