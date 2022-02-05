@@ -24,7 +24,7 @@ module "grafana_agent" {
   source                   = "./module/grafana-agent"
   namespace_name           = var.namespace_name
   resource_name            = "grafana-agent"
-  container_image          = "grafana/agent:latest"
+  agent_container_image    = "grafana/agent:latest"
   metrics_remote_write_url = "http://${module.prometheus_server.service_name}.${var.namespace_name}.svc.cluster.local:${module.prometheus_server.service_port}/api/v1/write"
 }
 

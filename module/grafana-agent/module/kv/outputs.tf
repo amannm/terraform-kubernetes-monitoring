@@ -1,3 +1,3 @@
-output "client_endpoint" {
+output "client_endpoint_host" {
   value = local.service_client_endpoint
 }

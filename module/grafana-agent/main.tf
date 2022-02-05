@@ -1,4 +1,6 @@
 locals {
+  agent_api_host = "${var.resource_name}.${var.namespace_name}.svc.cluster.local:${var.agent_container_port}"
+
   config_filename          = "agent.yaml"
   config_volume_name       = "config"
   config_volume_mount_path = "/etc/agent"
@@ -47,8 +49,8 @@ resource "kubernetes_cluster_role" "cluster_role" {
   }
   rule {
     api_groups = [""]
-    verbs      = ["get", "list", "watch"]
     resources  = ["nodes", "nodes/proxy", "nodes/metrics", "services", "endpoints", "pods", "ingresses", "configmaps"]
+    verbs      = ["get", "list", "watch"]
   }
   rule {
     api_groups = ["extensions", "networking.k8s.io"]
@@ -83,15 +85,24 @@ module "scraping_service_etcd" {
   container_image = var.etcd_container_image
 }
 
+module "config_sync_job" {
+  source          = "./module/config-sync"
+  namespace_name  = var.namespace_name
+  resource_name   = "${var.resource_name}-config-sync"
+  container_image = var.agentctl_container_image
+  config_yaml     = module.grafana_agent_config.scrape_yaml
+  agent_api_host  = local.agent_api_host
+}
+
 module "grafana_agent_config" {
   source                      = "./module/config"
   namespace_name              = var.namespace_name
-  server_container_port       = var.container_port
+  server_container_port       = var.agent_container_port
   metrics_remote_write_url    = var.metrics_remote_write_url
   host_root_volume_mount_path = local.host_volumes.root.mount_path
   host_sys_volume_mount_path  = local.host_volumes.sys.mount_path
   host_proc_volume_mount_path = local.host_volumes.proc.mount_path
-  etcd_endpoint               = module.scraping_service_etcd.client_endpoint
+  etcd_endpoint               = module.scraping_service_etcd.client_endpoint_host
 }
 
 resource "kubernetes_config_map" "config_map" {
@@ -151,7 +162,7 @@ resource "kubernetes_daemonset" "daemonset" {
         }
         container {
           name              = var.resource_name
-          image             = var.container_image
+          image             = var.agent_container_image
           image_pull_policy = "IfNotPresent"
           command           = ["/bin/agent"]
           args = [
@@ -161,7 +172,7 @@ resource "kubernetes_daemonset" "daemonset" {
           ]
           port {
             protocol       = "TCP"
-            container_port = var.container_port
+            container_port = var.agent_container_port
           }
           resources {
             requests = {

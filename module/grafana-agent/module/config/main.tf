@@ -119,8 +119,25 @@ locals {
 }
 
 locals {
+  scrape_rendered = yamlencode({
+    scrape_configs = [
+      local.node_job,
+      local.node_cadvisor_job,
+      local.api_service_endpoint_job,
+      local.service_endpoints_job,
+      local.pods_job,
+    ]
+    remote_write = [
+      {
+        url = var.metrics_remote_write_url
+      }
+    ]
+  })
   rendered = yamlencode({
     metrics = {
+      global = {
+        scrape_interval = "1m"
+      }
       scraping_service = {
         enabled = true
         kvstore = {
@@ -131,6 +148,7 @@ locals {
         }
         lifecycler = {
           ring = {
+            replication_factor : 1
             kvstore = {
               store = "etcd"
               etcd = {
@@ -140,34 +158,12 @@ locals {
           }
         }
       }
-      global = {
-        scrape_interval = "1m"
-        scrape_timeout  = "10s"
-        remote_write = [
-          {
-            url = var.metrics_remote_write_url
-          }
-        ]
-      }
-      configs : [
-        {
-          name = "default"
-          scrape_configs = [
-            local.node_job,
-            local.node_cadvisor_job,
-            local.api_service_endpoint_job,
-            local.service_endpoints_job,
-            local.pods_job,
-          ]
-        }
-      ]
+      configs : []
     }
-
     integrations = {
       metrics = {
         autoscrape = {
-          enable           = true
-          metrics_instance = "default"
+          enable = true
         }
       }
       node_exporter = {
@@ -176,6 +172,5 @@ locals {
         procfs_path = var.host_proc_volume_mount_path
       }
     }
-
   })
 }
