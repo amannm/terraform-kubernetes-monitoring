@@ -79,10 +79,11 @@ resource "kubernetes_cluster_role_binding" "cluster_role_binding" {
   }
 }
 module "scraping_service_etcd" {
-  source          = "./module/kv"
-  namespace_name  = var.namespace_name
-  service_name    = "${var.resource_name}-etcd"
-  container_image = var.etcd_container_image
+  source              = "./module/kv"
+  namespace_name      = var.namespace_name
+  service_name        = "${var.resource_name}-etcd"
+  container_image     = var.etcd_container_image
+  storage_volume_size = 1
 }
 
 module "config_sync_job" {

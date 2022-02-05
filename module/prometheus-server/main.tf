@@ -173,7 +173,7 @@ resource "kubernetes_deployment" "deployment" {
               memory = "100Mi"
             }
             limits = {
-              memory = "300Mi"
+              memory = "400Mi"
             }
           }
           volume_mount {
