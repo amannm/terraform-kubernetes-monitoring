@@ -139,7 +139,8 @@ locals {
         scrape_interval = "1m"
       }
       scraping_service = {
-        enabled = true
+        enabled                       = true
+        dangerous_allow_reading_files = true
         kvstore = {
           store = "etcd"
           etcd = {
