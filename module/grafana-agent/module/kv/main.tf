@@ -207,14 +207,14 @@ resource "kubernetes_daemonset" "daemonset" {
           security_context {
             privileged = true
           }
-          command = ["/bin/sh", "-ec", "echo hey"]
-          lifecycle {
-            pre_stop {
-              exec {
-                command = ["/bin/sh", "-ec", "echo hey"]
-              }
-            }
-          }
+          command = ["/bin/sh", "-ec", "tail -f /dev/null"]
+          #          lifecycle {
+          #            pre_stop {
+          #              exec {
+          #                command = ["/bin/sh", "-ec", "tail -f /dev/null"]
+          #              }
+          #            }
+          #          }
           port {
             protocol       = "TCP"
             container_port = local.client_port
