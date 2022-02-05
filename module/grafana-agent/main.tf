@@ -116,6 +116,25 @@ resource "kubernetes_config_map" "config_map" {
   }
 }
 
+resource "kubernetes_service" "service_headless" {
+  metadata {
+    name      = var.resource_name
+    namespace = var.namespace_name
+  }
+  spec {
+    type       = "ClusterIP"
+    cluster_ip = "None"
+    port {
+      name        = "http"
+      port        = var.agent_container_port
+      target_port = var.agent_container_port
+    }
+    selector = {
+      "component" = var.resource_name
+    }
+  }
+}
+
 resource "kubernetes_daemonset" "daemonset" {
   metadata {
     name      = var.resource_name
