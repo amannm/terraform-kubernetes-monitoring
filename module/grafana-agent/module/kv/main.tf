@@ -202,7 +202,10 @@ resource "kubernetes_daemonset" "daemonset" {
           name              = var.service_name
           image             = var.container_image
           image_pull_policy = "IfNotPresent"
-          command           = ["/bin/sh", "-ec", local.startup_script]
+          security_context {
+            privileged = true
+          }
+          command = ["/bin/sh", "-ec", local.startup_script]
           lifecycle {
             pre_stop {
               exec {
