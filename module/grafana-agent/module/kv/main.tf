@@ -130,10 +130,12 @@ resource "kubernetes_service" "service" {
     type             = "ClusterIP"
     session_affinity = "None"
     port {
+      name        = "client"
       port        = local.client_port
       target_port = local.client_port
     }
     port {
+      name        = "peer"
       port        = local.peer_port
       target_port = local.peer_port
     }
@@ -155,10 +157,12 @@ resource "kubernetes_service" "service_headless" {
     cluster_ip                  = "None"
     publish_not_ready_addresses = true
     port {
+      name        = "client"
       port        = local.client_port
       target_port = local.client_port
     }
     port {
+      name        = "peer"
       port        = local.peer_port
       target_port = local.peer_port
     }
