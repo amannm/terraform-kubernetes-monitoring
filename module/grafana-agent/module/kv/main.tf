@@ -13,7 +13,7 @@ locals {
   etcdctl member list | grep http://${"$"}{IP}:${local.peer_port} | cut -d':' -f1 | cut -d'[' -f1
   EOT
   get_peers_list          = <<-EOT
-  PEERS=${"$"}(nslookup ${local.headless_service_name}.${var.namespace_name}.svc.cluster.local | grep Address | awk -F ": " '{print ${"$"}2}' | grep -v " ")
+  PEERS=${"$"}(nslookup ${var.service_name}-headless.${var.namespace_name}.svc.cluster.local | grep Address | awk -F ": " '{print ${"$"}2}' | grep -v " ")
   EOT
   list_peers_function     = <<-EOT
   list_peers() {
