@@ -10,7 +10,8 @@ locals {
   member_hash_command     = "etcdctl member list | grep http://$${IP}:${local.peer_port} | cut -d':' -f1 | cut -d'[' -f1"
   get_peers_list          = <<-EOT
   PEERS=$( \
-  nslookup ${local.headless_service_name}.${var.namespace_name}.svc.cluster.local \
+  nslookup \
+  ${local.headless_service_name}.${var.namespace_name}.svc.cluster.local \
   | grep Address \
   | awk -F ": " '{print $2}' \
   | grep -v " " \
