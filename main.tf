@@ -43,6 +43,8 @@ module "prometheus_server" {
   namespace_name         = kubernetes_namespace.namespace.metadata[0].name
   service_name           = "prometheus-server"
   service_port           = var.prometheus_server_port
+  storage_volume_size    = 4
+  storage_retention_days = 1
   server_container_image = "quay.io/prometheus/prometheus:latest"
 }
 

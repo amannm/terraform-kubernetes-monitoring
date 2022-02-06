@@ -9,12 +9,10 @@ variable "service_port" {
   type = number
 }
 variable "storage_volume_size" {
-  type    = number
-  default = 4
+  type = number
 }
 variable "storage_retention_days" {
-  type    = number
-  default = 1
+  type = number
 }
 variable "server_container_image" {
   type    = string

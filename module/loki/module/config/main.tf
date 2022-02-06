@@ -53,7 +53,9 @@ locals {
     }
     query_range = {
       cache_results = true
-      results_cache = local.fifo_cache["23"]
+      results_cache = {
+        cache = local.fifo_cache["23"]
+      }
     }
     query_scheduler = {
       max_outstanding_requests_per_tenant = 10
@@ -97,9 +99,12 @@ locals {
       chunk_idle_period    = "3m"
       max_transfer_retries = 0
       lifecycler = {
-        ring               = local.etcd_kvstore
-        heartbeat_timeout  = "1m"
-        replication_factor = 1
+        ring = {
+          kvstore            = local.etcd_kvstore
+          heartbeat_timeout  = "1m"
+          replication_factor = 1
+        }
+        heartbeat_period = "5s"
       }
       wal = {
         enabled = true
@@ -110,7 +115,7 @@ locals {
       pool_config = {
         health_check_ingesters = true
         client_cleanup_period  = "15s"
-        remote_timeout         = "30s"
+        remotetimeout          = "30s"
       }
       remote_timeout = "5s"
     }
