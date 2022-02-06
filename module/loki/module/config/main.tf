@@ -48,7 +48,7 @@ locals {
     // query
     frontend = {
       max_outstanding_per_tenant   = 100
-      scheduler_worker_concurrency = 5
+      scheduler_worker_concurrency = 1
       compress_responses           = true
     }
     query_range = {
@@ -66,11 +66,11 @@ locals {
       }
     }
     frontend_worker = {
-      parallelism = 10
+      parallelism = 1
     }
     querier = {
       query_timeout  = "30s"
-      max_concurrent = 10
+      max_concurrent = 1
       engine = {
         timeout = "3m"
       }
@@ -103,7 +103,7 @@ locals {
         ring = {
           kvstore            = local.etcd_kvstore
           heartbeat_timeout  = "1m"
-          replication_factor = 5
+          replication_factor = 1
         }
         heartbeat_period = "10s"
       }
