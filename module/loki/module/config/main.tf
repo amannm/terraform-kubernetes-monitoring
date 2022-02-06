@@ -77,7 +77,6 @@ locals {
 
     #ruler = {}
 
-
     // ingest
     limits_config = {
       ingestion_rate_strategy       = "global"
