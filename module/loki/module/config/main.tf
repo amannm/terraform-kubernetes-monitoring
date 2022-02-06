@@ -115,7 +115,8 @@ locals {
       pool_config = {
         health_check_ingesters = true
         client_cleanup_period  = "15s"
-        remotetimeout          = "30s"
+        // TODO: docs seem wrong here
+        // remotetimeout          = "30s"
       }
       remote_timeout = "5s"
     }

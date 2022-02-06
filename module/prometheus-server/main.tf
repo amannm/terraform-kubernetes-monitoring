@@ -112,7 +112,7 @@ resource "kubernetes_deployment" "deployment" {
     namespace = var.namespace_name
   }
   spec {
-    replicas = "1"
+    replicas = 1
     strategy {
       type = "Recreate"
     }
