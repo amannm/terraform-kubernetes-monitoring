@@ -47,18 +47,19 @@ locals {
 
     // query
     frontend = {
-      max_outstanding_per_tenant   = 100
+      max_outstanding_per_tenant   = 1024
       scheduler_worker_concurrency = 2
       compress_responses           = true
     }
     query_range = {
+      split_queries_by_interval : "24h"
       cache_results = true
       results_cache = {
         cache = local.fifo_cache["23"]
       }
     }
     query_scheduler = {
-      max_outstanding_requests_per_tenant = 100
+      max_outstanding_requests_per_tenant = 2048
       use_scheduler_ring                  = true
       scheduler_ring = {
         kvstore = local.etcd_kvstore
