@@ -47,8 +47,8 @@ locals {
 
     // query
     frontend = {
-      max_outstanding_per_tenant   = 10
-      scheduler_worker_concurrency = 1
+      max_outstanding_per_tenant   = 100
+      scheduler_worker_concurrency = 2
       compress_responses           = true
     }
     query_range = {
@@ -58,18 +58,18 @@ locals {
       }
     }
     query_scheduler = {
-      max_outstanding_requests_per_tenant = 10
+      max_outstanding_requests_per_tenant = 100
       use_scheduler_ring                  = true
       scheduler_ring = {
         kvstore = local.etcd_kvstore
       }
     }
     frontend_worker = {
-      parallelism = 1
+      parallelism = 2
     }
     querier = {
       query_timeout  = "30s"
-      max_concurrent = 1
+      max_concurrent = 2
       engine = {
         timeout = "3m"
       }
@@ -101,9 +101,9 @@ locals {
         ring = {
           kvstore            = local.etcd_kvstore
           heartbeat_timeout  = "1m"
-          replication_factor = 1
+          replication_factor = 2
         }
-        heartbeat_period = "5s"
+        heartbeat_period = "10s"
       }
       wal = {
         enabled = true
@@ -112,12 +112,12 @@ locals {
     }
     ingester_client = {
       pool_config = {
-        health_check_ingesters = true
+        health_check_ingesters = false
         client_cleanup_period  = "15s"
         // TODO: docs seem wrong here
         // remotetimeout          = "30s"
       }
-      remote_timeout = "5s"
+      remote_timeout = "10s"
     }
 
     // storage
@@ -164,8 +164,8 @@ locals {
       shared_store               = "filesystem"
       working_directory          = "${var.storage_path}/compactor"
       shared_store_key_prefix    = "index/"
-      max_compaction_parallelism = 1
-      compaction_interval        = "5m"
+      max_compaction_parallelism = 2
+      compaction_interval        = "10m"
       compactor_ring = {
         kvstore = local.etcd_kvstore
       }

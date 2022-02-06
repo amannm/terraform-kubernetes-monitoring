@@ -212,7 +212,7 @@ resource "kubernetes_deployment" "deployment" {
               memory = "100Mi"
             }
             limits = {
-              memory = "300Mi"
+              memory = "400Mi"
             }
           }
           readiness_probe {
@@ -220,16 +220,17 @@ resource "kubernetes_deployment" "deployment" {
               path = "/ready"
               port = var.container_port
             }
-            initial_delay_seconds = 300
+            initial_delay_seconds = 30
             period_seconds        = 30
+            failure_threshold     = 10
           }
           liveness_probe {
             http_get {
               path = "/ready"
               port = var.container_port
             }
-            initial_delay_seconds = 390
-            period_seconds        = 60
+            initial_delay_seconds = 330
+            period_seconds        = 30
           }
           volume_mount {
             name       = local.config_volume_name
