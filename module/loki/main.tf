@@ -220,14 +220,16 @@ resource "kubernetes_deployment" "deployment" {
               path = "/ready"
               port = var.container_port
             }
-            initial_delay_seconds = 45
+            initial_delay_seconds = 120
+            period_seconds        = 20
           }
           readiness_probe {
             http_get {
               path = "/ready"
               port = var.container_port
             }
-            initial_delay_seconds = 45
+            initial_delay_seconds = 180
+            period_seconds        = 60
           }
           volume_mount {
             name       = local.config_volume_name
