@@ -42,10 +42,10 @@ locals {
 }
 
 module "loki_config" {
-  source = "./module/config"
-
+  source       = "./module/config"
   etcd_host    = var.etcd_host
-  http_port    = var.container_port
+  http_port    = var.container_http_port
+  grpc_port    = var.container_grpc_port
   storage_path = local.storage_volume_mount_path
 }
 
@@ -104,7 +104,7 @@ resource "kubernetes_service" "headless_service" {
     port {
       protocol    = "TCP"
       port        = var.service_port
-      target_port = var.container_port
+      target_port = var.container_http_port
     }
     selector = {
       component = var.service_name
@@ -121,7 +121,7 @@ resource "kubernetes_service" "service" {
     port {
       protocol    = "TCP"
       port        = var.service_port
-      target_port = var.container_port
+      target_port = var.container_http_port
     }
     selector = {
       component = var.service_name
@@ -204,7 +204,11 @@ resource "kubernetes_deployment" "deployment" {
           ]
           port {
             protocol       = "TCP"
-            container_port = var.container_port
+            container_port = var.container_http_port
+          }
+          port {
+            protocol       = "TCP"
+            container_port = var.container_grpc_port
           }
           resources {
             requests = {
@@ -218,7 +222,7 @@ resource "kubernetes_deployment" "deployment" {
           readiness_probe {
             http_get {
               path = "/ready"
-              port = var.container_port
+              port = var.container_http_port
             }
             initial_delay_seconds = 30
             period_seconds        = 30
@@ -227,7 +231,7 @@ resource "kubernetes_deployment" "deployment" {
           liveness_probe {
             http_get {
               path = "/ready"
-              port = var.container_port
+              port = var.container_http_port
             }
             initial_delay_seconds = 330
             period_seconds        = 30

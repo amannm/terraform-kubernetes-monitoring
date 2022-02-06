@@ -42,6 +42,7 @@ locals {
     auth_enabled = false
     server = {
       http_listen_port = var.http_port
+      grpc_listen_port = var.grpc_port
       log_level        = "info"
     }
 

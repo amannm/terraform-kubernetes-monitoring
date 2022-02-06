@@ -7,3 +7,6 @@ variable "storage_path" {
 variable "etcd_host" {
   type = string
 }
+variable "grpc_port" {
+  type = number
+}

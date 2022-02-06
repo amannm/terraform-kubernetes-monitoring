@@ -13,9 +13,13 @@ variable "storage_volume_size" {
 variable "container_image" {
   type = string
 }
-variable "container_port" {
+variable "container_http_port" {
   type    = number
   default = 3100
+}
+variable "container_grpc_port" {
+  type    = number
+  default = 9095
 }
 variable "etcd_host" {
   type = string
