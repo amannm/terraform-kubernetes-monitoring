@@ -128,7 +128,7 @@ locals {
           from       = "1970-01-01"
           schema     = "v11"
           row_shards = 16
-          store      = "boltdb"
+          store      = "boltdb-shipper"
           index = {
             prefix = "index_"
             period = "24h"
@@ -146,10 +146,13 @@ locals {
       retention_period          = "24h"
     }
     storage_config = {
-      boltdb = {
-        directory = "${var.storage_path}/index"
-      }
       index_queries_cache_config = local.fifo_cache["25"]
+      boltdb_shipper = {
+        shared_store           = "filesystem"
+        active_index_directory = "${var.storage_path}/index"
+        cache_location         = "${var.storage_path}/cache"
+        cache_ttl              = "24h"
+      }
       filesystem = {
         directory = "${var.storage_path}/chunks"
       }
@@ -159,9 +162,11 @@ locals {
       chunk_cache_config   = local.fifo_cache["26"]
     }
     compactor = {
-      shared_store            = "filesystem"
-      working_directory       = "${var.storage_path}/compactor"
-      shared_store_key_prefix = "index/"
+      shared_store               = "filesystem"
+      working_directory          = "${var.storage_path}/compactor"
+      shared_store_key_prefix    = "index/"
+      max_compaction_parallelism = 1
+      compaction_interval        = "5m"
       compactor_ring = {
         kvstore = local.etcd_kvstore
       }
