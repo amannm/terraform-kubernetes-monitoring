@@ -146,8 +146,9 @@ resource "kubernetes_service" "service_headless" {
     namespace = var.namespace_name
   }
   spec {
-    type       = "ClusterIP"
-    cluster_ip = "None"
+    type                        = "ClusterIP"
+    cluster_ip                  = "None"
+    publish_not_ready_addresses = true
     port {
       name        = "client"
       port        = local.client_port

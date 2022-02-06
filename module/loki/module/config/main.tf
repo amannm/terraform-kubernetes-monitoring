@@ -126,7 +126,7 @@ locals {
       configs = [
         {
           from       = "1970-01-01"
-          schema     = "v1"
+          schema     = "v11"
           row_shards = 16
           store      = "boltdb"
           index = {
