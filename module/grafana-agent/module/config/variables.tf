@@ -1,7 +1,7 @@
 variable "namespace_name" {
   type = string
 }
-variable "server_container_port" {
+variable "agent_container_port" {
   type = number
 }
 variable "metrics_remote_write_url" {
@@ -17,5 +17,11 @@ variable "host_proc_volume_mount_path" {
   type = string
 }
 variable "etcd_endpoint" {
+  type = string
+}
+variable "positions_volume_mount_path" {
+  type = string
+}
+variable "loki_api_host" {
   type = string
 }

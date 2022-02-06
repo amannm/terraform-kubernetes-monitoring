@@ -8,6 +8,9 @@ locals {
   wal_volume_name       = "write-ahead-log"
   wal_volume_mount_path = "/tmp/agent/wal"
 
+  positions_volume_name       = "positions"
+  positions_volume_mount_path = "/tmp/agent/positions"
+
   host_volumes = {
     "host-log" = {
       host_path  = "/var/log"
@@ -78,13 +81,7 @@ resource "kubernetes_cluster_role_binding" "cluster_role_binding" {
     api_group = "rbac.authorization.k8s.io"
   }
 }
-module "scraping_service_etcd" {
-  source              = "./module/kv"
-  namespace_name      = var.namespace_name
-  service_name        = "${var.resource_name}-etcd"
-  container_image     = var.etcd_container_image
-  storage_volume_size = 1
-}
+
 
 module "config_sync_job" {
   source          = "./module/config-sync"
@@ -98,12 +95,14 @@ module "config_sync_job" {
 module "grafana_agent_config" {
   source                      = "./module/config"
   namespace_name              = var.namespace_name
-  server_container_port       = var.agent_container_port
+  agent_container_port        = var.agent_container_port
   metrics_remote_write_url    = var.metrics_remote_write_url
   host_root_volume_mount_path = local.host_volumes.root.mount_path
   host_sys_volume_mount_path  = local.host_volumes.sys.mount_path
   host_proc_volume_mount_path = local.host_volumes.proc.mount_path
-  etcd_endpoint               = module.scraping_service_etcd.client_endpoint_host
+  etcd_endpoint               = var.etcd_host
+  positions_volume_mount_path = local.positions_volume_mount_path
+  loki_api_host               = var.loki_host
 }
 
 resource "kubernetes_config_map" "config_map" {
@@ -175,6 +174,10 @@ resource "kubernetes_daemonset" "daemonset" {
           name = local.wal_volume_name
           empty_dir {}
         }
+        volume {
+          name = local.positions_volume_name
+          empty_dir {}
+        }
         dynamic "volume" {
           for_each = local.host_volumes
           content {
@@ -229,6 +232,10 @@ resource "kubernetes_daemonset" "daemonset" {
           volume_mount {
             name       = local.wal_volume_name
             mount_path = local.wal_volume_mount_path
+          }
+          volume_mount {
+            name       = local.positions_volume_name
+            mount_path = local.positions_volume_mount_path
           }
           dynamic "volume_mount" {
             for_each = local.host_volumes

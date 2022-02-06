@@ -18,3 +18,7 @@ variable "grafana_port" {
   type    = number
   default = 3000
 }
+variable "loki_port" {
+  type    = number
+  default = 3100
+}

@@ -16,11 +16,13 @@ variable "agent_container_port" {
 variable "metrics_remote_write_url" {
   type = string
 }
-variable "etcd_container_image" {
-  type    = string
-  default = "quay.io/coreos/etcd:latest"
-}
 variable "agentctl_container_image" {
   type    = string
   default = "grafana/agentctl:v0.22.0"
+}
+variable "etcd_host" {
+  type = string
+}
+variable "loki_host" {
+  type = string
 }
