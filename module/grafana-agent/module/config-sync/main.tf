@@ -18,7 +18,7 @@ resource "kubernetes_cron_job" "config_update_job" {
     namespace = var.namespace_name
   }
   spec {
-    schedule                      = "*/5 * * * *"
+    schedule                      = "*/30 * * * *"
     successful_jobs_history_limit = 1
     failed_jobs_history_limit     = 3
     job_template {
