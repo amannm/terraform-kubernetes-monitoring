@@ -97,8 +97,9 @@ locals {
       chunk_encoding       = "gzip"
       chunk_retain_period  = "1m"
       chunk_idle_period    = "3m"
-      max_transfer_retries = 0
+      max_transfer_retries = 3
       lifecycler = {
+        join_after : "5s"
         ring = {
           kvstore            = local.etcd_kvstore
           heartbeat_timeout  = "1m"
@@ -113,7 +114,7 @@ locals {
     }
     ingester_client = {
       pool_config = {
-        health_check_ingesters = false
+        health_check_ingesters = true
         client_cleanup_period  = "15s"
         // TODO: docs seem wrong here
         // remotetimeout          = "30s"
