@@ -82,7 +82,7 @@ locals {
     limits_config = {
       ingestion_rate_strategy       = "global"
       ingestion_rate_mb             = 4
-      retention_period              = "1h"
+      retention_period              = "24h"
       max_cache_freshness_per_query = "10m"
     }
     distributor = {
@@ -131,19 +131,19 @@ locals {
           store      = "boltdb"
           index = {
             prefix = "index_"
-            period = "1h"
+            period = "24h"
           }
           object_store = "filesystem"
           chunks = {
             prefix = "chunks_"
-            period = "1h"
+            period = "24h"
           }
         }
       ]
     }
     table_manager = {
       retention_deletes_enabled = true
-      retention_period          = "1h"
+      retention_period          = "24h"
     }
     storage_config = {
       boltdb = {
