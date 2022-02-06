@@ -33,7 +33,7 @@ locals {
 
       //"ruler",
 
-      "table-manager",
+      //"table-manager",
       //"index-gateway",
       "compactor",
 
@@ -88,8 +88,8 @@ locals {
     }
     distributor = {
       ring = {
-        kvstore           = local.etcd_kvstore
-        heartbeat_timeout = "1m"
+        kvstore = local.etcd_kvstore
+        //heartbeat_timeout = "1m"
       }
     }
     ingester = {
@@ -102,26 +102,26 @@ locals {
       lifecycler = {
         join_after : "5s"
         ring = {
-          kvstore            = local.etcd_kvstore
-          heartbeat_timeout  = "1m"
+          kvstore = local.etcd_kvstore
+          //heartbeat_timeout  = "1m"
           replication_factor = 1
         }
-        heartbeat_period = "10s"
+        //heartbeat_period = "10s"
       }
       wal = {
         enabled = true
         dir     = "${var.storage_path}/wal"
       }
     }
-    ingester_client = {
-      pool_config = {
-        health_check_ingesters = true
-        client_cleanup_period  = "15s"
-        // TODO: docs seem wrong here
-        // remotetimeout          = "30s"
-      }
-      remote_timeout = "10s"
-    }
+    #    ingester_client = {
+    #      pool_config = {
+    #        //health_check_ingesters = true
+    #        //client_cleanup_period  = "15s"
+    #        // TODO: docs seem wrong here
+    #        // remotetimeout          = "30s"
+    #      }
+    #      //remote_timeout = "10s"
+    #    }
 
     // storage
     schema_config = {
@@ -143,10 +143,10 @@ locals {
         }
       ]
     }
-    table_manager = {
-      retention_deletes_enabled = true
-      retention_period          = "24h"
-    }
+    #    table_manager = {
+    #      retention_deletes_enabled = true
+    #      retention_period          = "24h"
+    #    }
     storage_config = {
       index_queries_cache_config = local.fifo_cache["25"]
       boltdb_shipper = {
