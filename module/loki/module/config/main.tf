@@ -161,7 +161,7 @@ locals {
     compactor = {
       shared_store            = "filesystem"
       working_directory       = "${var.storage_path}/indices"
-      shared_store_key_prefix = "index_"
+      shared_store_key_prefix = "index/"
       compactor_ring = {
         kvstore = local.etcd_kvstore
       }
