@@ -158,14 +158,14 @@ locals {
       max_look_back_period = "0s"
       chunk_cache_config   = local.fifo_cache["26"]
     }
-    compactor = {
-      shared_store            = "filesystem"
-      working_directory       = "${var.storage_path}/indices"
-      shared_store_key_prefix = "index/"
-      compactor_ring = {
-        kvstore = local.etcd_kvstore
-      }
-    }
+    #    compactor = {
+    #      shared_store            = "filesystem"
+    #      working_directory       = "${var.storage_path}/indices"
+    #      shared_store_key_prefix = "index/"
+    #      compactor_ring = {
+    #        kvstore = local.etcd_kvstore
+    #      }
+    #    }
 
     // for tracing with Jaeger
     tracing = {

@@ -61,7 +61,7 @@ module "loki" {
   namespace_name      = kubernetes_namespace.namespace.metadata[0].name
   service_name        = "loki"
   service_port        = var.loki_port
-  container_image     = "grafana/loki:2.4.2"
+  container_image     = "grafana/loki:main"
   storage_volume_size = 2
   etcd_host           = module.shared_etcd.client_endpoint_host
 }
