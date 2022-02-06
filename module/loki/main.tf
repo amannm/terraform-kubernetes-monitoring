@@ -215,20 +215,20 @@ resource "kubernetes_deployment" "deployment" {
               memory = "300Mi"
             }
           }
-          liveness_probe {
-            http_get {
-              path = "/ready"
-              port = var.container_port
-            }
-            initial_delay_seconds = 120
-            period_seconds        = 20
-          }
           readiness_probe {
             http_get {
               path = "/ready"
               port = var.container_port
             }
-            initial_delay_seconds = 180
+            initial_delay_seconds = 300
+            period_seconds        = 30
+          }
+          liveness_probe {
+            http_get {
+              path = "/ready"
+              port = var.container_port
+            }
+            initial_delay_seconds = 390
             period_seconds        = 60
           }
           volume_mount {
