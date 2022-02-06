@@ -47,7 +47,7 @@ locals {
 
     // query
     frontend = {
-      max_outstanding_per_tenant   = 1024
+      max_outstanding_per_tenant   = 100
       scheduler_worker_concurrency = 5
       compress_responses           = true
     }
@@ -59,7 +59,7 @@ locals {
       }
     }
     query_scheduler = {
-      max_outstanding_requests_per_tenant = 2048
+      max_outstanding_requests_per_tenant = 100
       use_scheduler_ring                  = true
       scheduler_ring = {
         kvstore = local.etcd_kvstore
@@ -97,13 +97,13 @@ locals {
       chunk_encoding       = "gzip"
       chunk_retain_period  = "1m"
       chunk_idle_period    = "3m"
-      max_transfer_retries = 3
+      max_transfer_retries = 0
       lifecycler = {
         join_after : "5s"
         ring = {
           kvstore            = local.etcd_kvstore
           heartbeat_timeout  = "1m"
-          replication_factor = 3
+          replication_factor = 5
         }
         heartbeat_period = "10s"
       }
