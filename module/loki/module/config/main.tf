@@ -34,7 +34,7 @@ locals {
       //"ruler",
 
       "table-manager",
-      "index-gateway",
+      //"index-gateway",
       "compactor",
 
     ])
