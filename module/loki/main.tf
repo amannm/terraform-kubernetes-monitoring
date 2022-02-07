@@ -68,6 +68,7 @@ module "distributor" {
   container_image      = var.container_image
   service_http_port    = module.loki_config.service_http_port
   service_grpc_port    = module.loki_config.service_grpc_port
+  service_grpclb_port  = 9096
   etcd_host            = module.loki_config.etcd_host
   config_filename      = module.loki_config.config_filename
   config_map_name      = module.loki_config.config_map_name
@@ -85,6 +86,7 @@ module "query_frontend" {
   container_image      = var.container_image
   service_http_port    = module.loki_config.service_http_port
   service_grpc_port    = module.loki_config.service_grpc_port
+  service_grpclb_port  = 9096
   etcd_host            = module.loki_config.etcd_host
   config_filename      = module.loki_config.config_filename
   config_map_name      = module.loki_config.config_map_name

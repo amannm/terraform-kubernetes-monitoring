@@ -16,6 +16,9 @@ variable "service_http_port" {
 variable "service_grpc_port" {
   type = number
 }
+variable "service_grpclb_port" {
+  type = number
+}
 variable "etcd_host" {
   type = string
 }
