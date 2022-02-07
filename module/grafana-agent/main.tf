@@ -141,9 +141,6 @@ resource "kubernetes_daemonset" "daemonset" {
         host_network                     = true
         dns_policy                       = "ClusterFirstWithHostNet"
         service_account_name             = module.service_account.name
-        security_context {
-          fs_group = local.security.uid
-        }
         container {
           security_context {
             privileged                 = local.security.uid == 0
