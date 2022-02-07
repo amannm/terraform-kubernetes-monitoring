@@ -3,9 +3,9 @@ locals {
   query_frontend_component_name = "query-frontend"
   distributor_component_name    = "distributor"
   ingester_component_name       = "ingester"
-  querier_hostname              = "${var.service_name}-${local.querier_component_name}.svc.cluster.local"
-  query_frontend_hostname       = "${var.service_name}-${local.query_frontend_component_name}.svc.cluster.local"
-  distributor_host              = "${var.service_name}-${local.distributor_component_name}.svc.cluster.local:${var.service_port}"
+  querier_hostname              = "${var.service_name}-${local.querier_component_name}.${var.namespace_name}.svc.cluster.local"
+  query_frontend_hostname       = "${var.service_name}-${local.query_frontend_component_name}.${var.namespace_name}.svc.cluster.local"
+  distributor_host              = "${var.service_name}-${local.distributor_component_name}.${var.namespace_name}.svc.cluster.local:${var.service_port}"
 }
 
 module "loki_config" {
