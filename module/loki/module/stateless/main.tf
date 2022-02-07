@@ -12,7 +12,7 @@ locals {
       port        = var.service_http_port
       target_port = var.service_http_port
     }
-    grpc = {
+    grpclb = {
       port        = var.service_grpc_port
       target_port = var.service_grpc_port
     }
