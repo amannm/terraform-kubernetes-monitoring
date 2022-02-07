@@ -200,6 +200,12 @@ resource "kubernetes_daemonset" "daemonset" {
           for_each = local.volumes
           content {
             name = volume.key
+            dynamic "host_path" {
+              for_each = { for k, v in volume.value : k => v if k == "host_path" }
+              content {
+                host_path = host_path.value
+              }
+            }
             dynamic "empty_dir" {
               for_each = { for k, v in volume.value : k => v if k == "size_limit" }
               content {
