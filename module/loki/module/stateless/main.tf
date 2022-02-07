@@ -142,7 +142,7 @@ resource "kubernetes_deployment" "deployment" {
             dynamic "empty_dir" {
               for_each = { for k, v in volume.value : k => v if k == "size_limit" }
               content {
-                size_limit = empty_dir.value
+                size_limit = "${empty_dir.value}G"
               }
             }
             dynamic "config_map" {
