@@ -1,0 +1,44 @@
+---
+# Source: loki-distributed/templates/querier/service-querier-headless.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: release-name-loki-distributed-querier-headless
+  labels:
+    app.kubernetes.io/component: querier
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+    - name: http
+      port: 3100
+      targetPort: http
+      protocol: TCP
+    - name: grpc
+      port: 9095
+      targetPort: grpc
+      protocol: TCP
+  selector:
+    app.kubernetes.io/component: querier
+---
+# Source: loki-distributed/templates/querier/service-querier.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: release-name-loki-distributed-querier
+  labels:
+    app.kubernetes.io/component: querier
+spec:
+  type: ClusterIP
+  sessionAffinity: None
+  ports:
+    - name: http
+      port: 3100
+      targetPort: http
+      protocol: TCP
+    - name: grpc
+      port: 9095
+      targetPort: grpc
+      protocol: TCP
+  selector:
+    app.kubernetes.io/component: querier

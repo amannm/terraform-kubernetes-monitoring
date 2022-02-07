@@ -6,23 +6,18 @@ locals {
 
   storage_volume_name       = "storage"
   storage_volume_mount_path = "/var/lib/grafana"
+
+  service_host = "${module.service.non_headless_service_hostname}:${var.service_port}"
 }
 
-resource "kubernetes_service" "service" {
-  metadata {
-    name      = var.service_name
-    namespace = var.namespace_name
-  }
-  spec {
-    type             = "ClusterIP"
-    session_affinity = "None"
-    port {
-      protocol    = "TCP"
+module "service" {
+  source         = "../common/service"
+  namespace_name = var.namespace_name
+  service_name   = var.service_name
+  ports = {
+    http = {
       port        = var.service_port
       target_port = var.container_port
-    }
-    selector = {
-      component = var.service_name
     }
   }
 }

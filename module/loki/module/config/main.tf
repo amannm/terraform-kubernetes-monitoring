@@ -10,6 +10,7 @@ locals {
       enable_fifocache = true
       fifocache = {
         max_size_bytes = pow(2, i)
+        validity       = "24h"
       }
     }
   }
@@ -17,27 +18,6 @@ locals {
 
 locals {
   rendered = yamlencode({
-    target = join(",", [
-
-      //"all",
-      //"read",
-      //"write",
-
-      "distributor",
-      "ingester",
-      "ingester-querier",
-
-      "query-frontend",
-      "query-scheduler",
-      "querier",
-
-      //"ruler",
-
-      //"table-manager",
-      //"index-gateway",
-      "compactor",
-
-    ])
 
     auth_enabled = false
     server = {
@@ -51,12 +31,16 @@ locals {
       max_outstanding_per_tenant   = 100
       scheduler_worker_concurrency = 1
       compress_responses           = true
+      log_queries_longer_than      = "5s"
+      tail_proxy_url               = "http://${var.querier_hostname}:${var.http_port}"
     }
     query_range = {
-      split_queries_by_interval : "24h"
+      align_queries_with_step = true
+      split_queries_by_interval : "15m"
+      max_retries   = 5
       cache_results = true
       results_cache = {
-        cache = local.fifo_cache["23"]
+        cache = local.fifo_cache["10"]
       }
     }
     query_scheduler = {
@@ -67,11 +51,12 @@ locals {
       }
     }
     frontend_worker = {
-      parallelism = 1
+      parallelism      = 10
+      frontend_address = "${var.query_frontend_hostname}:${var.grpc_port}"
     }
     querier = {
-      query_timeout  = "30s"
-      max_concurrent = 1
+      query_timeout  = "1m"
+      max_concurrent = 10
       engine = {
         timeout = "3m"
       }
@@ -81,36 +66,35 @@ locals {
 
     // ingest
     limits_config = {
+      enforce_metric_name           = false
       ingestion_rate_strategy       = "global"
       ingestion_rate_mb             = 4
       retention_period              = "24h"
       max_cache_freshness_per_query = "10m"
+      reject_old_samples            = true
+      reject_old_samples_max_age    = "24h"
     }
     distributor = {
       ring = {
         kvstore = local.etcd_kvstore
-        //heartbeat_timeout = "1m"
       }
     }
     ingester = {
       chunk_block_size     = pow(2, 18)
       chunk_target_size    = pow(2, 18) * 6
-      chunk_encoding       = "gzip"
+      chunk_encoding       = "snappy"
+      chunk_idle_period    = "30m"
       chunk_retain_period  = "1m"
-      chunk_idle_period    = "3m"
       max_transfer_retries = 0
       lifecycler = {
         join_after : "5s"
         ring = {
-          kvstore = local.etcd_kvstore
-          //heartbeat_timeout  = "1m"
+          kvstore            = local.etcd_kvstore
           replication_factor = 1
         }
-        //heartbeat_period = "10s"
       }
       wal = {
-        enabled = true
-        dir     = "${var.storage_path}/wal"
+        dir = "${var.storage_path}/wal"
       }
     }
     #    ingester_client = {
@@ -127,10 +111,9 @@ locals {
     schema_config = {
       configs = [
         {
-          from       = "1970-01-01"
-          schema     = "v11"
-          row_shards = 16
-          store      = "boltdb-shipper"
+          from   = "1970-01-01"
+          schema = "v11"
+          store  = "boltdb-shipper"
           index = {
             prefix = "index_"
             period = "24h"
@@ -143,10 +126,10 @@ locals {
         }
       ]
     }
-    #    table_manager = {
-    #      retention_deletes_enabled = true
-    #      retention_period          = "24h"
-    #    }
+    table_manager = {
+      retention_deletes_enabled = true
+      retention_period          = "0s"
+    }
     storage_config = {
       index_queries_cache_config = local.fifo_cache["25"]
       boltdb_shipper = {
@@ -185,4 +168,22 @@ locals {
     // to avoid copy/paste
     // common = {}
   })
+}
+
+locals {
+  config_map_name    = kubernetes_config_map.config_map.metadata[0].name
+  config_filename    = var.config_filename
+  storage_mount_path = var.storage_path
+  http_port          = var.http_port
+  grpc_port          = var.grpc_port
+  etcd_host          = var.etcd_host
+}
+resource "kubernetes_config_map" "config_map" {
+  metadata {
+    name      = var.service_name
+    namespace = var.namespace_name
+  }
+  data = {
+    (local.config_filename) = local.rendered
+  }
 }

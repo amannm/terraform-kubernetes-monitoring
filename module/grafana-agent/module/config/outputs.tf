@@ -1,6 +1,3 @@
-output "yaml" {
-  value = local.rendered
-}
-output "scrape_yaml" {
-  value = local.scrape_rendered
+output "config_map_name" {
+  value = local.config_map_name
 }

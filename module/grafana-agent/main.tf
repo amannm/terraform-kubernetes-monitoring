@@ -1,51 +1,78 @@
 locals {
-  agent_api_host = "${var.resource_name}.${var.namespace_name}.svc.cluster.local:${var.agent_container_port}"
+  agent_api_host = "${module.service.headless_service_hostname}:${var.agent_container_port}"
 
-  config_filename          = "agent.yaml"
-  config_volume_name       = "config"
-  config_volume_mount_path = "/etc/agent"
+  config_filename = "agent.yaml"
 
-  wal_volume_name       = "write-ahead-log"
-  wal_volume_mount_path = "/tmp/agent/wal"
+  cpu_min    = "75"
+  memory_min = "75"
+  memory_max = "200"
 
-  positions_volume_name       = "positions"
-  positions_volume_mount_path = "/tmp/agent/positions"
+  pod_environment_variables = {
+    "HOSTNAME" = "spec.nodeName"
+  }
+  lifecycle = {
+    min_readiness_time = 30
+    max_readiness_time = 90
+    max_cleanup_time   = 10
+  }
+  security = {
+    uid                       = 0
+    added_capabilities        = ["SYS_TIME"]
+    read_only_root_filesystem = null
+  }
+  command = ["/bin/agent"]
+  args = [
+    "-config.file=${local.volumes.config.mount_path}/${local.config_filename}",
+    "-prometheus.wal-directory=${local.volumes.write-ahead-log.mount_path}",
+    "-enable-features=integrations-next",
+  ]
 
-  host_volumes = {
+  ports = {
+    http = {
+      port        = var.agent_container_port
+      target_port = var.agent_container_port
+    }
+  }
+
+  volumes = {
+    "config" = {
+      mount_path      = "/etc/agent"
+      config_map_name = var.resource_name
+    }
+    "write-ahead-log" = {
+      mount_path = "/tmp/agent/wal"
+      size_limit = null
+    }
+    "positions" = {
+      mount_path = "/tmp/agent/positions"
+      size_limit = null
+    }
     "host-log" = {
-      host_path  = "/var/log"
       mount_path = "/var/log"
+      host_path  = "/var/log"
     }
     "host-containers-log" = {
-      host_path  = "/var/log/docker/containers"
       mount_path = "/var/log/docker/containers"
+      host_path  = "/var/log/docker/containers"
     }
     "host-id" = {
-      host_path  = "/etc/machine-id"
       mount_path = "/etc/machine-id"
+      host_path  = "/etc/machine-id"
     }
     "proc" = {
-      host_path  = "/proc"
       mount_path = "/host/proc"
+      host_path  = "/proc"
     }
     "sys" = {
-      host_path  = "/sys"
       mount_path = "/host/sys"
+      host_path  = "/sys"
     }
     "root" = {
-      host_path  = "/"
       mount_path = "/host/root"
+      host_path  = "/"
     }
   }
 }
-
-resource "kubernetes_service_account" "service_account" {
-  metadata {
-    name      = var.resource_name
-    namespace = var.namespace_name
-  }
-}
-
 resource "kubernetes_cluster_role" "cluster_role" {
   metadata {
     name = var.resource_name
@@ -66,80 +93,144 @@ resource "kubernetes_cluster_role" "cluster_role" {
   }
 }
 
-resource "kubernetes_cluster_role_binding" "cluster_role_binding" {
-  metadata {
-    name = var.resource_name
-  }
-  subject {
-    kind      = "ServiceAccount"
-    name      = kubernetes_service_account.service_account.metadata[0].name
-    namespace = var.namespace_name
-  }
-  role_ref {
-    kind      = "ClusterRole"
-    name      = kubernetes_cluster_role.cluster_role.metadata[0].name
-    api_group = "rbac.authorization.k8s.io"
-  }
+module "service_account" {
+  source            = "../common/cluster-service-account"
+  namespace_name    = var.namespace_name
+  service_name      = var.resource_name
+  cluster_role_name = kubernetes_cluster_role.cluster_role.metadata[0].name
 }
-
 
 module "config_sync_job" {
-  source          = "./module/config-sync"
-  namespace_name  = var.namespace_name
-  resource_name   = "${var.resource_name}-config-sync"
-  container_image = var.agentctl_container_image
-  config_yaml     = module.grafana_agent_config.scrape_yaml
-  agent_api_host  = local.agent_api_host
+  source                   = "./module/metrics-scrape-config"
+  namespace_name           = var.namespace_name
+  resource_name            = "${var.resource_name}-config-sync"
+  container_image          = var.agentctl_container_image
+  agent_api_host           = local.agent_api_host
+  metrics_remote_write_url = var.metrics_remote_write_url
+  refresh_rate             = 30
 }
 
-module "grafana_agent_config" {
+module "agent_config" {
   source                      = "./module/config"
   namespace_name              = var.namespace_name
+  config_filename             = local.config_filename
+  config_map_name             = var.resource_name
   agent_container_port        = var.agent_container_port
-  metrics_remote_write_url    = var.metrics_remote_write_url
-  host_root_volume_mount_path = local.host_volumes.root.mount_path
-  host_sys_volume_mount_path  = local.host_volumes.sys.mount_path
-  host_proc_volume_mount_path = local.host_volumes.proc.mount_path
+  host_root_volume_mount_path = local.volumes.root.mount_path
+  host_sys_volume_mount_path  = local.volumes.sys.mount_path
+  host_proc_volume_mount_path = local.volumes.proc.mount_path
   etcd_endpoint               = var.etcd_host
-  positions_volume_mount_path = local.positions_volume_mount_path
+  positions_volume_mount_path = local.volumes.positions.mount_path
   loki_api_host               = var.loki_host
 }
 
-resource "kubernetes_config_map" "config_map" {
-  metadata {
-    name      = var.resource_name
-    namespace = var.namespace_name
-  }
-  data = {
-    (local.config_filename) = module.grafana_agent_config.yaml
-  }
-}
-
-resource "kubernetes_service" "service_headless" {
-  metadata {
-    name      = var.resource_name
-    namespace = var.namespace_name
-  }
-  spec {
-    type       = "ClusterIP"
-    cluster_ip = "None"
-    port {
-      name        = "http"
-      port        = var.agent_container_port
-      target_port = var.agent_container_port
-    }
-    selector = {
-      component = var.resource_name
-    }
-  }
+module "service" {
+  source         = "../common/service"
+  namespace_name = var.namespace_name
+  service_name   = var.resource_name
+  ports          = local.ports
+  headless_only  = true
 }
 
 resource "kubernetes_daemonset" "daemonset" {
-  metadata {
-    name      = var.resource_name
-    namespace = var.namespace_name
-  }
   spec {
+    template {
+      spec {
+        termination_grace_period_seconds = local.lifecycle.max_cleanup_time
+        host_pid                         = true
+        host_network                     = true
+        dns_policy                       = "ClusterFirstWithHostNet"
+        service_account_name             = module.service_account.name
+        security_context {
+          fs_group = local.security.uid
+        }
+        container {
+          security_context {
+            privileged                 = local.security.uid == 0
+            allow_privilege_escalation = local.security.uid == 0
+            run_as_non_root            = local.security.uid != 0
+            run_as_user                = local.security.uid
+            run_as_group               = local.security.uid
+            read_only_root_filesystem  = local.security.read_only_root_filesystem
+            capabilities {
+              add  = local.security.added_capabilities
+              drop = local.security.uid != 0 ? ["ALL"] : []
+            }
+          }
+          name = var.resource_name
+          resources {
+            requests = {
+              cpu    = "${local.cpu_min}m"
+              memory = "${local.memory_min}Mi"
+            }
+            limits = {
+              memory = "${local.memory_max}Mi"
+            }
+          }
+          command           = local.command
+          args              = local.args
+          image             = var.agent_container_image
+          image_pull_policy = "IfNotPresent"
+          dynamic "env" {
+            for_each = local.pod_environment_variables
+            content {
+              name = env.key
+              value_from {
+                field_ref {
+                  field_path = env.value
+                }
+              }
+            }
+          }
+          dynamic "port" {
+            for_each = local.ports
+            content {
+              name           = port.key
+              protocol       = "TCP"
+              container_port = port.value["target_port"]
+            }
+          }
+          dynamic "volume_mount" {
+            for_each = local.volumes
+            content {
+              name       = volume_mount.key
+              mount_path = volume_mount.value["mount_path"]
+              read_only  = lookup(volume_mount.value, "host_path", "") != ""
+            }
+          }
+        }
+        dynamic "volume" {
+          for_each = local.volumes
+          content {
+            name = volume.key
+            dynamic "empty_dir" {
+              for_each = { for k, v in volume.value : k => v if k == "size_limit" }
+              content {
+                size_limit = empty_dir.value
+              }
+            }
+            dynamic "config_map" {
+              for_each = { for k, v in volume.value : k => v if k == "config_map_name" }
+              content {
+                name = config_map.value
+              }
+            }
+            dynamic "persistent_volume_claim" {
+              for_each = { for k, v in volume.value : k => v if k == "persistent_volume_claim_name" }
+              content {
+                name = persistent_volume_claim.value
+              }
+            }
+          }
+        }
+      }
+      metadata {
+        name = var.resource_name
+        labels = {
+          component = var.resource_name
+        }
+      }
+    }
     strategy {
       type = "RollingUpdate"
       rolling_update {
@@ -151,102 +242,9 @@ resource "kubernetes_daemonset" "daemonset" {
         component = var.resource_name
       }
     }
-    template {
-      metadata {
-        name = var.resource_name
-        labels = {
-          component = var.resource_name
-        }
-      }
-      spec {
-        termination_grace_period_seconds = 10
-        host_pid                         = true
-        host_network                     = true
-        dns_policy                       = "ClusterFirstWithHostNet"
-        service_account_name             = kubernetes_service_account.service_account.metadata[0].name
-        volume {
-          name = local.config_volume_name
-          config_map {
-            name = kubernetes_config_map.config_map.metadata[0].name
-          }
-        }
-        volume {
-          name = local.wal_volume_name
-          empty_dir {}
-        }
-        volume {
-          name = local.positions_volume_name
-          empty_dir {}
-        }
-        dynamic "volume" {
-          for_each = local.host_volumes
-          content {
-            name = volume.key
-            host_path {
-              path = volume.value["host_path"]
-            }
-          }
-        }
-        container {
-          name              = var.resource_name
-          image             = var.agent_container_image
-          image_pull_policy = "IfNotPresent"
-          command           = ["/bin/agent"]
-          args = [
-            "-config.file=${local.config_volume_mount_path}/${local.config_filename}",
-            "-prometheus.wal-directory=${local.wal_volume_mount_path}",
-            "-enable-features=integrations-next",
-          ]
-          port {
-            protocol       = "TCP"
-            container_port = var.agent_container_port
-          }
-          resources {
-            requests = {
-              cpu    = "75m"
-              memory = "75Mi"
-            }
-            limits = {
-              memory = "200Mi"
-            }
-          }
-          security_context {
-            privileged  = true
-            run_as_user = "0"
-            capabilities {
-              add = ["SYS_TIME"]
-            }
-          }
-          env {
-            name = "HOSTNAME"
-            value_from {
-              field_ref {
-                field_path = "spec.nodeName"
-              }
-            }
-          }
-          volume_mount {
-            name       = local.config_volume_name
-            mount_path = local.config_volume_mount_path
-          }
-          volume_mount {
-            name       = local.wal_volume_name
-            mount_path = local.wal_volume_mount_path
-          }
-          volume_mount {
-            name       = local.positions_volume_name
-            mount_path = local.positions_volume_mount_path
-          }
-          dynamic "volume_mount" {
-            for_each = local.host_volumes
-            content {
-              name       = volume_mount.key
-              mount_path = volume_mount.value["mount_path"]
-              read_only  = true
-            }
-          }
-        }
-      }
-    }
+  }
+  metadata {
+    name      = var.resource_name
+    namespace = var.namespace_name
   }
 }

@@ -4,12 +4,11 @@ locals {
   data_volume_name        = "data"
   data_volume_mount_path  = "/var/run/etcd"
   data_volume_host_path   = "/etcd/data"
-  headless_service_name   = "${var.service_name}-headless"
-  service_client_endpoint = "${var.service_name}.${var.namespace_name}.svc.cluster.local:${local.client_port}"
+  service_client_endpoint = "${module.service.non_headless_service_hostname}:${local.client_port}"
   get_ip                  = "export IP=$(hostname -i)"
   member_hash_command     = "etcdctl member list | grep http://$${IP}:${local.peer_port} | cut -d':' -f1 | cut -d'[' -f1"
   get_peers_list          = <<-EOT
-  PEERS=$(nslookup ${local.headless_service_name}.${var.namespace_name}.svc.cluster.local 2>/dev/null | grep Address | awk -F ": " '{print $2}' | grep -v " ")
+  PEERS=$(nslookup ${module.service.headless_service_hostname} 2>/dev/null | grep Address | awk -F ": " '{print $2}' | grep -v " ")
   EOT
   list_peers_function     = <<-EOT
   list_peers() {
@@ -117,50 +116,19 @@ locals {
   fi
   EOT
 }
-resource "kubernetes_service" "service" {
-  metadata {
-    name      = var.service_name
-    namespace = var.namespace_name
-  }
-  spec {
-    type             = "ClusterIP"
-    session_affinity = "None"
-    port {
-      name        = "client"
+
+module "service" {
+  source         = "../common/service"
+  namespace_name = var.namespace_name
+  service_name   = var.service_name
+  ports = {
+    client = {
       port        = local.client_port
       target_port = local.client_port
     }
-    port {
-      name        = "peer"
+    peer = {
       port        = local.peer_port
       target_port = local.peer_port
-    }
-    selector = {
-      component = var.service_name
-    }
-  }
-}
-resource "kubernetes_service" "service_headless" {
-  metadata {
-    name      = local.headless_service_name
-    namespace = var.namespace_name
-  }
-  spec {
-    type                        = "ClusterIP"
-    cluster_ip                  = "None"
-    publish_not_ready_addresses = true
-    port {
-      name        = "client"
-      port        = local.client_port
-      target_port = local.client_port
-    }
-    port {
-      name        = "peer"
-      port        = local.peer_port
-      target_port = local.peer_port
-    }
-    selector = {
-      component = var.service_name
     }
   }
 }

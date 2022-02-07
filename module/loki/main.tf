@@ -1,251 +1,94 @@
-resource "kubernetes_pod_security_policy" "pod_security_policy" {
-  metadata {
-    name = var.service_name
-  }
-  spec {
-    required_drop_capabilities = ["ALL"]
-    volumes = [
-      "configMap", "emptyDir", "persistentVolumeClaim", "secret", "projected", "downwardAPI"
-    ]
-    se_linux {
-      rule = "RunAsAny"
-    }
-    run_as_user {
-      rule = "MustRunAsNonRoot"
-    }
-    fs_group {
-      rule = "MustRunAs"
-      range {
-        min = 1
-        max = 65535
-      }
-    }
-    read_only_root_filesystem = true
-    supplemental_groups {
-      rule = "MustRunAs"
-      range {
-        min = 1
-        max = 65535
-      }
-    }
-  }
-}
-
 locals {
-  config_filename = "loki.yaml"
-
-  config_volume_name       = "config"
-  config_volume_mount_path = "/etc/config"
-
-  storage_volume_name       = "storage"
-  storage_volume_mount_path = "/data"
+  querier_component_name        = "querier"
+  query_frontend_component_name = "query-frontend"
+  distributor_component_name    = "distributor"
+  ingester_component_name       = "ingester"
+  querier_hostname              = "${var.service_name}-${local.querier_component_name}.svc.cluster.local"
+  query_frontend_hostname       = "${var.service_name}-${local.query_frontend_component_name}.svc.cluster.local"
+  distributor_host              = "${var.service_name}-${local.distributor_component_name}.svc.cluster.local:${var.service_port}"
 }
 
 module "loki_config" {
-  source       = "./module/config"
-  etcd_host    = var.etcd_host
-  http_port    = var.container_http_port
-  grpc_port    = var.container_grpc_port
-  storage_path = local.storage_volume_mount_path
+  source                  = "./module/config"
+  namespace_name          = var.namespace_name
+  service_name            = var.service_name
+  etcd_host               = var.etcd_host
+  http_port               = var.service_port
+  grpc_port               = 9095
+  querier_hostname        = local.querier_hostname
+  query_frontend_hostname = local.query_frontend_hostname
 }
 
-resource "kubernetes_config_map" "config_map" {
-  metadata {
-    name      = var.service_name
-    namespace = var.namespace_name
-  }
-  data = {
-    (local.config_filename) = module.loki_config.yaml
-  }
+module "service_account" {
+  source         = "../common/service-account"
+  namespace_name = var.namespace_name
+  service_name   = var.service_name
 }
 
-resource "kubernetes_service_account" "service_account" {
-  metadata {
-    name      = var.service_name
-    namespace = var.namespace_name
-  }
-  automount_service_account_token = true
+module "ingester" {
+  source               = "./module/stateful"
+  namespace_name       = var.namespace_name
+  system_name          = var.service_name
+  component_name       = local.ingester_component_name
+  service_account_name = module.service_account.name
+  container_image      = var.container_image
+  service_http_port    = module.loki_config.service_http_port
+  service_grpc_port    = module.loki_config.service_grpc_port
+  etcd_host            = module.loki_config.etcd_host
+  config_filename      = module.loki_config.config_filename
+  config_map_name      = module.loki_config.config_map_name
+  storage_mount_path   = module.loki_config.storage_mount_path
+  storage_volume_size  = 4
+  replicas             = 1
 }
 
-resource "kubernetes_role" "role" {
-  metadata {
-    name      = var.service_name
-    namespace = var.namespace_name
-  }
-  rule {
-    verbs          = ["use"]
-    api_groups     = ["extensions"]
-    resources      = ["podsecuritypolicies"]
-    resource_names = [var.service_name]
-  }
+module "querier" {
+  source               = "./module/stateful"
+  namespace_name       = var.namespace_name
+  system_name          = var.service_name
+  component_name       = local.querier_component_name
+  service_account_name = module.service_account.name
+  container_image      = var.container_image
+  service_http_port    = module.loki_config.service_http_port
+  service_grpc_port    = module.loki_config.service_grpc_port
+  etcd_host            = module.loki_config.etcd_host
+  config_filename      = module.loki_config.config_filename
+  config_map_name      = module.loki_config.config_map_name
+  storage_mount_path   = module.loki_config.storage_mount_path
+  storage_volume_size  = 2
+  replicas             = 1
 }
-resource "kubernetes_role_binding" "role_binding" {
-  metadata {
-    name      = var.service_name
-    namespace = var.namespace_name
-  }
-  subject {
-    kind = "ServiceAccount"
-    name = kubernetes_service_account.service_account.metadata[0].name
-  }
-  role_ref {
-    kind      = "Role"
-    name      = kubernetes_role.role.metadata[0].name
-    api_group = "rbac.authorization.k8s.io"
-  }
+
+module "distributor" {
+  source               = "./module/stateless"
+  namespace_name       = var.namespace_name
+  system_name          = var.service_name
+  component_name       = local.distributor_component_name
+  service_account_name = module.service_account.name
+  container_image      = var.container_image
+  service_http_port    = module.loki_config.service_http_port
+  service_grpc_port    = module.loki_config.service_grpc_port
+  etcd_host            = module.loki_config.etcd_host
+  config_filename      = module.loki_config.config_filename
+  config_map_name      = module.loki_config.config_map_name
+  storage_mount_path   = module.loki_config.storage_mount_path
+  storage_volume_size  = 1
+  replicas             = 1
 }
-resource "kubernetes_service" "headless_service" {
-  metadata {
-    name      = "${var.service_name}-headless"
-    namespace = var.namespace_name
-  }
-  spec {
-    cluster_ip = "None"
-    port {
-      protocol    = "TCP"
-      port        = var.service_port
-      target_port = var.container_http_port
-    }
-    selector = {
-      component = var.service_name
-    }
-  }
-}
-resource "kubernetes_service" "service" {
-  metadata {
-    name      = var.service_name
-    namespace = var.namespace_name
-  }
-  spec {
-    type = "ClusterIP"
-    port {
-      protocol    = "TCP"
-      port        = var.service_port
-      target_port = var.container_http_port
-    }
-    selector = {
-      component = var.service_name
-    }
-  }
-}
-resource "kubernetes_persistent_volume_claim" "persistent_volume_claim" {
-  metadata {
-    name      = var.service_name
-    namespace = var.namespace_name
-  }
-  spec {
-    resources {
-      requests = {
-        storage = "${var.storage_volume_size}Gi"
-      }
-    }
-    access_modes = [
-      "ReadWriteOnce"
-    ]
-  }
-}
-resource "kubernetes_deployment" "deployment" {
-  metadata {
-    name      = var.service_name
-    namespace = var.namespace_name
-    labels = {
-      component = var.service_name
-    }
-  }
-  spec {
-    replicas = 1
-    strategy {
-      rolling_update {
-        max_unavailable = 0
-        max_surge       = 1
-      }
-    }
-    selector {
-      match_labels = {
-        component = var.service_name
-      }
-    }
-    template {
-      metadata {
-        labels = {
-          component = var.service_name
-        }
-      }
-      spec {
-        termination_grace_period_seconds = 4800
-        service_account_name             = kubernetes_service_account.service_account.metadata[0].name
-        security_context {
-          run_as_non_root = true
-          run_as_user     = 10001
-          run_as_group    = 10001
-          fs_group        = 10001
-        }
-        volume {
-          name = local.config_volume_name
-          config_map {
-            name = kubernetes_config_map.config_map.metadata[0].name
-          }
-        }
-        volume {
-          name = local.storage_volume_name
-          persistent_volume_claim {
-            claim_name = kubernetes_persistent_volume_claim.persistent_volume_claim.metadata[0].name
-          }
-        }
-        container {
-          name              = var.service_name
-          image             = var.container_image
-          image_pull_policy = "IfNotPresent"
-          security_context {
-            read_only_root_filesystem = true
-          }
-          args = [
-            "-config.file=${local.config_volume_mount_path}/${local.config_filename}"
-          ]
-          port {
-            protocol       = "TCP"
-            container_port = var.container_http_port
-          }
-          port {
-            protocol       = "TCP"
-            container_port = var.container_grpc_port
-          }
-          resources {
-            requests = {
-              cpu    = "100m"
-              memory = "100Mi"
-            }
-            limits = {
-              memory = "400Mi"
-            }
-          }
-          readiness_probe {
-            http_get {
-              path = "/ready"
-              port = var.container_http_port
-            }
-            initial_delay_seconds = 30
-            period_seconds        = 30
-            failure_threshold     = 10
-          }
-          liveness_probe {
-            http_get {
-              path = "/ready"
-              port = var.container_http_port
-            }
-            initial_delay_seconds = 330
-            period_seconds        = 30
-          }
-          volume_mount {
-            name       = local.config_volume_name
-            mount_path = local.config_volume_mount_path
-          }
-          volume_mount {
-            name       = local.storage_volume_name
-            mount_path = local.storage_volume_mount_path
-          }
-        }
-      }
-    }
-  }
+
+module "query_frontend" {
+  source               = "./module/stateless"
+  namespace_name       = var.namespace_name
+  system_name          = var.service_name
+  component_name       = local.query_frontend_component_name
+  service_account_name = module.service_account.name
+  container_image      = var.container_image
+  service_http_port    = module.loki_config.service_http_port
+  service_grpc_port    = module.loki_config.service_grpc_port
+  etcd_host            = module.loki_config.etcd_host
+  config_filename      = module.loki_config.config_filename
+  config_map_name      = module.loki_config.config_map_name
+  storage_mount_path   = module.loki_config.storage_mount_path
+  storage_volume_size  = 1
+  replicas             = 1
 }
