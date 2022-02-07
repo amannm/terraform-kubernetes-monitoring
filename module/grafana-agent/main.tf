@@ -2,6 +2,12 @@ locals {
   agent_api_host = "${module.service.headless_service_hostname}:${var.agent_container_port}"
 
   config_filename = "agent.yaml"
+  command         = ["/bin/agent"]
+  args = [
+    "-config.file=${local.volumes.config.mount_path}/${local.config_filename}",
+    "-prometheus.wal-directory=${local.volumes.write-ahead-log.mount_path}",
+    "-enable-features=integrations-next",
+  ]
 
   cpu_min    = "75"
   memory_min = "75"
@@ -10,6 +16,7 @@ locals {
   pod_environment_variables = {
     "HOSTNAME" = "spec.nodeName"
   }
+
   lifecycle = {
     min_readiness_time = 30
     max_readiness_time = 90
@@ -20,12 +27,6 @@ locals {
     added_capabilities        = ["SYS_TIME"]
     read_only_root_filesystem = null
   }
-  command = ["/bin/agent"]
-  args = [
-    "-config.file=${local.volumes.config.mount_path}/${local.config_filename}",
-    "-prometheus.wal-directory=${local.volumes.write-ahead-log.mount_path}",
-    "-enable-features=integrations-next",
-  ]
 
   ports = {
     http = {

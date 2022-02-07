@@ -107,17 +107,17 @@ resource "kubernetes_stateful_set" "deployment" {
             failure_threshold     = ceil(local.lifecycle.max_readiness_time / local.probes.readiness_polling_rate)
             timeout_seconds       = 1
           }
-          liveness_probe {
-            http_get {
-              path = local.probes.liveness_path
-              port = local.probes.port
-            }
-            initial_delay_seconds = local.lifecycle.max_readiness_time
-            period_seconds        = local.probes.liveness_polling_rate
-            success_threshold     = 1
-            failure_threshold     = 3
-            timeout_seconds       = 1
-          }
+          #          liveness_probe {
+          #            http_get {
+          #              path = local.probes.liveness_path
+          #              port = local.probes.port
+          #            }
+          #            initial_delay_seconds = local.lifecycle.max_readiness_time
+          #            period_seconds        = local.probes.liveness_polling_rate
+          #            success_threshold     = 1
+          #            failure_threshold     = 3
+          #            timeout_seconds       = 1
+          #          }
           dynamic "port" {
             for_each = local.ports
             content {
