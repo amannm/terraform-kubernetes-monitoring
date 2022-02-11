@@ -50,7 +50,7 @@ locals {
           etcdctl member remove $${MEMBER_HASH}
       fi
       echo "Adding new member"
-      etcdctl member add $${HOSTNAME} http://${var.service_name}.${var.namespace_name}.svc.${local.cluster_domain}:${local.peer_port} | grep "^ETCD_" > ${local.data_volume_mount_path}/new_member_envs
+      etcdctl member add $${HOSTNAME} http://$${HOSTNAME}.${var.namespace_name}.svc.${local.cluster_domain}:${local.peer_port} | grep "^ETCD_" > ${local.data_volume_mount_path}/new_member_envs
       if [ $$? -ne 0 ]; then
           echo "Exiting"
           rm -f ${local.data_volume_mount_path}/new_member_envs
