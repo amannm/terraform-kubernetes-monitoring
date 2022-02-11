@@ -8,12 +8,14 @@ locals {
   service_client_endpoint = "${module.service.non_headless_service_hostname}:${local.client_port}"
   startup_script          = <<-EOT
   HOSTNAME=$(hostname)
+
   # store member id into PVC for later member replacement
   collect_member() {
       while ! etcdctl member list &>/dev/null; do sleep 1; done
       etcdctl member list | grep http://$${HOSTNAME}.${var.namespace_name}.svc.${local.cluster_domain}:${local.peer_port} | cut -d':' -f1 | cut -d'[' -f1 > ${local.data_volume_mount_path}/member_id
       exit 0
   }
+
   eps() {
       EPS=""
       for i in $$(seq 0 $$((${local.cluster_size} - 1))); do
@@ -21,9 +23,11 @@ locals {
       done
       echo $${EPS}
   }
+
   member_hash() {
       etcdctl member list | grep http://$${HOSTNAME}.${var.namespace_name}.svc.${local.cluster_domain}:${local.peer_port} | cut -d':' -f1 | cut -d'[' -f1
   }
+
   # re-joining after failure?
   if [ -e ${local.data_volume_mount_path}/default.etcd ]; then
       echo "Re-joining etcd member"
@@ -36,8 +40,10 @@ locals {
           --advertise-client-urls http://${var.service_name}.${var.namespace_name}.svc.${local.cluster_domain}:${local.client_port} \
           --data-dir ${local.data_volume_mount_path}/default.etcd
   fi
+
   # etcd-SET_ID
   SET_ID=$${HOSTNAME##*-}
+
   # adding a new member to existing cluster (assuming all initial pods are available)
   if [ "$${SET_ID}" -ge ${local.cluster_size} ]; then
       export ETCDCTL_ENDPOINT=$$(eps)
@@ -68,18 +74,14 @@ locals {
           --initial-cluster $${ETCD_INITIAL_CLUSTER} \
           --initial-cluster-state $${ETCD_INITIAL_CLUSTER_STATE}
   fi
-  for i in $$(seq 0 $$((${local.cluster_size} - 1))); do
-      while true; do
-          echo "Waiting for ${var.service_name}-$${i}.${var.service_name} to come up"
-          ping -W 1 -c 1 ${var.service_name}-$${i}.${var.service_name} > /dev/null && break
-          sleep 1s
-      done
-  done
+
   PEERS=""
   for i in $$(seq 0 $$((${local.cluster_size} - 1))); do
       PEERS="$${PEERS}$${PEERS:+,}${var.service_name}-$${i}=http://${var.service_name}-$${i}.${var.service_name}:${local.peer_port}"
   done
+
   collect_member &
+
   # join member
   exec etcd --name $${HOSTNAME} \
       --initial-advertise-peer-urls http://${var.service_name}.${var.namespace_name}.svc.${local.cluster_domain}:${local.peer_port} \
@@ -90,6 +92,7 @@ locals {
       --initial-cluster $${PEERS} \
       --initial-cluster-state new \
       --data-dir ${local.data_volume_mount_path}/default.etcd
+
   EOT
   pre_stop_script         = <<-EOT
   EPS=""
