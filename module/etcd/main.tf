@@ -38,7 +38,7 @@ locals {
   # etcd-SET_ID
   SET_ID=$${HOSTNAME:5:$${#HOSTNAME}}
   # adding a new member to existing cluster (assuming all initial pods are available)
-  if [ "$${SET_ID}" -ge $${INITIAL_CLUSTER_SIZE} ]; then
+  if [ "$${SET_ID}" -ge ${local.cluster_size} ]; then
       export ETCDCTL_ENDPOINT=$$(eps)
       # member already added?
       MEMBER_HASH=$$(member_hash)
@@ -67,7 +67,7 @@ locals {
           --initial-cluster $${ETCD_INITIAL_CLUSTER} \
           --initial-cluster-state $${ETCD_INITIAL_CLUSTER_STATE}
   fi
-  for i in $$(seq 0 $$(($${INITIAL_CLUSTER_SIZE} - 1))); do
+  for i in $$(seq 0 $$((${local.cluster_size} - 1))); do
       while true; do
           echo "Waiting for ${var.service_name}-$${i}.${var.service_name} to come up"
           ping -W 1 -c 1 ${var.service_name}-$${i}.${var.service_name} > /dev/null && break
@@ -75,7 +75,7 @@ locals {
       done
   done
   PEERS=""
-  for i in $$(seq 0 $$(($${INITIAL_CLUSTER_SIZE} - 1))); do
+  for i in $$(seq 0 $$((${local.cluster_size} - 1))); do
       PEERS="$${PEERS}$${PEERS:+,}${var.service_name}-$${i}=http://${var.service_name}-$${i}.${var.service_name}:${local.peer_port}"
   done
   collect_member &
@@ -131,7 +131,7 @@ resource "kubernetes_stateful_set" "stateful_set" {
   }
   spec {
     service_name = var.service_name
-    replicas     = 3
+    replicas     = local.cluster_size
     update_strategy {
       rolling_update {
         partition = 0
