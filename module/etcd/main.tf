@@ -6,17 +6,26 @@ locals {
   data_volume_name        = "data"
   data_volume_mount_path  = "/var/run/etcd"
   service_client_endpoint = "${module.service.non_headless_service_hostname}:${local.client_port}"
-  startup_script          = <<-EOT
+
+  script_globals = <<-EOT
   PEER_IPS=$(nslookup ${module.service.headless_service_hostname} 2>/dev/null | grep Address | awk -F ": " '{print $2}' | grep -v " ")
   ALL_CLIENT_ENDPOINTS=""
   for peer_ip in $${PEER_IPS}; do
     ALL_CLIENT_ENDPOINTS="$${ALL_CLIENT_ENDPOINTS}$${ALL_CLIENT_ENDPOINTS:+,}http://$${peer_ip}:${local.client_port}"
   done
   IP=$(hostname -i)
+  member_hash() {
+    etcdctl --endpoint $ALL_CLIENT_ENDPOINTS member list | grep http://$${IP}:${local.peer_port} | cut -d':' -f1 | cut -d'[' -f1
+  }
+  EOT
+
+  startup_script = <<-EOT
+
+  ${local.script_globals}
+
   if [ -e ${local.data_volume_mount_path}/default.etcd ]; then
-      echo "Re-joining etcd member"
-      member_id=$(cat ${local.data_volume_mount_path}/member_id)
-      etcdctl --endpoint $ALL_CLIENT_ENDPOINTS member update $${member_id} http://$${IP}:${local.peer_port}
+      echo "re-joining etcd cluster as existing member"
+      etcdctl --endpoint $ALL_CLIENT_ENDPOINTS member update $(cat ${local.data_volume_mount_path}/member_id) http://$${IP}:${local.peer_port}
       exec etcd --endpoint $ALL_CLIENT_ENDPOINTS \
           --name $${IP} \
           --listen-peer-urls http://$${IP}:${local.peer_port} \
@@ -24,26 +33,28 @@ locals {
           --advertise-client-urls http://$${IP}:${local.client_port} \
           --data-dir ${local.data_volume_mount_path}/default.etcd
   fi
-  member_hash() {
-    etcdctl --endpoint $ALL_CLIENT_ENDPOINTS member list | grep http://$${IP}:${local.peer_port} | cut -d':' -f1 | cut -d'[' -f1
-  }
+
   collect_member() {
       while ! etcdctl --endpoint $ALL_CLIENT_ENDPOINTS member list &>/dev/null; do sleep 1; done
-      etcdctl --endpoint $ALL_CLIENT_ENDPOINTS member list | grep http://$${IP}:${local.peer_port} | cut -d':' -f1 | cut -d'[' -f1 > ${local.data_volume_mount_path}/member_id
+      member_hash > ${local.data_volume_mount_path}/member_id
       exit 0
   }
+
   check_cluster() {
     etcdctl --endpoint $ALL_CLIENT_ENDPOINTS member list > /dev/null
     local exit_code=$?
     echo "$exit_code"
   }
+
   CLUSTER=$(check_cluster)
   if [[ "$CLUSTER" == "0" ]]; then
+
       MEMBER_HASH=$(member_hash)
       if [ -n "$${MEMBER_HASH}" ]; then
           etcdctl --endpoint $ALL_CLIENT_ENDPOINTS member remove $${MEMBER_HASH}
       fi
-      echo "Adding new member"
+
+      echo "adding new member"
       etcdctl --endpoint $ALL_CLIENT_ENDPOINTS member add $${IP} http://$${IP}:${local.peer_port} | grep "^ETCD_" > ${local.data_volume_mount_path}/new_member_envs
       if [ $? -ne 0 ]; then
           echo "Exiting"
@@ -52,7 +63,9 @@ locals {
       fi
       cat ${local.data_volume_mount_path}/new_member_envs
       source ${local.data_volume_mount_path}/new_member_envs
+
       collect_member &
+
       exec etcd --endpoint $ALL_CLIENT_ENDPOINTS \
           --name $${IP} \
           --listen-peer-urls http://$${IP}:${local.peer_port} \
@@ -62,34 +75,31 @@ locals {
           --initial-advertise-peer-urls http://$${IP}:${local.peer_port} \
           --initial-cluster $${ETCD_INITIAL_CLUSTER} \
           --initial-cluster-state $${ETCD_INITIAL_CLUSTER_STATE}
+
   fi
-  collect_member &
+
   ALL_PEER_ENDPOINTS=""
   for peer_ip in $${PEER_IPS}; do
     ALL_PEER_ENDPOINTS="$${ALL_PEER_ENDPOINTS}$${ALL_PEER_ENDPOINTS:+,}http://$${peer_ip}:${local.peer_port}"
   done
+
+  collect_member &
+
   exec etcd --endpoint $ALL_CLIENT_ENDPOINTS \
       --name $${IP} \
       --initial-advertise-peer-urls http://$${IP}:${local.peer_port} \
       --listen-peer-urls http://$${IP}:${local.peer_port} \
       --listen-client-urls http://$${IP}:${local.client_port},http://127.0.0.1:${local.client_port} \
       --advertise-client-urls http://$${IP}:${local.client_port} \
-      --initial-cluster-token etcd-cluster-1 \
+      --data-dir ${local.data_volume_mount_path}/default.etcd \
       --initial-cluster $${ALL_PEER_ENDPOINTS} \
       --initial-cluster-state new \
-      --data-dir ${local.data_volume_mount_path}/default.etcd
+      --initial-cluster-token etcd-cluster-1
+
   EOT
 
   pre_stop_script = <<-EOT
-  PEER_IPS=$(nslookup ${module.service.headless_service_hostname} 2>/dev/null | grep Address | awk -F ": " '{print $2}' | grep -v " ")
-  ALL_CLIENT_ENDPOINTS=""
-  for peer_ip in $${PEER_IPS}; do
-    ALL_CLIENT_ENDPOINTS="$${ALL_CLIENT_ENDPOINTS}$${ALL_CLIENT_ENDPOINTS:+,}http://$${peer_ip}:${local.client_port}"
-  done
-  IP=$(hostname -i)
-  member_hash() {
-    etcdctl --endpoint $ALL_CLIENT_ENDPOINTS member list | grep http://$${IP}:${local.peer_port} | cut -d':' -f1 | cut -d'[' -f1
-  }
+  ${local.script_globals}
   echo "Removing $${IP} from etcd cluster"
   etcdctl --endpoint $ALL_CLIENT_ENDPOINTS member remove $(member_hash)
   if [ $? -eq 0 ]; then
