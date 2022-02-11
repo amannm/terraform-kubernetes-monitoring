@@ -15,7 +15,7 @@ locals {
   done
   IP=$(hostname -i)
   member_hash() {
-    etcdctl --endpoint $ALL_CLIENT_ENDPOINTS member list | grep http://$${IP}:${local.peer_port} | cut -d':' -f1 | cut -d'[' -f1
+    etcdctl member list | grep http://$${IP}:${local.peer_port} | cut -d':' -f1 | cut -d'[' -f1
   }
   EOT
 
@@ -33,7 +33,7 @@ locals {
   fi
 
   collect_member() {
-      while ! etcdctl --endpoint $ALL_CLIENT_ENDPOINTS member list &>/dev/null; do sleep 1; done
+      while ! etcdctl member list &>/dev/null; do sleep 1; done
       member_hash > ${local.data_volume_mount_path}/member_id
       exit 0
   }
