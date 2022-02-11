@@ -20,14 +20,12 @@ locals {
   EOT
 
   startup_script = <<-EOT
-
   ${local.script_globals}
 
   if [ -e ${local.data_volume_mount_path}/default.etcd ]; then
       echo "re-joining etcd cluster as existing member"
       etcdctl --endpoint $ALL_CLIENT_ENDPOINTS member update $(cat ${local.data_volume_mount_path}/member_id) http://$${IP}:${local.peer_port}
-      exec etcd --endpoint $ALL_CLIENT_ENDPOINTS \
-          --name $${IP} \
+      exec etcd --name $${IP} \
           --listen-peer-urls http://$${IP}:${local.peer_port} \
           --listen-client-urls http://$${IP}:${local.client_port},http://127.0.0.1:${local.client_port} \
           --advertise-client-urls http://$${IP}:${local.client_port} \
@@ -66,13 +64,12 @@ locals {
 
       collect_member &
 
-      exec etcd --endpoint $ALL_CLIENT_ENDPOINTS \
-          --name $${IP} \
+      exec etcd --name $${IP} \
+          --initial-advertise-peer-urls http://$${IP}:${local.peer_port} \
           --listen-peer-urls http://$${IP}:${local.peer_port} \
           --listen-client-urls http://$${IP}:${local.client_port},http://127.0.0.1:${local.client_port} \
           --advertise-client-urls http://$${IP}:${local.client_port} \
           --data-dir ${local.data_volume_mount_path}/default.etcd \
-          --initial-advertise-peer-urls http://$${IP}:${local.peer_port} \
           --initial-cluster $${ETCD_INITIAL_CLUSTER} \
           --initial-cluster-state $${ETCD_INITIAL_CLUSTER_STATE}
 
@@ -85,8 +82,7 @@ locals {
 
   collect_member &
 
-  exec etcd --endpoint $ALL_CLIENT_ENDPOINTS \
-      --name $${IP} \
+  exec etcd --name $${IP} \
       --initial-advertise-peer-urls http://$${IP}:${local.peer_port} \
       --listen-peer-urls http://$${IP}:${local.peer_port} \
       --listen-client-urls http://$${IP}:${local.client_port},http://127.0.0.1:${local.client_port} \
@@ -100,11 +96,13 @@ locals {
 
   pre_stop_script = <<-EOT
   ${local.script_globals}
+
   echo "Removing $${IP} from etcd cluster"
   etcdctl --endpoint $ALL_CLIENT_ENDPOINTS member remove $(member_hash)
   if [ $? -eq 0 ]; then
       rm -rf ${local.data_volume_mount_path}/*
   fi
+
   EOT
 
 }
