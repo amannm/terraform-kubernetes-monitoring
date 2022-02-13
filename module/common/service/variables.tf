@@ -11,18 +11,10 @@ variable "service_name" {
 variable "non_headless_only" {
   type    = bool
   default = false
-  #  validation {
-  #    condition = var.non_headless_only == true && var.headless_only == true
-  #    error_message = "\"disable_headless\" and \"headless_only\" cannot both be set to true."
-  #  }
 }
 variable "headless_only" {
   type    = bool
   default = false
-  #  validation {
-  #    condition = var.non_headless_only == true && var.headless_only == true
-  #    error_message = "\"disable_headless\" and \"headless_only\" cannot both be set to true."
-  #  }
 }
 variable "ports" {
   type = map(object({
