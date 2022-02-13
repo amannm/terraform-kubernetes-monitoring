@@ -26,7 +26,7 @@ locals {
   ${local.script_globals}
 
   if [ -e ${local.data_volume_mount_path}/default.etcd ]; then
-      echo "re-joining etcd cluster as existing member"
+      echo "re-joining cluster as existing member"
       ETCDCTL_ENDPOINT=$$ALL_CLIENT_ENDPOINTS etcdctl member update $(cat ${local.data_volume_mount_path}/member_id) http://$${IP}:${local.peer_port}
       exec etcd --name $${IP} \
           --listen-peer-urls http://$${IP}:${local.peer_port} \
@@ -36,12 +36,16 @@ locals {
   fi
 
   collect_member() {
+      echo "waiting for member ID generation..."
       while ! etcdctl member list &>/dev/null; do sleep 1; done
+      echo "member ID generated -- saving to disk"
       ${local.get_member_id} > ${local.data_volume_mount_path}/member_id
+      echo "member ID saved to disk"
       exit 0
   }
 
   check_cluster() {
+      echo "checking for existing cluster..."
       ETCDCTL_ENDPOINT=$$ALL_CLIENT_ENDPOINTS etcdctl member list > /dev/null
       local exit_code=$?
       echo "$exit_code"
@@ -49,16 +53,16 @@ locals {
 
   CLUSTER=$(check_cluster)
   if [[ "$CLUSTER" == "0" ]]; then
-
+      echo "existing cluster found"
       MEMBER_HASH=$(${local.get_member_id})
       if [ -n "$${MEMBER_HASH}" ]; then
+          echo "clearing previous membership from existing cluster"
           ETCDCTL_ENDPOINT=$$ALL_CLIENT_ENDPOINTS etcdctl member remove $${MEMBER_HASH}
       fi
-
-      echo "adding new member"
+      echo "registering with existing cluster as new member"
       ETCDCTL_ENDPOINT=$$ALL_CLIENT_ENDPOINTS etcdctl member add $${IP} http://$${IP}:${local.peer_port} | grep "^ETCD_" > ${local.data_volume_mount_path}/new_member_envs
       if [ $? -ne 0 ]; then
-          echo "Exiting"
+          echo "failed to register with existing cluster"
           rm -f ${local.data_volume_mount_path}/new_member_envs
           exit 1
       fi
@@ -67,6 +71,7 @@ locals {
 
       collect_member &
 
+      echo "joining existing cluster"
       exec etcd --name $${IP} \
           --listen-peer-urls http://$${IP}:${local.peer_port} \
           --listen-client-urls http://$${IP}:${local.client_port},http://127.0.0.1:${local.client_port} \
@@ -75,8 +80,6 @@ locals {
           --initial-advertise-peer-urls http://$${IP}:${local.peer_port} \
           --initial-cluster $${ETCD_INITIAL_CLUSTER} \
           --initial-cluster-state $${ETCD_INITIAL_CLUSTER_STATE}
-
-      tail -f /dev/null
   fi
 
   ALL_PEER_ENDPOINTS="$${IP}=http://$${IP}:${local.peer_port}"
@@ -96,9 +99,6 @@ locals {
       --initial-cluster $${ALL_PEER_ENDPOINTS} \
       --initial-cluster-state new \
       --initial-cluster-token ${var.service_name}-cluster
-
-  tail -f /dev/null
-
   EOT
 
   pre_stop_script = <<-EOT
@@ -215,23 +215,23 @@ resource "kubernetes_stateful_set" "stateful_set" {
               memory : "200Mi"
             }
           }
-          #          readiness_probe {
-          #            http_get {
-          #              port = local.client_port
-          #              path = "/health"
-          #            }
-          #            initial_delay_seconds = 30
-          #            period_seconds        = 15
-          #            failure_threshold     = 4
-          #          }
-          #          liveness_probe {
-          #            http_get {
-          #              port = local.client_port
-          #              path = "/health"
-          #            }
-          #            initial_delay_seconds = 90
-          #            period_seconds        = 15
-          #          }
+          readiness_probe {
+            http_get {
+              port = local.client_port
+              path = "/health"
+            }
+            initial_delay_seconds = 30
+            period_seconds        = 15
+            failure_threshold     = 4
+          }
+          liveness_probe {
+            http_get {
+              port = local.client_port
+              path = "/health"
+            }
+            initial_delay_seconds = 90
+            period_seconds        = 15
+          }
           port {
             protocol       = "TCP"
             container_port = local.client_port
