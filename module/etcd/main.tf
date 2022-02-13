@@ -20,7 +20,7 @@ locals {
   get_member_id = "etcdctl member list | grep http://$${IP}:${local.peer_port} | cut -d':' -f1 | cut -d'[' -f1"
 
   startup_script = <<-EOT
-  ${local.script_globals}
+#  ${local.script_globals}
 #
 #  if [ -e ${local.data_volume_mount_path}/default.etcd ]; then
 #      echo "re-joining etcd cluster as existing member"
@@ -97,13 +97,13 @@ locals {
   EOT
 
   pre_stop_script = <<-EOT
-  ${local.script_globals}
-
-  echo "Removing $${IP} from etcd cluster"
-  ETCDCTL_ENDPOINT=$$ALL_CLIENT_ENDPOINTS etcdctl member remove $(${local.get_member_id})
-  if [ $? -eq 0 ]; then
-      rm -rf ${local.data_volume_mount_path}/*
-  fi
+#  ${local.script_globals}
+#
+#  echo "Removing $${IP} from etcd cluster"
+#  ETCDCTL_ENDPOINT=$$ALL_CLIENT_ENDPOINTS etcdctl member remove $(${local.get_member_id})
+#  if [ $? -eq 0 ]; then
+#      rm -rf ${local.data_volume_mount_path}/*
+#  fi
 
   EOT
 
@@ -203,11 +203,11 @@ resource "kubernetes_stateful_set" "stateful_set" {
           }
           resources {
             requests = {
-              cpu : "75m"
-              memory : "75Mi"
+              cpu : "100m"
+              memory : "125Mi"
             }
             limits = {
-              memory : "150Mi"
+              memory : "200Mi"
             }
           }
           #          readiness_probe {
