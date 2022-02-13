@@ -24,7 +24,7 @@ locals {
 
   if [ -e ${local.data_volume_mount_path}/default.etcd ]; then
       echo "re-joining etcd cluster as existing member"
-      etcdctl --endpoint $ALL_CLIENT_ENDPOINTS member update $(cat ${local.data_volume_mount_path}/member_id) http://$${IP}:${local.peer_port}
+      ETCDCTL_ENDPOINT=$$ALL_CLIENT_ENDPOINTS etcdctl member update $(cat ${local.data_volume_mount_path}/member_id) http://$${IP}:${local.peer_port}
       exec etcd --name $${IP} \
           --listen-peer-urls http://$${IP}:${local.peer_port} \
           --listen-client-urls http://$${IP}:${local.client_port},http://127.0.0.1:${local.client_port} \
@@ -39,7 +39,7 @@ locals {
   }
 
   check_cluster() {
-    etcdctl --endpoint $ALL_CLIENT_ENDPOINTS member list > /dev/null
+    ETCDCTL_ENDPOINT=$$ALL_CLIENT_ENDPOINTS etcdctl member list > /dev/null
     local exit_code=$?
     echo "$exit_code"
   }
@@ -49,11 +49,11 @@ locals {
 
       MEMBER_HASH=$(${local.get_member_id})
       if [ -n "$${MEMBER_HASH}" ]; then
-          etcdctl --endpoint $ALL_CLIENT_ENDPOINTS member remove $${MEMBER_HASH}
+          ETCDCTL_ENDPOINT=$$ALL_CLIENT_ENDPOINTS etcdctl member remove $${MEMBER_HASH}
       fi
 
       echo "adding new member"
-      etcdctl --endpoint $ALL_CLIENT_ENDPOINTS member add $${IP} http://$${IP}:${local.peer_port} | grep "^ETCD_" > ${local.data_volume_mount_path}/new_member_envs
+      ETCDCTL_ENDPOINT=$$ALL_CLIENT_ENDPOINTS etcdctl member add $${IP} http://$${IP}:${local.peer_port} | grep "^ETCD_" > ${local.data_volume_mount_path}/new_member_envs
       if [ $? -ne 0 ]; then
           echo "Exiting"
           rm -f ${local.data_volume_mount_path}/new_member_envs
@@ -75,7 +75,7 @@ locals {
 
   fi
 
-  ALL_PEER_ENDPOINTS=""
+  ALL_PEER_ENDPOINTS="$${IP}=http://$${IP}:${local.peer_port}"
   for peer_ip in $${PEER_IPS}; do
     ALL_PEER_ENDPOINTS="$${ALL_PEER_ENDPOINTS}$${ALL_PEER_ENDPOINTS:+,}$${peer_ip}=http://$${peer_ip}:${local.peer_port}"
   done
@@ -98,7 +98,7 @@ locals {
   ${local.script_globals}
 
   echo "Removing $${IP} from etcd cluster"
-  etcdctl --endpoint $ALL_CLIENT_ENDPOINTS member remove $(${local.get_member_id})
+  ETCDCTL_ENDPOINT=$$ALL_CLIENT_ENDPOINTS etcdctl member remove $(${local.get_member_id})
   if [ $? -eq 0 ]; then
       rm -rf ${local.data_volume_mount_path}/*
   fi
