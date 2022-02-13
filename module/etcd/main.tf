@@ -7,6 +7,7 @@ locals {
   service_client_endpoint = "${module.service.non_headless_service_hostname}:${local.client_port}"
 
   script_globals = <<-EOT
+  sleep 5
   PEER_IPS=$(nslookup ${module.service.headless_service_hostname} 2>/dev/null | grep Address | awk -F ": " '{print $2}' | grep -v " ")
   echo "peer IPs: $PEER_IPS"
   ALL_CLIENT_ENDPOINTS=""
