@@ -20,14 +20,14 @@ locals {
   echo "IP: $IP"
   EOT
 
-  get_member_id = "ETCDCTL_ENDPOINT=$$ALL_CLIENT_ENDPOINTS etcdctl member list | grep http://$${IP}:${local.peer_port} | cut -d':' -f1 | cut -d'[' -f1"
+  get_member_id = "ETCDCTL_ENDPOINT=\"$ALL_CLIENT_ENDPOINTS\" etcdctl member list | grep http://$${IP}:${local.peer_port} | cut -d':' -f1 | cut -d'[' -f1"
 
   startup_script = <<-EOT
   ${local.script_globals}
 
   if [ -e ${local.data_volume_mount_path}/default.etcd ]; then
       echo "re-joining cluster as existing member"
-      ETCDCTL_ENDPOINT=$$ALL_CLIENT_ENDPOINTS etcdctl member update $(cat ${local.data_volume_mount_path}/member_id) http://$${IP}:${local.peer_port}
+      ETCDCTL_ENDPOINT="$ALL_CLIENT_ENDPOINTS" etcdctl member update $(cat ${local.data_volume_mount_path}/member_id) http://$${IP}:${local.peer_port}
       exec etcd --name $${IP} \
           --listen-peer-urls http://$${IP}:${local.peer_port} \
           --listen-client-urls http://$${IP}:${local.client_port},http://127.0.0.1:${local.client_port} \
@@ -46,21 +46,21 @@ locals {
 
   check_cluster() {
       echo "checking for existing cluster..."
-      ETCDCTL_ENDPOINT=$$ALL_CLIENT_ENDPOINTS etcdctl member list > /dev/null
+      ETCDCTL_ENDPOINT="$ALL_CLIENT_ENDPOINTS" etcdctl member list > /dev/null
       local exit_code=$?
       echo "$exit_code"
   }
 
   CLUSTER=$(check_cluster)
-  if [[ "$CLUSTER" == "0" ]]; then
+  if [[ "$ALL_CLIENT_ENDPOINTS" != "" ]]; then
       echo "existing cluster found"
       MEMBER_ID=$(${local.get_member_id})
       if [ -n "$${MEMBER_ID}" ]; then
           echo "clearing previous membership from existing cluster"
-          ETCDCTL_ENDPOINT=$$ALL_CLIENT_ENDPOINTS etcdctl member remove $${MEMBER_ID}
+          ETCDCTL_ENDPOINT="$ALL_CLIENT_ENDPOINTS" etcdctl member remove $${MEMBER_ID}
       fi
       echo "registering with existing cluster as new member"
-      ETCDCTL_ENDPOINT=$$ALL_CLIENT_ENDPOINTS etcdctl member add $${IP} http://$${IP}:${local.peer_port} | grep "^ETCD_" > ${local.data_volume_mount_path}/new_member_envs
+      ETCDCTL_ENDPOINT="$ALL_CLIENT_ENDPOINTS" etcdctl member add $${IP} http://$${IP}:${local.peer_port} | grep "^ETCD_" > ${local.data_volume_mount_path}/new_member_envs
       if [ $? -ne 0 ]; then
           echo "failed to register with existing cluster"
           rm -f ${local.data_volume_mount_path}/new_member_envs
@@ -103,7 +103,7 @@ locals {
   ${local.script_globals}
   MEMBER_ID=$(${local.get_member_id})
   echo "Removing $${IP} from etcd cluster"
-  ETCDCTL_ENDPOINT=$$ALL_CLIENT_ENDPOINTS etcdctl member remove $(${local.get_member_id})
+  ETCDCTL_ENDPOINT=$"ALL_CLIENT_ENDPOINTS" etcdctl member remove $(${local.get_member_id})
   if [ $? -eq 0 ]; then
       rm -rf ${local.data_volume_mount_path}/*
   fi
