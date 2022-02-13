@@ -21,76 +21,76 @@ locals {
 
   startup_script = <<-EOT
   ${local.script_globals}
-
-  if [ -e ${local.data_volume_mount_path}/default.etcd ]; then
-      echo "re-joining etcd cluster as existing member"
-      ETCDCTL_ENDPOINT=$$ALL_CLIENT_ENDPOINTS etcdctl member update $(cat ${local.data_volume_mount_path}/member_id) http://$${IP}:${local.peer_port}
-      exec etcd --name $${IP} \
-          --listen-peer-urls http://$${IP}:${local.peer_port} \
-          --listen-client-urls http://$${IP}:${local.client_port},http://127.0.0.1:${local.client_port} \
-          --advertise-client-urls http://$${IP}:${local.client_port} \
-          --data-dir ${local.data_volume_mount_path}/default.etcd
-  fi
-
-  collect_member() {
-      while ! etcdctl member list &>/dev/null; do sleep 1; done
-      ${local.get_member_id} > ${local.data_volume_mount_path}/member_id
-      exit 0
-  }
-
-  check_cluster() {
-    ETCDCTL_ENDPOINT=$$ALL_CLIENT_ENDPOINTS etcdctl member list > /dev/null
-    local exit_code=$?
-    echo "$exit_code"
-  }
-
-  CLUSTER=$(check_cluster)
-  if [[ "$CLUSTER" == "0" ]]; then
-
-      MEMBER_HASH=$(${local.get_member_id})
-      if [ -n "$${MEMBER_HASH}" ]; then
-          ETCDCTL_ENDPOINT=$$ALL_CLIENT_ENDPOINTS etcdctl member remove $${MEMBER_HASH}
-      fi
-
-      echo "adding new member"
-      ETCDCTL_ENDPOINT=$$ALL_CLIENT_ENDPOINTS etcdctl member add $${IP} http://$${IP}:${local.peer_port} | grep "^ETCD_" > ${local.data_volume_mount_path}/new_member_envs
-      if [ $? -ne 0 ]; then
-          echo "Exiting"
-          rm -f ${local.data_volume_mount_path}/new_member_envs
-          exit 1
-      fi
-      cat ${local.data_volume_mount_path}/new_member_envs
-      source ${local.data_volume_mount_path}/new_member_envs
-
-      collect_member &
-
-      exec etcd --name $${IP} \
-          --listen-peer-urls http://$${IP}:${local.peer_port} \
-          --listen-client-urls http://$${IP}:${local.client_port},http://127.0.0.1:${local.client_port} \
-          --advertise-client-urls http://$${IP}:${local.client_port} \
-          --data-dir ${local.data_volume_mount_path}/default.etcd \
-          --initial-advertise-peer-urls http://$${IP}:${local.peer_port} \
-          --initial-cluster $${ETCD_INITIAL_CLUSTER} \
-          --initial-cluster-state $${ETCD_INITIAL_CLUSTER_STATE}
-
-  fi
-
-  ALL_PEER_ENDPOINTS="$${IP}=http://$${IP}:${local.peer_port}"
-  for peer_ip in $${PEER_IPS}; do
-    ALL_PEER_ENDPOINTS="$${ALL_PEER_ENDPOINTS}$${ALL_PEER_ENDPOINTS:+,}$${peer_ip}=http://$${peer_ip}:${local.peer_port}"
-  done
-
-  collect_member &
-
-  exec etcd --name $${IP} \
-      --listen-peer-urls http://$${IP}:${local.peer_port} \
-      --listen-client-urls http://$${IP}:${local.client_port},http://127.0.0.1:${local.client_port} \
-      --advertise-client-urls http://$${IP}:${local.client_port} \
-      --data-dir ${local.data_volume_mount_path}/default.etcd \
-      --initial-advertise-peer-urls http://$${IP}:${local.peer_port} \
-      --initial-cluster $${ALL_PEER_ENDPOINTS} \
-      --initial-cluster-state new \
-      --initial-cluster-token ${var.service_name}-cluster
+#
+#  if [ -e ${local.data_volume_mount_path}/default.etcd ]; then
+#      echo "re-joining etcd cluster as existing member"
+#      ETCDCTL_ENDPOINT=$$ALL_CLIENT_ENDPOINTS etcdctl member update $(cat ${local.data_volume_mount_path}/member_id) http://$${IP}:${local.peer_port}
+#      exec etcd --name $${IP} \
+#          --listen-peer-urls http://$${IP}:${local.peer_port} \
+#          --listen-client-urls http://$${IP}:${local.client_port},http://127.0.0.1:${local.client_port} \
+#          --advertise-client-urls http://$${IP}:${local.client_port} \
+#          --data-dir ${local.data_volume_mount_path}/default.etcd
+#  fi
+#
+#  collect_member() {
+#      while ! etcdctl member list &>/dev/null; do sleep 1; done
+#      ${local.get_member_id} > ${local.data_volume_mount_path}/member_id
+#      exit 0
+#  }
+#
+#  check_cluster() {
+#    ETCDCTL_ENDPOINT=$$ALL_CLIENT_ENDPOINTS etcdctl member list > /dev/null
+#    local exit_code=$?
+#    echo "$exit_code"
+#  }
+#
+#  CLUSTER=$(check_cluster)
+#  if [[ "$CLUSTER" == "0" ]]; then
+#
+#      MEMBER_HASH=$(${local.get_member_id})
+#      if [ -n "$${MEMBER_HASH}" ]; then
+#          ETCDCTL_ENDPOINT=$$ALL_CLIENT_ENDPOINTS etcdctl member remove $${MEMBER_HASH}
+#      fi
+#
+#      echo "adding new member"
+#      ETCDCTL_ENDPOINT=$$ALL_CLIENT_ENDPOINTS etcdctl member add $${IP} http://$${IP}:${local.peer_port} | grep "^ETCD_" > ${local.data_volume_mount_path}/new_member_envs
+#      if [ $? -ne 0 ]; then
+#          echo "Exiting"
+#          rm -f ${local.data_volume_mount_path}/new_member_envs
+#          exit 1
+#      fi
+#      cat ${local.data_volume_mount_path}/new_member_envs
+#      source ${local.data_volume_mount_path}/new_member_envs
+#
+#      collect_member &
+#
+#      exec etcd --name $${IP} \
+#          --listen-peer-urls http://$${IP}:${local.peer_port} \
+#          --listen-client-urls http://$${IP}:${local.client_port},http://127.0.0.1:${local.client_port} \
+#          --advertise-client-urls http://$${IP}:${local.client_port} \
+#          --data-dir ${local.data_volume_mount_path}/default.etcd \
+#          --initial-advertise-peer-urls http://$${IP}:${local.peer_port} \
+#          --initial-cluster $${ETCD_INITIAL_CLUSTER} \
+#          --initial-cluster-state $${ETCD_INITIAL_CLUSTER_STATE}
+#
+#  fi
+#
+#  ALL_PEER_ENDPOINTS="$${IP}=http://$${IP}:${local.peer_port}"
+#  for peer_ip in $${PEER_IPS}; do
+#    ALL_PEER_ENDPOINTS="$${ALL_PEER_ENDPOINTS}$${ALL_PEER_ENDPOINTS:+,}$${peer_ip}=http://$${peer_ip}:${local.peer_port}"
+#  done
+#
+#  collect_member &
+#
+#  exec etcd --name $${IP} \
+#      --listen-peer-urls http://$${IP}:${local.peer_port} \
+#      --listen-client-urls http://$${IP}:${local.client_port},http://127.0.0.1:${local.client_port} \
+#      --advertise-client-urls http://$${IP}:${local.client_port} \
+#      --data-dir ${local.data_volume_mount_path}/default.etcd \
+#      --initial-advertise-peer-urls http://$${IP}:${local.peer_port} \
+#      --initial-cluster $${ALL_PEER_ENDPOINTS} \
+#      --initial-cluster-state new \
+#      --initial-cluster-token ${var.service_name}-cluster
 
   tail -f /dev/null
 
