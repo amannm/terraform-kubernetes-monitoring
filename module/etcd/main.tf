@@ -210,23 +210,23 @@ resource "kubernetes_stateful_set" "stateful_set" {
               memory : "150Mi"
             }
           }
-          readiness_probe {
-            http_get {
-              port = local.client_port
-              path = "/health"
-            }
-            initial_delay_seconds = 30
-            period_seconds        = 15
-            failure_threshold     = 4
-          }
-          liveness_probe {
-            http_get {
-              port = local.client_port
-              path = "/health"
-            }
-            initial_delay_seconds = 90
-            period_seconds        = 15
-          }
+          #          readiness_probe {
+          #            http_get {
+          #              port = local.client_port
+          #              path = "/health"
+          #            }
+          #            initial_delay_seconds = 30
+          #            period_seconds        = 15
+          #            failure_threshold     = 4
+          #          }
+          #          liveness_probe {
+          #            http_get {
+          #              port = local.client_port
+          #              path = "/health"
+          #            }
+          #            initial_delay_seconds = 90
+          #            period_seconds        = 15
+          #          }
           port {
             protocol       = "TCP"
             container_port = local.client_port
