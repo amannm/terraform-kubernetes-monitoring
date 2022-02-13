@@ -218,9 +218,9 @@ resource "kubernetes_stateful_set" "stateful_set" {
               port = local.client_port
               path = "/health"
             }
-            initial_delay_seconds = 30
+            initial_delay_seconds = 15
             period_seconds        = 15
-            failure_threshold     = 4
+            failure_threshold     = 5
           }
           liveness_probe {
             http_get {
