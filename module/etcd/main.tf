@@ -193,11 +193,11 @@ resource "kubernetes_stateful_set" "stateful_set" {
           name              = var.service_name
           image             = var.container_image
           image_pull_policy = "IfNotPresent"
-          command           = ["/bin/sh", "-ec", local.startup_script]
+          command           = ["/bin/sh", "-c", local.startup_script]
           lifecycle {
             pre_stop {
               exec {
-                command = ["/bin/sh", "-ec", local.pre_stop_script]
+                command = ["/bin/sh", "-c", local.pre_stop_script]
               }
             }
           }
