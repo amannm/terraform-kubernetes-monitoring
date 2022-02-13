@@ -7,6 +7,9 @@ variable "service_name" {
 variable "container_image" {
   type = string
 }
+variable "cluster_size" {
+  type = number
+}
 variable "storage_volume_size" {
   type = number
 }

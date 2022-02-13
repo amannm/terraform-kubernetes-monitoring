@@ -1,5 +1,4 @@
 locals {
-  cluster_size            = 3
   client_port             = 2379
   cluster_domain          = "cluster.local"
   peer_port               = 2380
@@ -8,7 +7,6 @@ locals {
   service_client_endpoint = "${module.service.non_headless_service_hostname}:${local.client_port}"
 
   script_globals = <<-EOT
-  sleep 5
   PEER_IPS=$(nslookup ${module.service.headless_service_hostname} 2>/dev/null | grep Address | awk -F ": " '{print $2}' | grep -v " ")
   echo "peer IPs: $PEER_IPS"
   ALL_CLIENT_ENDPOINTS=""
@@ -24,7 +22,6 @@ locals {
 
   startup_script = <<-EOT
   ${local.script_globals}
-
   if [ -e ${local.data_volume_mount_path}/default.etcd ]; then
       echo "re-joining cluster as existing member"
       ETCDCTL_ENDPOINT="$ALL_CLIENT_ENDPOINTS" etcdctl member update $(cat ${local.data_volume_mount_path}/member_id) http://$${IP}:${local.peer_port}
@@ -33,70 +30,60 @@ locals {
           --listen-client-urls http://$${IP}:${local.client_port},http://127.0.0.1:${local.client_port} \
           --advertise-client-urls http://$${IP}:${local.client_port} \
           --data-dir ${local.data_volume_mount_path}/default.etcd
-  fi
-
-  collect_member() {
-      echo "waiting for member ID assignment..."
-      while ! etcdctl member list &>/dev/null; do sleep 1; done
-      echo "member ID generated -- saving to disk"
-      ${local.get_member_id} > ${local.data_volume_mount_path}/member_id
-      echo "member ID saved to disk"
-      exit 0
-  }
-
-  check_cluster() {
-      echo "checking for existing cluster..."
-      ETCDCTL_ENDPOINT="$ALL_CLIENT_ENDPOINTS" etcdctl member list > /dev/null
-      local exit_code=$?
-      echo "$exit_code"
-  }
-
-  CLUSTER=$(check_cluster)
-  if [[ "$ALL_CLIENT_ENDPOINTS" != "" ]]; then
-      echo "existing cluster found"
-      MEMBER_ID=$(${local.get_member_id})
-      if [ -n "$${MEMBER_ID}" ]; then
-          echo "clearing previous membership from existing cluster"
-          ETCDCTL_ENDPOINT="$ALL_CLIENT_ENDPOINTS" etcdctl member remove $${MEMBER_ID}
-      fi
-      echo "registering with existing cluster as new member"
-      ETCDCTL_ENDPOINT="$ALL_CLIENT_ENDPOINTS" etcdctl member add $${IP} http://$${IP}:${local.peer_port} | grep "^ETCD_" > ${local.data_volume_mount_path}/new_member_envs
-      if [ $? -ne 0 ]; then
-          echo "failed to register with existing cluster"
-          rm -f ${local.data_volume_mount_path}/new_member_envs
-          exit 1
-      fi
-      cat ${local.data_volume_mount_path}/new_member_envs
-      source ${local.data_volume_mount_path}/new_member_envs
-      collect_member &
-      echo "joining existing cluster"
-      exec etcd --name $${IP} \
-          --listen-peer-urls http://$${IP}:${local.peer_port} \
-          --listen-client-urls http://$${IP}:${local.client_port},http://127.0.0.1:${local.client_port} \
-          --advertise-client-urls http://$${IP}:${local.client_port} \
-          --data-dir ${local.data_volume_mount_path}/default.etcd \
-          --initial-advertise-peer-urls http://$${IP}:${local.peer_port} \
-          --initial-cluster $${ETCD_INITIAL_CLUSTER} \
-          --initial-cluster-state $${ETCD_INITIAL_CLUSTER_STATE}
   else
-      echo "existing cluster not found"
-      ALL_PEER_ENDPOINTS="$${IP}=http://$${IP}:${local.peer_port}"
-      for peer_ip in $${PEER_IPS}; do
-          ALL_PEER_ENDPOINTS="$${ALL_PEER_ENDPOINTS}$${ALL_PEER_ENDPOINTS:+,}$${peer_ip}=http://$${peer_ip}:${local.peer_port}"
-      done
-      collect_member &
-      echo "founding new cluster"
-      exec etcd --name $${IP} \
-          --listen-peer-urls http://$${IP}:${local.peer_port} \
-          --listen-client-urls http://$${IP}:${local.client_port},http://127.0.0.1:${local.client_port} \
-          --advertise-client-urls http://$${IP}:${local.client_port} \
-          --data-dir ${local.data_volume_mount_path}/default.etcd \
-          --initial-advertise-peer-urls http://$${IP}:${local.peer_port} \
-          --initial-cluster $${ALL_PEER_ENDPOINTS} \
-          --initial-cluster-state new \
-          --initial-cluster-token ${var.service_name}-cluster
+      save_member_id() {
+          echo "waiting for member ID assignment..."
+          while ! etcdctl member list &>/dev/null; do sleep 1; done
+          echo "member ID generated -- saving to disk"
+          ${local.get_member_id} > ${local.data_volume_mount_path}/member_id
+          echo "member ID saved to disk"
+          exit 0
+      }
+      if [[ "$ALL_CLIENT_ENDPOINTS" != "" ]]; then
+          echo "existing cluster found"
+          MEMBER_ID=$(${local.get_member_id})
+          if [ -n "$${MEMBER_ID}" ]; then
+              echo "clearing previous membership from existing cluster"
+              ETCDCTL_ENDPOINT="$ALL_CLIENT_ENDPOINTS" etcdctl member remove $${MEMBER_ID}
+          fi
+          echo "registering with existing cluster as new member"
+          ETCDCTL_ENDPOINT="$ALL_CLIENT_ENDPOINTS" etcdctl member add $${IP} http://$${IP}:${local.peer_port} | grep "^ETCD_" > ${local.data_volume_mount_path}/new_member_envs
+          if [ $? -ne 0 ]; then
+              echo "failed to register with existing cluster"
+              rm -f ${local.data_volume_mount_path}/new_member_envs
+              exit 1
+          fi
+          cat ${local.data_volume_mount_path}/new_member_envs
+          source ${local.data_volume_mount_path}/new_member_envs
+          save_member_id &
+          echo "joining existing cluster"
+          exec etcd --name $${IP} \
+              --listen-peer-urls http://$${IP}:${local.peer_port} \
+              --listen-client-urls http://$${IP}:${local.client_port},http://127.0.0.1:${local.client_port} \
+              --advertise-client-urls http://$${IP}:${local.client_port} \
+              --data-dir ${local.data_volume_mount_path}/default.etcd \
+              --initial-advertise-peer-urls http://$${IP}:${local.peer_port} \
+              --initial-cluster $${ETCD_INITIAL_CLUSTER} \
+              --initial-cluster-state $${ETCD_INITIAL_CLUSTER_STATE}
+      else
+          echo "existing cluster not found"
+          ALL_PEER_ENDPOINTS="$${IP}=http://$${IP}:${local.peer_port}"
+          for peer_ip in $${PEER_IPS}; do
+              ALL_PEER_ENDPOINTS="$${ALL_PEER_ENDPOINTS}$${ALL_PEER_ENDPOINTS:+,}$${peer_ip}=http://$${peer_ip}:${local.peer_port}"
+          done
+          save_member_id &
+          echo "founding new cluster"
+          exec etcd --name $${IP} \
+              --listen-peer-urls http://$${IP}:${local.peer_port} \
+              --listen-client-urls http://$${IP}:${local.client_port},http://127.0.0.1:${local.client_port} \
+              --advertise-client-urls http://$${IP}:${local.client_port} \
+              --data-dir ${local.data_volume_mount_path}/default.etcd \
+              --initial-advertise-peer-urls http://$${IP}:${local.peer_port} \
+              --initial-cluster $${ALL_PEER_ENDPOINTS} \
+              --initial-cluster-state new \
+              --initial-cluster-token ${var.service_name}-cluster
+      fi
   fi
-
   EOT
 
   pre_stop_script = <<-EOT
@@ -107,7 +94,6 @@ locals {
   if [ $? -eq 0 ]; then
       rm -rf ${local.data_volume_mount_path}/*
   fi
-
   EOT
 
 }
@@ -135,7 +121,7 @@ resource "kubernetes_stateful_set" "stateful_set" {
   }
   spec {
     service_name = var.service_name
-    replicas     = local.cluster_size
+    replicas     = var.cluster_size
     update_strategy {
       rolling_update {
         partition = 0
