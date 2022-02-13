@@ -34,7 +34,7 @@ locals {
 
   collect_member() {
       while ! etcdctl member list &>/dev/null; do sleep 1; done
-      $(${local.get_member_id}) > ${local.data_volume_mount_path}/member_id
+      ${local.get_member_id} > ${local.data_volume_mount_path}/member_id
       exit 0
   }
 
@@ -91,6 +91,8 @@ locals {
       --initial-cluster $${ALL_PEER_ENDPOINTS} \
       --initial-cluster-state new \
       --initial-cluster-token ${var.service_name}-cluster
+
+  tail -f /dev/null
 
   EOT
 
