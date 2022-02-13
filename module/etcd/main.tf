@@ -68,9 +68,7 @@ locals {
       fi
       cat ${local.data_volume_mount_path}/new_member_envs
       source ${local.data_volume_mount_path}/new_member_envs
-
       collect_member &
-
       echo "joining existing cluster"
       exec etcd --name $${IP} \
           --listen-peer-urls http://$${IP}:${local.peer_port} \
@@ -80,25 +78,25 @@ locals {
           --initial-advertise-peer-urls http://$${IP}:${local.peer_port} \
           --initial-cluster $${ETCD_INITIAL_CLUSTER} \
           --initial-cluster-state $${ETCD_INITIAL_CLUSTER_STATE}
+  else
+      echo "existing cluster not found"
+      ALL_PEER_ENDPOINTS="$${IP}=http://$${IP}:${local.peer_port}"
+      for peer_ip in $${PEER_IPS}; do
+          ALL_PEER_ENDPOINTS="$${ALL_PEER_ENDPOINTS}$${ALL_PEER_ENDPOINTS:+,}$${peer_ip}=http://$${peer_ip}:${local.peer_port}"
+      done
+      collect_member &
+      echo "founding new cluster"
+      exec etcd --name $${IP} \
+          --listen-peer-urls http://$${IP}:${local.peer_port} \
+          --listen-client-urls http://$${IP}:${local.client_port},http://127.0.0.1:${local.client_port} \
+          --advertise-client-urls http://$${IP}:${local.client_port} \
+          --data-dir ${local.data_volume_mount_path}/default.etcd \
+          --initial-advertise-peer-urls http://$${IP}:${local.peer_port} \
+          --initial-cluster $${ALL_PEER_ENDPOINTS} \
+          --initial-cluster-state new \
+          --initial-cluster-token ${var.service_name}-cluster
   fi
 
-  ALL_PEER_ENDPOINTS="$${IP}=http://$${IP}:${local.peer_port}"
-  for peer_ip in $${PEER_IPS}; do
-      ALL_PEER_ENDPOINTS="$${ALL_PEER_ENDPOINTS}$${ALL_PEER_ENDPOINTS:+,}$${peer_ip}=http://$${peer_ip}:${local.peer_port}"
-  done
-
-  collect_member &
-
-  echo "founding new cluster"
-  exec etcd --name $${IP} \
-      --listen-peer-urls http://$${IP}:${local.peer_port} \
-      --listen-client-urls http://$${IP}:${local.client_port},http://127.0.0.1:${local.client_port} \
-      --advertise-client-urls http://$${IP}:${local.client_port} \
-      --data-dir ${local.data_volume_mount_path}/default.etcd \
-      --initial-advertise-peer-urls http://$${IP}:${local.peer_port} \
-      --initial-cluster $${ALL_PEER_ENDPOINTS} \
-      --initial-cluster-state new \
-      --initial-cluster-token ${var.service_name}-cluster
   EOT
 
   pre_stop_script = <<-EOT
