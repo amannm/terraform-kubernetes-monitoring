@@ -20,7 +20,7 @@ locals {
   echo "IP: $IP"
   EOT
 
-  get_member_id = "etcdctl member list | grep http://$${IP}:${local.peer_port} | cut -d':' -f1 | cut -d'[' -f1"
+  get_member_id = "ETCDCTL_ENDPOINT=$$ALL_CLIENT_ENDPOINTS etcdctl member list | grep http://$${IP}:${local.peer_port} | cut -d':' -f1 | cut -d'[' -f1"
 
   startup_script = <<-EOT
   ${local.script_globals}
@@ -36,7 +36,7 @@ locals {
   fi
 
   collect_member() {
-      echo "waiting for member ID generation..."
+      echo "waiting for member ID assignment..."
       while ! etcdctl member list &>/dev/null; do sleep 1; done
       echo "member ID generated -- saving to disk"
       ${local.get_member_id} > ${local.data_volume_mount_path}/member_id
@@ -54,10 +54,10 @@ locals {
   CLUSTER=$(check_cluster)
   if [[ "$CLUSTER" == "0" ]]; then
       echo "existing cluster found"
-      MEMBER_HASH=$(${local.get_member_id})
-      if [ -n "$${MEMBER_HASH}" ]; then
+      MEMBER_ID=$(${local.get_member_id})
+      if [ -n "$${MEMBER_ID}" ]; then
           echo "clearing previous membership from existing cluster"
-          ETCDCTL_ENDPOINT=$$ALL_CLIENT_ENDPOINTS etcdctl member remove $${MEMBER_HASH}
+          ETCDCTL_ENDPOINT=$$ALL_CLIENT_ENDPOINTS etcdctl member remove $${MEMBER_ID}
       fi
       echo "registering with existing cluster as new member"
       ETCDCTL_ENDPOINT=$$ALL_CLIENT_ENDPOINTS etcdctl member add $${IP} http://$${IP}:${local.peer_port} | grep "^ETCD_" > ${local.data_volume_mount_path}/new_member_envs
@@ -103,7 +103,7 @@ locals {
 
   pre_stop_script = <<-EOT
   ${local.script_globals}
-
+  MEMBER_ID=$(${local.get_member_id})
   echo "Removing $${IP} from etcd cluster"
   ETCDCTL_ENDPOINT=$$ALL_CLIENT_ENDPOINTS etcdctl member remove $(${local.get_member_id})
   if [ $? -eq 0 ]; then
