@@ -90,7 +90,7 @@ locals {
   ${local.script_globals}
   MEMBER_ID=$(${local.get_member_id})
   echo "Removing $${IP} from etcd cluster"
-  ETCDCTL_ENDPOINT=$"ALL_CLIENT_ENDPOINTS" etcdctl member remove $(${local.get_member_id})
+  ETCDCTL_ENDPOINT="$ALL_CLIENT_ENDPOINTS" etcdctl member remove $(${local.get_member_id})
   if [ $? -eq 0 ]; then
       rm -rf ${local.data_volume_mount_path}/*
   fi
