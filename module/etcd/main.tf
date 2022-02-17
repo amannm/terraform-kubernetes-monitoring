@@ -1,11 +1,12 @@
 locals {
-  client_port            = 2379
-  cluster_domain         = "cluster.local"
-  peer_port              = 2380
-  data_volume_name       = "data"
-  data_volume_mount_path = "/var/run/etcd"
-  domain_suffix          = module.service.headless_service_hostname
-  script_globals         = <<-EOT
+  client_port             = 2379
+  cluster_domain          = "cluster.local"
+  peer_port               = 2380
+  data_volume_name        = "data"
+  data_volume_mount_path  = "/var/run/etcd"
+  service_client_endpoint = "${module.service.non_headless_service_hostname}:${local.client_port}"
+  domain_suffix           = module.service.headless_service_hostname
+  script_globals          = <<-EOT
   SET_ID="$${POD_NAME##*-}"
   SET_NAME="$${POD_NAME%%-*}"
   HOSTNAME=$${POD_NAME}.${local.domain_suffix}
