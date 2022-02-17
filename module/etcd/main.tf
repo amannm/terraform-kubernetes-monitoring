@@ -12,7 +12,7 @@ locals {
   HOSTNAME=$${POD_NAME}.${local.domain_suffix}
   IP=$(hostname -i)
   ALL_CLIENT_ENDPOINTS=""
-  for i in $(seq 0 $((${SET_ID} - 1))); do
+  for i in $(seq 0 $(($${SET_ID} - 1))); do
       ALL_CLIENT_ENDPOINTS="$${ALL_CLIENT_ENDPOINTS}$${ALL_CLIENT_ENDPOINTS:+,}http://$${SET_NAME}-$${i}.${local.domain_suffix}:${local.client_port}"
   done
   echo "SET_ID: $SET_ID"
