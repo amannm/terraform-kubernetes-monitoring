@@ -5,7 +5,7 @@ locals {
   data_volume_name        = "data"
   data_volume_mount_path  = "/var/run/etcd"
   service_client_endpoint = "${module.service.non_headless_service_hostname}:${local.client_port}"
-  domain_suffix           = module.service.headless_service_hostname
+  domain_suffix           = module.service.headless_service_name
   script_globals          = <<-EOT
   SET_ID="$${POD_NAME##*-}"
   SET_NAME="$${POD_NAME%%-*}"
@@ -120,7 +120,7 @@ resource "kubernetes_stateful_set" "stateful_set" {
     namespace = var.namespace_name
   }
   spec {
-    service_name = module.service.non_headless_service_name
+    service_name = module.service.headless_service_name
     replicas     = var.cluster_size
     update_strategy {
       rolling_update {
