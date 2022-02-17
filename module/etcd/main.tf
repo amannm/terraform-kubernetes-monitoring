@@ -9,7 +9,7 @@ locals {
   script_globals          = <<-EOT
   SET_ID="$${POD_NAME##*-}"
   SET_NAME="$${POD_NAME%%-*}"
-  HOSTNAME=$${POD_NAME}.${local.domain_suffix}
+  HOSTNAME="$${POD_NAME}.${local.domain_suffix}"
   IP=$(hostname -i)
   ALL_CLIENT_ENDPOINTS=""
   for i in $(seq 0 $(($${SET_ID} - 1))); do
@@ -120,7 +120,7 @@ resource "kubernetes_stateful_set" "stateful_set" {
     namespace = var.namespace_name
   }
   spec {
-    service_name = var.service_name
+    service_name = module.service.non_headless_service_name
     replicas     = var.cluster_size
     update_strategy {
       rolling_update {
