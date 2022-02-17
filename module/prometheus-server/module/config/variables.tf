@@ -1,9 +1,9 @@
 variable "namespace_name" {
   type = string
 }
-variable "server_container_port" {
-  type = number
+variable "config_map_name" {
+  type = string
 }
-variable "configmap_reload_container_port" {
-  type = number
+variable "config_filename" {
+  type = string
 }

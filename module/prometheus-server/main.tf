@@ -1,5 +1,4 @@
 locals {
-
   config_filename = "prometheus.yml"
 
   config_volume_name       = "config"
@@ -7,103 +6,35 @@ locals {
 
   storage_volume_name       = "storage"
   storage_volume_mount_path = "/data"
-}
 
-resource "kubernetes_service" "service" {
-  metadata {
-    name      = var.service_name
-    namespace = var.namespace_name
-  }
-  spec {
-    type             = "ClusterIP"
-    session_affinity = "None"
-    port {
+  ports = {
+    http = {
       port        = var.service_port
-      protocol    = "TCP"
       target_port = var.server_container_port
     }
-    selector = {
-      component = var.service_name
-    }
   }
 }
 
-resource "kubernetes_service_account" "service_account" {
-  metadata {
-    name      = var.service_name
-    namespace = var.namespace_name
-  }
+module "service" {
+  source            = "../common/service"
+  namespace_name    = var.namespace_name
+  service_name      = var.service_name
+  non_headless_only = true
+  ports             = local.ports
 }
 
-resource "kubernetes_cluster_role" "cluster_role" {
-  metadata {
-    name = var.service_name
-  }
-  rule {
-    api_groups = [""]
-    verbs      = ["get", "list", "watch"]
-    resources  = ["nodes", "nodes/proxy", "nodes/metrics", "services", "endpoints", "pods", "ingresses", "configmaps"]
-  }
-  rule {
-    api_groups = ["extensions", "networking.k8s.io"]
-    resources  = ["ingresses/status", "ingresses"]
-    verbs      = ["get", "list", "watch"]
-  }
-  rule {
-    non_resource_urls = ["/metrics"]
-    verbs             = ["get"]
-  }
+module "persistent_volume_claim" {
+  source         = "../common/persistent-volume-claim"
+  namespace_name = var.namespace_name
+  service_name   = var.service_name
+  size           = var.storage_volume_size
 }
 
-resource "kubernetes_cluster_role_binding" "cluster_role_binding" {
-  metadata {
-    name = var.service_name
-  }
-  subject {
-    kind      = "ServiceAccount"
-    name      = kubernetes_service_account.service_account.metadata[0].name
-    namespace = var.namespace_name
-  }
-  role_ref {
-    kind      = "ClusterRole"
-    name      = kubernetes_cluster_role.cluster_role.metadata[0].name
-    api_group = "rbac.authorization.k8s.io"
-  }
-}
-
-resource "kubernetes_persistent_volume_claim" "persistent_volume_claim" {
-  metadata {
-    name      = var.service_name
-    namespace = var.namespace_name
-  }
-  spec {
-    resources {
-      requests = {
-        storage = "${var.storage_volume_size}Gi"
-      }
-    }
-    access_modes = [
-      "ReadWriteOnce"
-    ]
-  }
-}
-
-#module "prometheus_config" {
-#  source                          = "./module/config"
-#  namespace_name                  = var.namespace_name
-#  server_container_port           = var.server_container_port
-#  configmap_reload_container_port = var.configmap_reload_container_port
-#}
-
-resource "kubernetes_config_map" "config_map" {
-  metadata {
-    name      = var.service_name
-    namespace = var.namespace_name
-  }
-  data = {
-    //  (local.config_filename) = module.prometheus_config.yaml
-    (local.config_filename) = ""
-  }
+module "prometheus_config" {
+  source          = "./module/config"
+  namespace_name  = var.namespace_name
+  config_map_name = var.service_name
+  config_filename = local.config_filename
 }
 
 resource "kubernetes_deployment" "deployment" {
@@ -130,8 +61,6 @@ resource "kubernetes_deployment" "deployment" {
       spec {
         termination_grace_period_seconds = 30
         dns_policy                       = "ClusterFirst"
-        enable_service_links             = true
-        service_account_name             = kubernetes_service_account.service_account.metadata[0].name
         security_context {
           fs_group        = "65534"
           run_as_group    = "65534"
@@ -141,13 +70,13 @@ resource "kubernetes_deployment" "deployment" {
         volume {
           name = local.config_volume_name
           config_map {
-            name = kubernetes_config_map.config_map.metadata[0].name
+            name = module.prometheus_config.config_map_name
           }
         }
         volume {
           name = local.storage_volume_name
           persistent_volume_claim {
-            claim_name = kubernetes_persistent_volume_claim.persistent_volume_claim.metadata[0].name
+            claim_name = module.persistent_volume_claim.name
           }
         }
         container {
