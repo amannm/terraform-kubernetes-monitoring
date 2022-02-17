@@ -178,7 +178,6 @@ resource "kubernetes_stateful_set" "stateful_set" {
           }
         }
         container {
-
           name              = var.service_name
           image             = var.container_image
           image_pull_policy = "IfNotPresent"
@@ -187,6 +186,14 @@ resource "kubernetes_stateful_set" "stateful_set" {
             pre_stop {
               exec {
                 command = ["/bin/sh", "-c", local.pre_stop_script]
+              }
+            }
+          }
+          env {
+            name = "POD_NAME"
+            value_from {
+              field_ref {
+                field_path = "metadata.name"
               }
             }
           }
