@@ -22,13 +22,13 @@ locals {
   echo "ALL_CLIENT_ENDPOINTS: $ALL_CLIENT_ENDPOINTS"
   EOT
 
-  get_member_id = "etcdctl member list | grep http://$${HOSTNAME}:${local.peer_port} | cut -d',' -f1 | cut -d'[' -f1"
+  get_member_id = "etcdctl member list | grep http://$${IP}:${local.peer_port} | cut -d',' -f1 | cut -d'[' -f1"
 
   startup_script = <<-EOT
   ${local.script_globals}
   save_member_id() {
       MEMBER_ID=""
-      while "$MEMBER_ID" == ""
+      while [ "$MEMBER_ID" = "" ]
       do
         echo "waiting for member ID assignment..."
         sleep 1
@@ -174,11 +174,11 @@ resource "kubernetes_stateful_set" "stateful_set" {
           name              = var.service_name
           image             = var.container_image
           image_pull_policy = "IfNotPresent"
-          command           = ["/bin/sh", "-c", local.startup_script]
+          command           = ["/bin/sh", "-ec", local.startup_script]
           lifecycle {
             pre_stop {
               exec {
-                command = ["/bin/sh", "-c", local.pre_stop_script]
+                command = ["/bin/sh", "-ec", local.pre_stop_script]
               }
             }
           }
