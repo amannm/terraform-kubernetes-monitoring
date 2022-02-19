@@ -26,66 +26,47 @@ locals {
 
   startup_script = <<-EOT
   ${local.script_globals}
-  save_member_id() {
-      MEMBER_ID=""
-      while [ "$MEMBER_ID" = "" ]
-      do
-        echo "waiting for member ID assignment..."
-        sleep 1
-        MEMBER_ID=$(${local.get_member_id})
-      done
-      echo "member ID generated -- saving to disk"
-      ${local.get_member_id} > ${local.data_volume_mount_path}/member_id
-      echo "member ID saved to disk"
-      exit 0
-  }
   if [ "$ALL_CLIENT_ENDPOINTS" != "" ]; then
       echo "existing cluster found"
-      if [ -e ${local.data_volume_mount_path}/default.etcd ]; then
-          echo "re-joining existing cluster as existing member"
-          etcdctl member update --endpoints="$ALL_CLIENT_ENDPOINTS" $(cat ${local.data_volume_mount_path}/member_id) --peer-urls=http://$${HOSTNAME}:${local.peer_port}
-          exec etcd --name $${POD_NAME} --data-dir ${local.data_volume_mount_path}/default.etcd \
-              --advertise-client-urls http://$${HOSTNAME}:${local.client_port} --listen-client-urls http://$${IP}:${local.client_port},http://127.0.0.1:${local.client_port} \
-              --listen-peer-urls http://$${IP}:${local.peer_port}
-      else
-          MEMBER_ID=$(${local.get_member_id})
-          if [ -n "$${MEMBER_ID}" ]; then
-              echo "clearing previous membership from existing cluster"
-              etcdctl member remove --endpoints="$ALL_CLIENT_ENDPOINTS" $${MEMBER_ID}
+      MEMBER_ID=$(etcdctl member list --endpoints="$ALL_CLIENT_ENDPOINTS" | grep http://$${HOSTNAME}:${local.peer_port} | cut -d',' -f1 | cut -d'[' -f1)
+      if [ "$MEMBER_ID" != "" ]; then
+          echo "existing membership found: $MEMBER_ID"
+          if [ -e ${local.data_volume_mount_path}/default.etcd ]; then
+              echo "existing local data found -- re-joining existing cluster using existing membership"
+              etcdctl member update --endpoints="$ALL_CLIENT_ENDPOINTS" $MEMBER_ID --peer-urls=http://$${HOSTNAME}:${local.peer_port}
+              exec etcd --name $${POD_NAME} --data-dir ${local.data_volume_mount_path}/default.etcd --listen-peer-urls http://0.0.0.0:${local.peer_port} --listen-client-urls http://0.0.0.0:${local.client_port} \
+                  --advertise-client-urls http://$${HOSTNAME}:${local.client_port},http://${local.service_client_endpoint}
+          else
+              echo "existing local data not found -- removing existing membership"
+              etcdctl member remove --endpoints="$ALL_CLIENT_ENDPOINTS" $MEMBER_ID
           fi
-          echo "registering with existing cluster as new member"
-          etcdctl member add --endpoints="$ALL_CLIENT_ENDPOINTS" $${POD_NAME} --peer-urls=http://$${HOSTNAME}:${local.peer_port} | grep "^ETCD_" > ${local.data_volume_mount_path}/new_member_envs
-          if [ $? -ne 0 ]; then
-              echo "failed to register with existing cluster"
-              rm -f ${local.data_volume_mount_path}/new_member_envs
-              exit 1
-          fi
-          source ${local.data_volume_mount_path}/new_member_envs
-          save_member_id &
-          echo "joining existing cluster"
-          exec etcd --name $${POD_NAME} --data-dir ${local.data_volume_mount_path}/default.etcd \
-              --advertise-client-urls http://$${HOSTNAME}:${local.client_port} --listen-client-urls http://$${IP}:${local.client_port},http://127.0.0.1:${local.client_port} \
-              --initial-advertise-peer-urls http://$${HOSTNAME}:${local.peer_port} --listen-peer-urls http://$${IP}:${local.peer_port} \
-              --initial-cluster $${ETCD_INITIAL_CLUSTER} --initial-cluster-state $${ETCD_INITIAL_CLUSTER_STATE}
       fi
+      echo "creating new membership"
+      for NEW_MEMBER_ENV_VAR in $(etcdctl member add --endpoints="$ALL_CLIENT_ENDPOINTS" $${POD_NAME} --peer-urls=http://$${HOSTNAME}:${local.peer_port} | grep "^ETCD_"); do
+          export $NEW_MEMBER_ENV_VAR
+      done
+      exec etcd --name $${POD_NAME} --data-dir ${local.data_volume_mount_path}/default.etcd --listen-peer-urls http://0.0.0.0:${local.peer_port} --listen-client-urls http://0.0.0.0:${local.client_port} \
+          --advertise-client-urls http://$${HOSTNAME}:${local.client_port},http://${local.service_client_endpoint} \
+          --initial-advertise-peer-urls http://$${HOSTNAME}:${local.peer_port} \
+          --initial-cluster $${ETCD_INITIAL_CLUSTER} --initial-cluster-state $${ETCD_INITIAL_CLUSTER_STATE}
   else
-      echo "existing cluster not found"
-      save_member_id &
-      echo "founding new cluster"
-      exec etcd --name $${POD_NAME} --data-dir ${local.data_volume_mount_path}/default.etcd \
-          --advertise-client-urls http://$${HOSTNAME}:${local.client_port} --listen-client-urls http://$${IP}:${local.client_port},http://127.0.0.1:${local.client_port} \
-          --initial-advertise-peer-urls http://$${HOSTNAME}:${local.peer_port} --listen-peer-urls http://$${IP}:${local.peer_port} \
+      echo "existing cluster not found -- founding new cluster"
+      exec etcd --name $${POD_NAME} --data-dir ${local.data_volume_mount_path}/default.etcd --listen-peer-urls http://0.0.0.0:${local.peer_port} --listen-client-urls http://0.0.0.0:${local.client_port} \
+          --advertise-client-urls http://$${HOSTNAME}:${local.client_port},http://${local.service_client_endpoint} \
+          --initial-advertise-peer-urls http://$${HOSTNAME}:${local.peer_port} \
           --initial-cluster "$${POD_NAME}=http://$${HOSTNAME}:${local.peer_port}" --initial-cluster-state new --initial-cluster-token ${var.service_name}-cluster
   fi
   EOT
 
   pre_stop_script = <<-EOT
   ${local.script_globals}
-  MEMBER_ID=$(${local.get_member_id})
+  MEMBER_ID=$(etcdctl member list | grep http://$${IP}:${local.peer_port} | cut -d',' -f1 | cut -d'[' -f1)
   echo "removing $${POD_NAME} from cluster"
-  etcdctl member remove --endpoints="$ALL_CLIENT_ENDPOINTS" $(${local.get_member_id})
-  if [ $? -eq 0 ]; then
-      rm -rf ${local.data_volume_mount_path}/*
+  if [ "$ALL_CLIENT_ENDPOINTS" != "" ]; then
+      etcdctl member remove --endpoints="$ALL_CLIENT_ENDPOINTS" $MEMBER_ID
+      if [ $? -eq 0 ]; then
+          rm -rf ${local.data_volume_mount_path}/*
+      fi
   fi
   EOT
 
