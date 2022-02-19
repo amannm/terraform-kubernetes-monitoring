@@ -28,7 +28,8 @@ locals {
   ${local.script_globals}
   save_member_id() {
       MEMBER_ID=""
-      while [ "$MEMBER_ID" == "" ]; do
+      while "$MEMBER_ID" == ""
+      do
         echo "waiting for member ID assignment..."
         sleep 1
         MEMBER_ID=$(${local.get_member_id})
