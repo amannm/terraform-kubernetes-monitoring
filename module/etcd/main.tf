@@ -34,7 +34,7 @@ locals {
       echo "member ID saved to disk"
       exit 0
   }
-  if [[ "$ALL_CLIENT_ENDPOINTS" != "" ]]; then
+  if [ "$ALL_CLIENT_ENDPOINTS" != "" ]; then
       echo "existing cluster found"
       if [ -e ${local.data_volume_mount_path}/default.etcd ]; then
           echo "re-joining existing cluster as existing member"
