@@ -42,7 +42,7 @@ locals {
       fi
       echo "creating new membership"
       etcdctl member add --endpoints="$ALL_CLIENT_ENDPOINTS" $${POD_NAME} --peer-urls=http://$${HOSTNAME}:${local.peer_port} | grep "^ETCD_" > ${local.data_volume_mount_path}/new_member_envs
-      source ${local.data_volume_mount_path}/new_member_envs
+      . ${local.data_volume_mount_path}/new_member_envs
       exec etcd --name $${POD_NAME} --data-dir ${local.data_volume_mount_path}/default.etcd --listen-peer-urls http://0.0.0.0:${local.peer_port} --listen-client-urls http://0.0.0.0:${local.client_port} \
           --advertise-client-urls http://$${HOSTNAME}:${local.client_port},http://${local.service_client_endpoint} \
           --initial-advertise-peer-urls http://$${HOSTNAME}:${local.peer_port} \
