@@ -19,6 +19,6 @@ resource "kubernetes_config_map" "config_map" {
     namespace = var.namespace_name
   }
   data = {
-    (var.config_filename) = local.rendered
+    (var.config_filename) = ""
   }
 }
