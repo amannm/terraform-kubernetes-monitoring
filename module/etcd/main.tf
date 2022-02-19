@@ -27,8 +27,13 @@ locals {
   startup_script = <<-EOT
   ${local.script_globals}
   save_member_id() {
-      echo "waiting for member ID assignment..."
-      while ! etcdctl member list &>/dev/null; do sleep 1; done
+      MEMBER_ID=$(${local.get_member_id})
+      while [ "$MEMBER_ID" == "" ]
+      do
+        echo "waiting for member ID assignment..."
+        sleep 1
+        MEMBER_ID=$(${local.get_member_id})
+      done
       echo "member ID generated -- saving to disk"
       ${local.get_member_id} > ${local.data_volume_mount_path}/member_id
       echo "member ID saved to disk"
@@ -40,7 +45,7 @@ locals {
           echo "re-joining existing cluster as existing member"
           etcdctl member update --endpoints="$ALL_CLIENT_ENDPOINTS" $(cat ${local.data_volume_mount_path}/member_id) --peer-urls=http://$${HOSTNAME}:${local.peer_port}
           exec etcd --name $${POD_NAME} \
-              --peer-urls http://$${IP}:${local.peer_port} \
+              --listen-peer-urls http://$${IP}:${local.peer_port} \
               --listen-client-urls http://$${IP}:${local.client_port},http://127.0.0.1:${local.client_port} \
               --advertise-client-urls http://$${HOSTNAME}:${local.client_port} \
               --data-dir ${local.data_volume_mount_path}/default.etcd
@@ -62,7 +67,7 @@ locals {
           save_member_id &
           echo "joining existing cluster"
           exec etcd --name $${POD_NAME} \
-              --peer-urls http://$${IP}:${local.peer_port} \
+              --listen-peer-urls http://$${IP}:${local.peer_port} \
               --listen-client-urls http://$${IP}:${local.client_port},http://127.0.0.1:${local.client_port} \
               --advertise-client-urls http://$${HOSTNAME}:${local.client_port} \
               --data-dir ${local.data_volume_mount_path}/default.etcd \
@@ -75,7 +80,7 @@ locals {
       save_member_id &
       echo "founding new cluster"
       exec etcd --name $${POD_NAME} \
-          --peer-urls http://$${IP}:${local.peer_port} \
+          --listen-peer-urls http://$${IP}:${local.peer_port} \
           --listen-client-urls http://$${IP}:${local.client_port},http://127.0.0.1:${local.client_port} \
           --advertise-client-urls http://$${HOSTNAME}:${local.client_port} \
           --data-dir ${local.data_volume_mount_path}/default.etcd \
