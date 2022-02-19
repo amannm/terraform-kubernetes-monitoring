@@ -45,7 +45,7 @@ locals {
           echo "re-joining existing cluster as existing member"
           etcdctl member update --endpoints="$ALL_CLIENT_ENDPOINTS" $(cat ${local.data_volume_mount_path}/member_id) --peer-urls=http://$${HOSTNAME}:${local.peer_port}
           exec etcd --name $${POD_NAME} --data-dir ${local.data_volume_mount_path}/default.etcd \
-              --advertise-client-urls http://$${HOSTNAME}:${local.client_port} --listen-client-urls http://$${IP}:${local.client_port} \
+              --advertise-client-urls http://$${HOSTNAME}:${local.client_port} --listen-client-urls http://$${IP}:${local.client_port},http://127.0.0.1:${local.client_port} \
               --listen-peer-urls http://$${IP}:${local.peer_port}
       else
           MEMBER_ID=$(${local.get_member_id})
@@ -60,26 +60,22 @@ locals {
               rm -f ${local.data_volume_mount_path}/new_member_envs
               exit 1
           fi
-          cat ${local.data_volume_mount_path}/new_member_envs
           source ${local.data_volume_mount_path}/new_member_envs
           save_member_id &
           echo "joining existing cluster"
           exec etcd --name $${POD_NAME} --data-dir ${local.data_volume_mount_path}/default.etcd \
-              --advertise-client-urls http://$${HOSTNAME}:${local.client_port} --listen-client-urls http://$${IP}:${local.client_port} \
+              --advertise-client-urls http://$${HOSTNAME}:${local.client_port} --listen-client-urls http://$${IP}:${local.client_port},http://127.0.0.1:${local.client_port} \
               --initial-advertise-peer-urls http://$${HOSTNAME}:${local.peer_port} --listen-peer-urls http://$${IP}:${local.peer_port} \
-              --initial-cluster "$${POD_NAME}=http://$${HOSTNAME}:${local.peer_port}" \
-              --initial-cluster $${ETCD_INITIAL_CLUSTER} \
-              --initial-cluster-state $${ETCD_INITIAL_CLUSTER_STATE}
+              --initial-cluster $${ETCD_INITIAL_CLUSTER} --initial-cluster-state $${ETCD_INITIAL_CLUSTER_STATE}
       fi
   else
       echo "existing cluster not found"
       save_member_id &
       echo "founding new cluster"
       exec etcd --name $${POD_NAME} --data-dir ${local.data_volume_mount_path}/default.etcd \
-          --advertise-client-urls http://$${HOSTNAME}:${local.client_port} --listen-client-urls http://$${IP}:${local.client_port} \
+          --advertise-client-urls http://$${HOSTNAME}:${local.client_port} --listen-client-urls http://$${IP}:${local.client_port},http://127.0.0.1:${local.client_port} \
           --initial-advertise-peer-urls http://$${HOSTNAME}:${local.peer_port} --listen-peer-urls http://$${IP}:${local.peer_port} \
-          --initial-cluster "$${POD_NAME}=http://$${HOSTNAME}:${local.peer_port}" \
-          --initial-cluster-state new --initial-cluster-token ${var.service_name}-cluster
+          --initial-cluster "$${POD_NAME}=http://$${HOSTNAME}:${local.peer_port}" --initial-cluster-state new --initial-cluster-token ${var.service_name}-cluster
   fi
   EOT
 
