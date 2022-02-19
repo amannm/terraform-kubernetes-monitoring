@@ -6,7 +6,8 @@ locals {
   data_volume_mount_path  = "/var/run/etcd"
   service_client_endpoint = "${module.service.non_headless_service_hostname}:${local.client_port}"
   domain_suffix           = module.service.headless_service_name
-  script_globals          = <<-EOT
+
+  script_globals = <<-EOT
   SET_ID="$${POD_NAME##*-}"
   SET_NAME="$${POD_NAME%%-*}"
   HOSTNAME="$${POD_NAME}.${local.domain_suffix}"
@@ -21,8 +22,6 @@ locals {
   echo "IP: $IP"
   echo "ALL_CLIENT_ENDPOINTS: $ALL_CLIENT_ENDPOINTS"
   EOT
-
-  get_member_id = "etcdctl member list | grep http://$${IP}:${local.peer_port} | cut -d',' -f1 | cut -d'[' -f1"
 
   startup_script = <<-EOT
   ${local.script_globals}
@@ -42,9 +41,8 @@ locals {
           fi
       fi
       echo "creating new membership"
-      for NEW_MEMBER_ENV_VAR in $(etcdctl member add --endpoints="$ALL_CLIENT_ENDPOINTS" $${POD_NAME} --peer-urls=http://$${HOSTNAME}:${local.peer_port} | grep "^ETCD_"); do
-          export $NEW_MEMBER_ENV_VAR
-      done
+      etcdctl member add --endpoints="$ALL_CLIENT_ENDPOINTS" $${POD_NAME} --peer-urls=http://$${HOSTNAME}:${local.peer_port} | grep "^ETCD_" > ${local.data_volume_mount_path}/new_member_envs
+      source ${local.data_volume_mount_path}/new_member_envs
       exec etcd --name $${POD_NAME} --data-dir ${local.data_volume_mount_path}/default.etcd --listen-peer-urls http://0.0.0.0:${local.peer_port} --listen-client-urls http://0.0.0.0:${local.client_port} \
           --advertise-client-urls http://$${HOSTNAME}:${local.client_port},http://${local.service_client_endpoint} \
           --initial-advertise-peer-urls http://$${HOSTNAME}:${local.peer_port} \
