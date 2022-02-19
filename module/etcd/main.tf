@@ -38,7 +38,7 @@ locals {
       echo "existing cluster found"
       if [ -e ${local.data_volume_mount_path}/default.etcd ]; then
           echo "re-joining existing cluster as existing member"
-          etcdctl member update --endpoints="$ALL_CLIENT_ENDPOINTS" $(cat ${local.data_volume_mount_path}/member_id) http://$${HOSTNAME}:${local.peer_port}
+          etcdctl member update --endpoints="$ALL_CLIENT_ENDPOINTS" $(cat ${local.data_volume_mount_path}/member_id) --peer-urls=http://$${HOSTNAME}:${local.peer_port}
           exec etcd --name $${POD_NAME} \
               --peer-urls http://$${IP}:${local.peer_port} \
               --listen-client-urls http://$${IP}:${local.client_port},http://127.0.0.1:${local.client_port} \
@@ -51,7 +51,7 @@ locals {
               etcdctl member remove --endpoints="$ALL_CLIENT_ENDPOINTS" $${MEMBER_ID}
           fi
           echo "registering with existing cluster as new member"
-          etcdctl member add --endpoints="$ALL_CLIENT_ENDPOINTS" $${POD_NAME} http://$${HOSTNAME}:${local.peer_port} | grep "^ETCD_" > ${local.data_volume_mount_path}/new_member_envs
+          etcdctl member add --endpoints="$ALL_CLIENT_ENDPOINTS" $${POD_NAME} --peer-urls=http://$${HOSTNAME}:${local.peer_port} | grep "^ETCD_" > ${local.data_volume_mount_path}/new_member_envs
           if [ $? -ne 0 ]; then
               echo "failed to register with existing cluster"
               rm -f ${local.data_volume_mount_path}/new_member_envs
