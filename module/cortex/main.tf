@@ -30,7 +30,7 @@ module "service_account" {
 }
 
 module "ingester" {
-  source               = "./module/stateless"
+  source               = "../common/stateless"
   namespace_name       = var.namespace_name
   system_name          = var.service_name
   component_name       = local.ingester_component_name
@@ -48,7 +48,7 @@ module "ingester" {
 }
 
 module "compactor" {
-  source               = "./module/stateful"
+  source               = "../common/stateful"
   namespace_name       = var.namespace_name
   system_name          = var.service_name
   component_name       = local.compactor_component_name
@@ -65,7 +65,7 @@ module "compactor" {
 }
 
 module "store-gateway" {
-  source               = "./module/stateful"
+  source               = "../common/stateful"
   namespace_name       = var.namespace_name
   system_name          = var.service_name
   component_name       = local.store_gateway_component_name
@@ -82,7 +82,7 @@ module "store-gateway" {
 }
 
 module "querier" {
-  source               = "./module/stateless"
+  source               = "../common/stateless"
   namespace_name       = var.namespace_name
   system_name          = var.service_name
   component_name       = local.querier_component_name
@@ -100,7 +100,7 @@ module "querier" {
 }
 
 module "distributor" {
-  source               = "./module/stateless"
+  source               = "../common/stateless"
   namespace_name       = var.namespace_name
   system_name          = var.service_name
   component_name       = local.distributor_component_name
@@ -118,7 +118,7 @@ module "distributor" {
 }
 
 module "query_frontend" {
-  source               = "./module/stateless"
+  source               = "../common/stateless"
   namespace_name       = var.namespace_name
   system_name          = var.service_name
   component_name       = local.query_frontend_component_name

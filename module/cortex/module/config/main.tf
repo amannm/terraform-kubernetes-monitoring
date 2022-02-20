@@ -15,7 +15,10 @@ locals {
     }
   }
 }
-
+/*
+rror loading config from /etc/cortex/config/config.yaml: Error parsing config file: yaml: unmarshal errors:
+  line 89: field schema_config not found in type cortex.Config
+*/
 locals {
   rendered = yamlencode({
 
@@ -36,7 +39,6 @@ locals {
     frontend = {
       max_outstanding_per_tenant   = 100
       scheduler_worker_concurrency = 1
-      compress_responses           = true
       log_queries_longer_than      = "5s"
     }
     query_range = {
@@ -69,7 +71,7 @@ locals {
       ingestion_rate_strategy           = "global"
       ingestion_rate                    = 4
       compactor_blocks_retention_period = "24h"
-      max_cache_freshness_per_query     = "10m"
+      max_cache_freshness               = "10m"
       reject_old_samples                = true
       reject_old_samples_max_age        = "24h"
     }
@@ -100,35 +102,6 @@ locals {
     }
     flusher = {
       wal_dir = "${var.storage_path}/wal"
-    }
-    #    ingester_client = {
-    #      pool_config = {
-    #        //health_check_ingesters = true
-    #        //client_cleanup_period  = "15s"
-    #        // TODO: docs seem wrong here
-    #        // remotetimeout          = "30s"
-    #      }
-    #      //remote_timeout = "10s"
-    #    }
-
-    // storage
-    schema_config = {
-      configs = [
-        {
-          from   = "1970-01-01"
-          schema = "v11"
-          store  = "boltdb-shipper"
-          index = {
-            prefix = "index_"
-            period = "24h"
-          }
-          object_store = "filesystem"
-          chunks = {
-            prefix = "chunks_"
-            period = "24h"
-          }
-        }
-      ]
     }
     table_manager = {
       retention_deletes_enabled = true

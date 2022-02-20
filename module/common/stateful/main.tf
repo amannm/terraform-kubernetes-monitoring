@@ -47,7 +47,7 @@ locals {
 }
 
 module "service" {
-  source         = "../../../common/service"
+  source         = "../service"
   namespace_name = var.namespace_name
   service_name   = local.service_name
   ports          = local.ports

@@ -16,6 +16,10 @@ locals {
       port        = var.service_grpc_port
       target_port = var.service_grpc_port
     }
+    grpclb = {
+      port        = var.service_grpclb_port
+      target_port = var.service_grpc_port
+    }
   }
   security = {
     uid                       = 10001
@@ -25,7 +29,7 @@ locals {
   lifecycle = {
     min_readiness_time = 30
     max_readiness_time = 90
-    max_cleanup_time   = 300
+    max_cleanup_time   = 30
   }
   probes = {
     port                   = var.service_http_port
@@ -47,20 +51,20 @@ locals {
 }
 
 module "service" {
-  source         = "../../../common/service"
-  namespace_name = var.namespace_name
-  service_name   = local.service_name
-  ports          = local.ports
+  source            = "../service"
+  namespace_name    = var.namespace_name
+  service_name      = local.service_name
+  ports             = local.ports
+  non_headless_only = true
 }
 
-resource "kubernetes_stateful_set" "deployment" {
+resource "kubernetes_deployment" "deployment" {
   spec {
-    service_name          = module.service.headless_service_name
-    replicas              = var.replicas
-    pod_management_policy = "Parallel"
-    update_strategy {
+    replicas = var.replicas
+    strategy {
       rolling_update {
-        partition = 0
+        max_unavailable = 0
+        max_surge       = 1
       }
     }
     template {
