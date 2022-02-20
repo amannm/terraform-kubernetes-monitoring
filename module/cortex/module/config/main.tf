@@ -85,12 +85,12 @@ locals {
           heartbeat_timeout  = "1m"
           replication_factor = 1
         }
-        join_after                  = "5s"
-        heartbeat_period            = "5s"
-        min_ready_duration          = "15s"
-        final_sleep                 = "30s"
-        unregister_on_shutdown      = true
-        readiness_check_ring_health = false
+        join_after             = "5s"
+        heartbeat_period       = "5s"
+        min_ready_duration     = "15s"
+        final_sleep            = "30s"
+        unregister_on_shutdown = true
+        #        readiness_check_ring_health = false
       }
       walconfig = {
         wal_enabled = true
@@ -159,6 +159,7 @@ locals {
   config_map_name    = kubernetes_config_map.config_map.metadata[0].name
   config_filename    = var.config_filename
   storage_mount_path = var.storage_path
+  config_mount_path  = var.config_path
   http_port          = var.http_port
   grpc_port          = var.grpc_port
   etcd_host          = var.etcd_host

@@ -35,8 +35,7 @@ variable "storage_mount_path" {
   type = string
 }
 variable "config_mount_path" {
-  type    = string
-  default = "/etc/loki/config"
+  type = string
 }
 variable "component_name" {
   type = string

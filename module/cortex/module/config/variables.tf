@@ -17,6 +17,10 @@ variable "config_filename" {
   type    = string
   default = "config.yaml"
 }
+variable "config_path" {
+  type    = string
+  default = "/etc/cortex/config"
+}
 variable "storage_path" {
   type    = string
   default = "/var/cortex"
