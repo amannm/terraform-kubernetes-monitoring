@@ -17,7 +17,7 @@ module "shared_etcd" {
   namespace_name      = var.namespace_name
   service_name        = "etcd"
   container_image     = "quay.io/coreos/etcd:v3.5.2"
-  cluster_size        = 1
+  cluster_size        = 2
   storage_volume_size = 1
 }
 
