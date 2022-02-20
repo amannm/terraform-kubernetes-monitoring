@@ -47,10 +47,10 @@ module "ingester" {
   etcd_host            = module.cortex_config.etcd_host
   config_filename      = module.cortex_config.config_filename
   config_map_name      = module.cortex_config.config_map_name
+  config_mount_path    = module.cortex_config.config_mount_path
   storage_mount_path   = module.cortex_config.storage_mount_path
   storage_volume_size  = 1
   replicas             = 1
-  config_mount_path    = ""
 }
 
 module "compactor" {
