@@ -47,8 +47,8 @@ locals {
       max_outstanding_requests_per_tenant = 100
     }
     frontend_worker = {
-      parallelism      = local.worker_parallelism
-      frontend_address = "${var.query_frontend_hostname}:${var.grpc_port}"
+      parallelism       = local.worker_parallelism
+      scheduler_address = "${var.query_scheduler_hostname}:${var.grpc_port}"
     }
     querier = {
       active_query_tracker_dir = "${var.storage_path}/active-query-tracker"
