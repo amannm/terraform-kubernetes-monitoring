@@ -1,7 +1,8 @@
 locals {
   worker_parallelism = 10
   etcd_kvstore = {
-    store = "etcd"
+    store  = "etcd"
+    prefix = "${var.service_name}/collectors/"
     etcd = {
       endpoints = [var.etcd_host]
     }
@@ -64,12 +65,14 @@ locals {
       reject_old_samples_max_age        = "24h"
     }
     distributor = {
-      shard_by_all_labels = true
       pool = {
         health_check_ingesters = false
       }
+      shard_by_all_labels = true
       ring = {
-        kvstore = local.etcd_kvstore
+        kvstore           = local.etcd_kvstore
+        heartbeat_period  = "5s"
+        heartbeat_timeout = "1m"
       }
     }
     ingester = {
@@ -77,11 +80,17 @@ locals {
       flush_period         = "1m"
       max_transfer_retries = 0
       lifecycler = {
-        join_after : "5s"
         ring = {
           kvstore            = local.etcd_kvstore
+          heartbeat_timeout  = "1m"
           replication_factor = 1
         }
+        join_after                  = "5s"
+        heartbeat_period            = "5s"
+        min_ready_duration          = "15s"
+        final_sleep                 = "30s"
+        unregister_on_shutdown      = true
+        readiness_check_ring_health = false
       }
       walconfig = {
         wal_enabled = true
@@ -117,16 +126,27 @@ locals {
     store_gateway = {
       sharding_enabled = true
       sharding_ring = {
-        kvstore = local.etcd_kvstore
+        kvstore                     = local.etcd_kvstore
+        heartbeat_period            = "15s"
+        heartbeat_timeout           = "1m"
+        wait_stability_min_duration = "1s"
+        wait_stability_max_duration = "5s"
+        replication_factor          = 1
       }
     }
     compactor = {
       data_dir               = "${var.storage_path}/compactor"
       compaction_concurrency = 1
-      compaction_interval    = "10m"
+      compaction_interval    = "1h"
+      cleanup_interval       = "15m"
       sharding_enabled       = true
       sharding_ring = {
-        kvstore = local.etcd_kvstore
+        kvstore                      = local.etcd_kvstore
+        heartbeat_period             = "5s"
+        heartbeat_timeout            = "1m"
+        wait_stability_min_duration  = "1s"
+        wait_stability_max_duration  = "5s"
+        wait_active_instance_timeout = "5s"
       }
     }
     purger = {
