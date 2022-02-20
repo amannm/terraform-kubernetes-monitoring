@@ -14,7 +14,8 @@ variable "agent_container_port" {
   default = 80
 }
 variable "metrics_remote_write_url" {
-  type = string
+  type    = string
+  default = null
 }
 variable "agentctl_container_image" {
   type    = string
@@ -23,6 +24,7 @@ variable "agentctl_container_image" {
 variable "etcd_host" {
   type = string
 }
-variable "loki_remote_write_url" {
-  type = string
+variable "logs_remote_write_url" {
+  type    = string
+  default = null
 }

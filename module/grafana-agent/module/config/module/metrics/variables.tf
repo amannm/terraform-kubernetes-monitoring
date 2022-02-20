@@ -4,10 +4,10 @@ variable "namespace_name" {
 variable "resource_name" {
   type = string
 }
-variable "container_image" {
+variable "agentctl_container_image" {
   type = string
 }
-variable "agent_api_host" {
+variable "agent_host" {
   type = string
 }
 variable "metrics_remote_write_url" {
@@ -15,4 +15,7 @@ variable "metrics_remote_write_url" {
 }
 variable "refresh_rate" {
   type = number
+}
+variable "etcd_host" {
+  type = string
 }

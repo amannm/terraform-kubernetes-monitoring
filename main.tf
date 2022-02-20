@@ -30,13 +30,13 @@ module "kube_state_metrics" {
 }
 
 module "grafana_agent" {
-  source                   = "./module/grafana-agent"
-  namespace_name           = kubernetes_namespace.namespace.metadata[0].name
-  resource_name            = "grafana-agent"
-  agent_container_image    = "grafana/agent:latest"
-  etcd_host                = module.shared_etcd.client_endpoint_host
-  metrics_remote_write_url = module.cortex.remote_write_url
-  loki_remote_write_url    = module.loki.remote_write_url
+  source                = "./module/grafana-agent"
+  namespace_name        = kubernetes_namespace.namespace.metadata[0].name
+  resource_name         = "grafana-agent"
+  agent_container_image = "grafana/agent:latest"
+  etcd_host             = module.shared_etcd.client_endpoint_host
+  #  metrics_remote_write_url = module.cortex.remote_write_url
+  logs_remote_write_url = module.loki.remote_write_url
 }
 
 #module "prometheus_server" {
@@ -67,12 +67,12 @@ module "loki" {
   etcd_host           = module.shared_etcd.client_endpoint_host
 }
 
-module "cortex" {
-  source              = "./module/cortex"
-  namespace_name      = kubernetes_namespace.namespace.metadata[0].name
-  service_name        = "cortex"
-  service_port        = var.cortex_port
-  container_image     = "quay.io/cortexproject/cortex:v1.11.0"
-  storage_volume_size = 2
-  etcd_host           = module.shared_etcd.client_endpoint_host
-}
+#module "cortex" {
+#  source              = "./module/cortex"
+#  namespace_name      = kubernetes_namespace.namespace.metadata[0].name
+#  service_name        = "cortex"
+#  service_port        = var.cortex_port
+#  container_image     = "quay.io/cortexproject/cortex:v1.11.0"
+#  storage_volume_size = 2
+#  etcd_host           = module.shared_etcd.client_endpoint_host
+#}

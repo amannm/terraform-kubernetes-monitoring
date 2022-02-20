@@ -1,5 +1,4 @@
 locals {
-  agent_api_host = "${module.service.headless_service_hostname}:${var.agent_container_port}"
 
   config_filename = "agent.yaml"
   command         = ["/bin/agent"]
@@ -101,28 +100,27 @@ module "service_account" {
   cluster_role_name = kubernetes_cluster_role.cluster_role.metadata[0].name
 }
 
-module "config_sync_job" {
-  source                   = "./module/metrics-scrape-config"
-  namespace_name           = var.namespace_name
-  resource_name            = "${var.resource_name}-config-sync"
-  container_image          = var.agentctl_container_image
-  agent_api_host           = local.agent_api_host
-  metrics_remote_write_url = var.metrics_remote_write_url
-  refresh_rate             = 30
-}
-
 module "agent_config" {
-  source                      = "./module/config"
-  namespace_name              = var.namespace_name
-  config_filename             = local.config_filename
-  config_map_name             = var.resource_name
-  agent_container_port        = var.agent_container_port
-  host_root_volume_mount_path = local.volumes.root.mount_path
-  host_sys_volume_mount_path  = local.volumes.sys.mount_path
-  host_proc_volume_mount_path = local.volumes.proc.mount_path
-  etcd_endpoint               = var.etcd_host
-  positions_volume_mount_path = local.volumes.positions.mount_path
-  loki_remote_write_url       = var.loki_remote_write_url
+  source               = "./module/config"
+  namespace_name       = var.namespace_name
+  service_name         = var.resource_name
+  config_filename      = local.config_filename
+  agent_container_port = var.agent_container_port
+  node_exporter_config = {
+    host_root_volume_mount_path = local.volumes.root.mount_path
+    host_sys_volume_mount_path  = local.volumes.sys.mount_path
+    host_proc_volume_mount_path = local.volumes.proc.mount_path
+  }
+  metrics_config = var.metrics_remote_write_url == null ? null : {
+    agentctl_container_image = var.agentctl_container_image
+    agent_host               = "${module.service.headless_service_hostname}:${var.agent_container_port}"
+    metrics_remote_write_url = var.metrics_remote_write_url
+    etcd_host                = var.etcd_host
+  }
+  logs_config = var.logs_remote_write_url == null ? null : {
+    positions_volume_mount_path = local.volumes.positions.mount_path
+    logs_remote_write_url       = var.logs_remote_write_url
+  }
 }
 
 module "service" {

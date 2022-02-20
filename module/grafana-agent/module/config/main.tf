@@ -1,129 +1,43 @@
-locals {
-  etcd_kvstore = {
-    store = "etcd"
-    etcd = {
-      endpoints = [var.etcd_endpoint]
-    }
-  }
-}
-
-locals {
-  rendered = yamlencode({
-    server = {
-      http_listen_port = var.agent_container_port
-      log_level        = "info"
-    }
-    metrics = {
-      global = {
-        scrape_interval = "1m"
-      }
-      scraping_service = {
-        enabled                       = true
-        dangerous_allow_reading_files = true
-        kvstore                       = local.etcd_kvstore
-        lifecycler = {
-          ring = {
-            kvstore = local.etcd_kvstore
-          }
-        }
-      }
-      configs = []
-    }
-    logs = {
-      positions_directory = var.positions_volume_mount_path
-      configs = [
-        {
-          name = "default"
-          clients = [
-            {
-              url = var.loki_remote_write_url
-            }
-          ]
-          scrape_configs = [
-            {
-              job_name = "kubernetes-pods"
-              kubernetes_sd_configs = [
-                {
-                  role = "pod"
-                },
-              ]
-              pipeline_stages = [
-                {
-                  docker = {}
-                },
-              ]
-              relabel_configs = [
-                {
-                  source_labels = ["__meta_kubernetes_pod_node_name"]
-                  target_label  = "__host__"
-                },
-                {
-                  source_labels = ["__meta_kubernetes_pod_container_name"]
-                  action        = "drop"
-                  regex         = ""
-                },
-                {
-                  action = "labelmap"
-                  regex  = "__meta_kubernetes_pod_label_(.+)"
-                },
-                {
-                  source_labels = ["__meta_kubernetes_namespace", "__meta_kubernetes_pod_container_name"]
-                  action        = "replace"
-                  separator     = "/"
-                  target_label  = "job"
-                  replacement   = "$1"
-                },
-                {
-                  source_labels = ["__meta_kubernetes_namespace"]
-                  action        = "replace"
-                  target_label  = "namespace"
-                },
-                {
-                  source_labels = ["__meta_kubernetes_pod_name"]
-                  action        = "replace"
-                  target_label  = "pod"
-                },
-                {
-                  source_labels = ["__meta_kubernetes_pod_container_name"]
-                  action        = "replace"
-                  target_label  = "container"
-                },
-                {
-                  source_labels = ["__meta_kubernetes_pod_uid", "__meta_kubernetes_pod_container_name"]
-                  target_label  = "__path__"
-                  separator     = "/"
-                  replacement   = "/var/log/pods/*$1/*.log"
-                },
-              ]
-            }
-          ]
-        }
-      ]
-    }
-    integrations = {
-      metrics = {
-        autoscrape = {
-          enable = false
-        }
-      }
-      node_exporter = {
-        rootfs_path = var.host_root_volume_mount_path
-        sysfs_path  = var.host_sys_volume_mount_path
-        procfs_path = var.host_proc_volume_mount_path
-      }
-    }
-  })
-}
-
-locals {
-  config_map_name = kubernetes_config_map.config_map.metadata[0].name
-}
 resource "kubernetes_config_map" "config_map" {
   metadata {
-    name      = var.config_map_name
     namespace = var.namespace_name
+    name      = var.service_name
   }
   data = {
-    (var.config_filename) = local.rendered
+    (var.config_filename) = yamlencode({
+      server = {
+        http_listen_port = var.agent_container_port
+        log_level        = "info"
+      }
+      metrics = var.metrics_config == null ? {} : module.metrics.agent_metrics_config
+      logs    = var.logs_config == null ? {} : module.logs.agent_logs_config
+      integrations = {
+        metrics = var.metrics_config == null ? {} : module.metrics.agent_integrations_metrics_config
+        node_exporter = var.node_exporter_config == null ? {} : {
+          rootfs_path = var.node_exporter_config.host_root_volume_mount_path
+          sysfs_path  = var.node_exporter_config.host_sys_volume_mount_path
+          procfs_path = var.node_exporter_config.host_proc_volume_mount_path
+        }
+      }
+    })
   }
+}
+
+module "metrics" {
+  count                    = var.metrics_config == null ? 0 : 1
+  source                   = "./module/metrics"
+  namespace_name           = var.namespace_name
+  resource_name            = "${var.service_name}-metrics"
+  agentctl_container_image = var.metrics_config.agentctl_container_image
+  agent_host               = var.metrics_config.agent_host
+  metrics_remote_write_url = var.metrics_config.metrics_remote_write_url
+  etcd_host                = var.metrics_config.etcd_host
+  refresh_rate             = 30
+}
+
+module "logs" {
+  count                       = var.logs_config == null ? 0 : 1
+  source                      = "./module/logs"
+  positions_volume_mount_path = var.logs_config.positions_volume_mount_path
+  logs_remote_write_url       = var.logs_config.remote_write_url
 }

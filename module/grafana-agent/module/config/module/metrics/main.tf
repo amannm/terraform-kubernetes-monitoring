@@ -1,5 +1,12 @@
 # helpers
 locals {
+  etcd_kvstore = {
+    store = "etcd"
+    etcd = {
+      endpoints = [var.etcd_host]
+    }
+  }
+
   auth_token_path = "/var/run/secrets/kubernetes.io/serviceaccount/token"
   auth_tls_config = {
     ca_file              = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
@@ -117,22 +124,30 @@ locals {
   }
 }
 
-# root scrape config
 locals {
-  rendered = yamlencode({
-    scrape_configs = [
-      local.node_job,
-      local.node_cadvisor_job,
-      local.api_service_endpoint_job,
-      local.service_endpoints_job,
-      local.pods_job,
-    ]
-    remote_write = [
-      {
-        url = var.metrics_remote_write_url
+  metrics_config = {
+    scraping_service = {
+      enabled                       = true
+      dangerous_allow_reading_files = true
+      kvstore                       = local.etcd_kvstore
+      lifecycler = {
+        ring = {
+          kvstore           = local.etcd_kvstore
+          heartbeat_timeout = "1m"
+        }
+        join_after         = "0s"
+        heartbeat_period   = "5s"
+        min_ready_duration = "1m"
+        final_sleep        = "30s"
       }
-    ]
-  })
+    }
+    configs = []
+  }
+  integrations_metrics_config = {
+    autoscrape = {
+      enable = false
+    }
+  }
 }
 
 locals {
@@ -146,13 +161,26 @@ resource "kubernetes_config_map" "config_map" {
     namespace = var.namespace_name
   }
   data = {
-    (local.config_filename) = local.rendered
+    (local.config_filename) = yamlencode({
+      scrape_configs = [
+        local.node_job,
+        local.node_cadvisor_job,
+        local.api_service_endpoint_job,
+        local.service_endpoints_job,
+        local.pods_job,
+      ]
+      remote_write = [
+        {
+          url = var.metrics_remote_write_url
+        }
+      ]
+    })
   }
 }
 resource "kubernetes_cron_job" "config_update_job" {
   metadata {
-    name      = var.resource_name
     namespace = var.namespace_name
+    name      = var.resource_name
   }
   spec {
     schedule                      = "*/${var.refresh_rate} * * * *"
@@ -179,14 +207,14 @@ resource "kubernetes_cron_job" "config_update_job" {
             }
             container {
               name              = var.resource_name
-              image             = var.container_image
+              image             = var.agentctl_container_image
               image_pull_policy = "IfNotPresent"
               command           = ["/bin/agentctl"]
               args = [
                 "config-sync",
                 local.config_volume_mount_path,
                 "--addr",
-                "http://${var.agent_api_host}",
+                "http://${var.agent_host}",
               ]
               volume_mount {
                 name       = local.config_volume_name
