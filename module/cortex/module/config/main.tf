@@ -32,7 +32,7 @@ locals {
       max_outstanding_per_tenant   = 100
       scheduler_worker_concurrency = 1
       log_queries_longer_than      = "5s"
-      scheduler_address            = "${var.query_scheduler_hostname}:${var.grpc_port}"
+      scheduler_address            = var.query_scheduler_hostname
     }
     query_range = {
       align_queries_with_step = true
@@ -48,7 +48,7 @@ locals {
     }
     frontend_worker = {
       parallelism       = local.worker_parallelism
-      scheduler_address = "${var.query_scheduler_hostname}:${var.grpc_port}"
+      scheduler_address = var.query_scheduler_hostname
     }
     querier = {
       active_query_tracker_dir = "${var.storage_path}/active-query-tracker"
