@@ -58,7 +58,6 @@ locals {
     limits = {
       enforce_metric_name               = false
       ingestion_rate_strategy           = "global"
-      ingestion_rate                    = 4
       compactor_blocks_retention_period = "24h"
       max_cache_freshness               = "10m"
       reject_old_samples                = true
