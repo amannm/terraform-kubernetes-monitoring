@@ -24,11 +24,10 @@ locals {
         lifecycler = {
           ring = {
             kvstore = local.etcd_kvstore
-            replication_factor : 2
           }
         }
       }
-      configs : []
+      configs = []
     }
     logs = {
       positions_directory = var.positions_volume_mount_path
