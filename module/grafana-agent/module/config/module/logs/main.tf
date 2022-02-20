@@ -6,7 +6,7 @@ locals {
         name = "default"
         clients = [
           {
-            url = var.logs_remote_write_url
+            url = var.remote_write_url
           }
         ]
         scrape_configs = [

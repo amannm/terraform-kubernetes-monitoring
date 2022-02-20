@@ -10,7 +10,7 @@ variable "agentctl_container_image" {
 variable "agent_host" {
   type = string
 }
-variable "metrics_remote_write_url" {
+variable "remote_write_url" {
   type = string
 }
 variable "refresh_rate" {

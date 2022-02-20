@@ -171,7 +171,7 @@ resource "kubernetes_config_map" "config_map" {
       ]
       remote_write = [
         {
-          url = var.metrics_remote_write_url
+          url = var.remote_write_url
         }
       ]
     })

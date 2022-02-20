@@ -20,7 +20,7 @@ variable "node_exporter_config" {
 }
 variable "metrics_config" {
   type = object({
-    metrics_remote_write_url = string
+    remote_write_url         = string
     agent_host               = string
     etcd_host                = string
     agentctl_container_image = string

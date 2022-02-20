@@ -114,12 +114,12 @@ module "agent_config" {
   metrics_config = var.metrics_remote_write_url == null ? null : {
     agentctl_container_image = var.agentctl_container_image
     agent_host               = "${module.service.headless_service_hostname}:${var.agent_container_port}"
-    metrics_remote_write_url = var.metrics_remote_write_url
+    remote_write_url         = var.metrics_remote_write_url
     etcd_host                = var.etcd_host
   }
   logs_config = var.logs_remote_write_url == null ? null : {
     positions_volume_mount_path = local.volumes.positions.mount_path
-    logs_remote_write_url       = var.logs_remote_write_url
+    remote_write_url            = var.logs_remote_write_url
   }
 }
 
