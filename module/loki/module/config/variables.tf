@@ -27,3 +27,6 @@ variable "query_frontend_hostname" {
 variable "querier_hostname" {
   type = string
 }
+variable "max_query_frontend_replicas" {
+  type = number
+}

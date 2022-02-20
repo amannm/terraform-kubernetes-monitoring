@@ -1,4 +1,5 @@
 locals {
+  worker_parallelism = 10
   etcd_kvstore = {
     store = "etcd"
     etcd = {
@@ -18,15 +19,12 @@ locals {
 
 locals {
   rendered = yamlencode({
-
     auth_enabled = false
     server = {
       http_listen_port = var.http_port
       grpc_listen_port = var.grpc_port
       log_level        = "info"
     }
-
-    // query
     frontend = {
       max_outstanding_per_tenant   = 100
       scheduler_worker_concurrency = 1
@@ -51,20 +49,16 @@ locals {
       }
     }
     frontend_worker = {
-      parallelism      = 10
+      parallelism      = local.worker_parallelism
       frontend_address = "${var.query_frontend_hostname}:${var.grpc_port}"
     }
     querier = {
       query_timeout  = "1m"
-      max_concurrent = 10
+      max_concurrent = local.worker_parallelism * var.max_query_frontend_replicas
       engine = {
         timeout = "3m"
       }
     }
-
-    #ruler = {}
-
-    // ingest
     limits_config = {
       enforce_metric_name           = false
       ingestion_rate_strategy       = "global"
@@ -97,17 +91,6 @@ locals {
         dir = "${var.storage_path}/wal"
       }
     }
-    #    ingester_client = {
-    #      pool_config = {
-    #        //health_check_ingesters = true
-    #        //client_cleanup_period  = "15s"
-    #        // TODO: docs seem wrong here
-    #        // remotetimeout          = "30s"
-    #      }
-    #      //remote_timeout = "10s"
-    #    }
-
-    // storage
     schema_config = {
       configs = [
         {
@@ -156,17 +139,9 @@ locals {
         kvstore = local.etcd_kvstore
       }
     }
-
-    // for tracing with Jaeger
     tracing = {
       enabled = true
     }
-
-    // for tuning limits or multi KV settings during operation
-    // runtime_config = {}
-
-    // to avoid copy/paste
-    // common = {}
   })
 }
 

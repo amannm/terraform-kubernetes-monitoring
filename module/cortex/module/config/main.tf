@@ -1,4 +1,5 @@
 locals {
+  worker_parallelism = 10
   etcd_kvstore = {
     store = "etcd"
     etcd = {
@@ -15,27 +16,18 @@ locals {
     }
   }
 }
-/*
-rror loading config from /etc/cortex/config/config.yaml: Error parsing config file: yaml: unmarshal errors:
-  line 89: field schema_config not found in type cortex.Config
-*/
 locals {
   rendered = yamlencode({
-
     auth_enabled = false
-
-    api = {
-      prometheus_http_prefix       = var.prometheus_api_path
-      response_compression_enabled = true
-    }
-
     server = {
       http_listen_port = var.http_port
       grpc_listen_port = var.grpc_port
       log_level        = "info"
     }
-
-    // query
+    api = {
+      prometheus_http_prefix       = var.prometheus_api_path
+      response_compression_enabled = true
+    }
     frontend = {
       max_outstanding_per_tenant   = 100
       scheduler_worker_concurrency = 1
@@ -54,18 +46,14 @@ locals {
       max_outstanding_requests_per_tenant = 100
     }
     frontend_worker = {
-      parallelism      = 10
+      parallelism      = local.worker_parallelism
       frontend_address = "${var.query_frontend_hostname}:${var.grpc_port}"
     }
     querier = {
       active_query_tracker_dir = "${var.storage_path}/active-query-tracker"
       timeout                  = "1m"
-      max_concurrent           = 10
+      max_concurrent           = local.worker_parallelism * var.max_query_frontend_replicas
     }
-
-    #ruler = {}
-
-    // ingest
     limits = {
       enforce_metric_name               = false
       ingestion_rate_strategy           = "global"
@@ -144,12 +132,6 @@ locals {
     purger = {
       enable = false
     }
-
-    // for tuning limits or multi KV settings during operation
-    // runtime_config = {}
-
-    // to avoid copy/paste
-    // common = {}
   })
 }
 

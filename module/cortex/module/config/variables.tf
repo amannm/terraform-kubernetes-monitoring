@@ -31,3 +31,6 @@ variable "prometheus_api_path" {
   type    = string
   default = "/prometheus"
 }
+variable "max_query_frontend_replicas" {
+  type = number
+}

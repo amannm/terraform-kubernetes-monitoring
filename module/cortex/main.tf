@@ -1,4 +1,5 @@
 locals {
+  query_frontend_replicas       = 1
   prometheus_api_path           = "/prometheus"
   querier_component_name        = "querier"
   query_frontend_component_name = "query-frontend"
@@ -12,15 +13,16 @@ locals {
 }
 
 module "cortex_config" {
-  source                  = "./module/config"
-  namespace_name          = var.namespace_name
-  service_name            = var.service_name
-  etcd_host               = var.etcd_host
-  http_port               = var.service_port
-  grpc_port               = 9095
-  querier_hostname        = local.querier_hostname
-  query_frontend_hostname = local.query_frontend_hostname
-  prometheus_api_path     = local.prometheus_api_path
+  source                      = "./module/config"
+  namespace_name              = var.namespace_name
+  service_name                = var.service_name
+  etcd_host                   = var.etcd_host
+  http_port                   = var.service_port
+  grpc_port                   = 9095
+  querier_hostname            = local.querier_hostname
+  query_frontend_hostname     = local.query_frontend_hostname
+  prometheus_api_path         = local.prometheus_api_path
+  max_query_frontend_replicas = local.query_frontend_replicas
 }
 
 module "service_account" {
@@ -132,5 +134,5 @@ module "query_frontend" {
   config_map_name      = module.cortex_config.config_map_name
   storage_mount_path   = module.cortex_config.storage_mount_path
   storage_volume_size  = 1
-  replicas             = 1
+  replicas             = local.query_frontend_replicas
 }
