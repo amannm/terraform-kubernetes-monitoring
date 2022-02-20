@@ -11,7 +11,7 @@ locals {
   querier_hostname               = "${var.service_name}-${local.querier_component_name}.${var.namespace_name}.svc.cluster.local"
   query_frontend_hostname        = "${var.service_name}-${local.query_frontend_component_name}.${var.namespace_name}.svc.cluster.local"
   query_scheduler_hostname       = "${var.service_name}-${local.query_scheduler_component_name}.${var.namespace_name}.svc.cluster.local"
-  prometheus_api_uri             = "http://${local.query_frontend_hostname}:${var.service_port}${local.prometheus_api_path}"
+  remote_write_endpoint_uri      = "http://${local.query_frontend_hostname}:${var.service_port}/api/v1/push"
 }
 
 module "cortex_config" {

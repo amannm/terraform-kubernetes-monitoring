@@ -1,3 +1,3 @@
-output "prometheus_api_uri" {
-  value = local.prometheus_api_uri
+output "remote_write_endpoint_uri" {
+  value = local.remote_write_endpoint_uri
 }
