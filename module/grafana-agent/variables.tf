@@ -23,6 +23,6 @@ variable "agentctl_container_image" {
 variable "etcd_host" {
   type = string
 }
-variable "loki_host" {
+variable "loki_remote_write_url" {
   type = string
 }

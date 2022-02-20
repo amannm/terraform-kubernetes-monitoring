@@ -25,6 +25,6 @@ variable "etcd_endpoint" {
 variable "positions_volume_mount_path" {
   type = string
 }
-variable "loki_api_host" {
+variable "loki_remote_write_url" {
   type = string
 }

@@ -34,9 +34,9 @@ module "grafana_agent" {
   namespace_name           = kubernetes_namespace.namespace.metadata[0].name
   resource_name            = "grafana-agent"
   agent_container_image    = "grafana/agent:latest"
-  metrics_remote_write_url = module.cortex.remote_write_url
   etcd_host                = module.shared_etcd.client_endpoint_host
-  loki_host                = module.loki.api_host
+  metrics_remote_write_url = module.cortex.remote_write_url
+  loki_remote_write_url    = module.loki.remote_write_url
 }
 
 #module "prometheus_server" {

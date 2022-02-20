@@ -37,7 +37,7 @@ locals {
           name = "default"
           clients = [
             {
-              url = "http://${var.loki_api_host}/loki/api/v1/push"
+              url = var.loki_remote_write_url
             }
           ]
           scrape_configs = [

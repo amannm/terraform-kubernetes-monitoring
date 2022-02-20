@@ -1,3 +1,3 @@
-output "api_host" {
-  value = local.distributor_host
+output "remote_write_url" {
+  value = local.remote_write_url
 }

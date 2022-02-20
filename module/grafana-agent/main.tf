@@ -122,7 +122,7 @@ module "agent_config" {
   host_proc_volume_mount_path = local.volumes.proc.mount_path
   etcd_endpoint               = var.etcd_host
   positions_volume_mount_path = local.volumes.positions.mount_path
-  loki_api_host               = var.loki_host
+  loki_remote_write_url       = var.loki_remote_write_url
 }
 
 module "service" {
