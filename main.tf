@@ -67,12 +67,12 @@ module "loki" {
   etcd_host           = module.shared_etcd.client_endpoint_host
 }
 
-module "cortex" {
-  source              = "./module/cortex"
-  namespace_name      = kubernetes_namespace.namespace.metadata[0].name
-  service_name        = "cortex"
-  service_port        = var.cortex_port
-  container_image     = "quay.io/cortexproject/cortex:v1.11.0"
-  storage_volume_size = 2
-  etcd_host           = module.shared_etcd.client_endpoint_host
-}
+#module "cortex" {
+#  source              = "./module/cortex"
+#  namespace_name      = kubernetes_namespace.namespace.metadata[0].name
+#  service_name        = "cortex"
+#  service_port        = var.cortex_port
+#  container_image     = "quay.io/cortexproject/cortex:master"
+#  storage_volume_size = 2
+#  etcd_host           = module.shared_etcd.client_endpoint_host
+#}
