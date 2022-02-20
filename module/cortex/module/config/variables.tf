@@ -27,6 +27,9 @@ variable "query_frontend_hostname" {
 variable "querier_hostname" {
   type = string
 }
+variable "query_scheduler_hostname" {
+  type = string
+}
 variable "prometheus_api_path" {
   type    = string
   default = "/prometheus"

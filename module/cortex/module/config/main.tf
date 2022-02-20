@@ -32,6 +32,7 @@ locals {
       max_outstanding_per_tenant   = 100
       scheduler_worker_concurrency = 1
       log_queries_longer_than      = "5s"
+      scheduler_address            = "${var.query_scheduler_hostname}:${var.grpc_port}"
     }
     query_range = {
       align_queries_with_step = true
