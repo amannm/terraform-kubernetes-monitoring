@@ -85,9 +85,10 @@ locals {
       max_transfer_retries = 0
       lifecycler = {
         ring = {
-          kvstore            = local.etcd_kvstore
-          replication_factor = 3
-          heartbeat_timeout  = "1m"
+          kvstore           = local.etcd_kvstore
+          heartbeat_timeout = "1m"
+          // distributor will refuse to write unless floor(replication_factor / 2) + 1 replicas are ACTIVE
+          replication_factor = 1
         }
         join_after         = "5s"
         min_ready_duration = "15s"

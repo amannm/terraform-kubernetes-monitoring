@@ -62,10 +62,8 @@ locals {
   echo "removing $${POD_NAME} from cluster"
   if [ "$ALL_CLIENT_ENDPOINTS" != "" ]; then
       etcdctl member remove --endpoints="$ALL_CLIENT_ENDPOINTS" $MEMBER_ID
-      if [ $? -eq 0 ]; then
-          rm -rf ${local.data_volume_mount_path}/*
-      fi
   fi
+  rm -rf ${local.data_volume_mount_path}/*
   EOT
 
 }
