@@ -70,6 +70,9 @@ locals {
       reject_old_samples_max_age    = "24h"
     }
     distributor = {
+      pool = {
+        health_check_ingesters = false
+      }
       ring = {
         kvstore = local.etcd_kvstore
       }

@@ -66,7 +66,7 @@ locals {
     distributor = {
       shard_by_all_labels = true
       pool = {
-        health_check_ingesters = true
+        health_check_ingesters = false
       }
       ring = {
         kvstore = local.etcd_kvstore
