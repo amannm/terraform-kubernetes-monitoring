@@ -54,7 +54,7 @@ locals {
     }
     querier = {
       query_timeout  = "1m"
-      max_concurrent = local.worker_parallelism * var.max_query_frontend_replicas
+      max_concurrent = local.worker_parallelism * var.max_query_frontend_replicas + local.worker_parallelism
       engine = {
         timeout = "3m"
       }

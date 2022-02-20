@@ -53,7 +53,7 @@ locals {
     querier = {
       active_query_tracker_dir = "${var.storage_path}/active-query-tracker"
       timeout                  = "1m"
-      max_concurrent           = local.worker_parallelism * var.max_query_frontend_replicas
+      max_concurrent           = local.worker_parallelism * var.max_query_frontend_replicas + local.worker_parallelism
     }
     limits = {
       enforce_metric_name               = false
