@@ -1,7 +1,8 @@
 locals {
   worker_parallelism = 10
   etcd_kvstore = {
-    store = "etcd"
+    store  = "etcd"
+    prefix = "${var.service_name}/collectors/"
     etcd = {
       endpoints = [var.etcd_host]
     }
@@ -70,11 +71,9 @@ locals {
       reject_old_samples_max_age    = "24h"
     }
     distributor = {
-      pool = {
-        health_check_ingesters = false
-      }
       ring = {
-        kvstore = local.etcd_kvstore
+        kvstore           = local.etcd_kvstore
+        heartbeat_timeout = "1m"
       }
     }
     ingester = {
@@ -85,14 +84,20 @@ locals {
       chunk_retain_period  = "1m"
       max_transfer_retries = 0
       lifecycler = {
-        join_after : "5s"
         ring = {
           kvstore            = local.etcd_kvstore
-          replication_factor = 1
+          replication_factor = 3
+          heartbeat_timeout  = "1m"
         }
+        join_after         = "5s"
+        min_ready_duration = "15s"
+        heartbeat_period   = "5s"
+        final_sleep        = "30s"
       }
+      autoforget_unhealthy = false
       wal = {
-        dir = "${var.storage_path}/wal"
+        enabled = true
+        dir     = "${var.storage_path}/wal"
       }
     }
     schema_config = {

@@ -175,7 +175,7 @@ resource "kubernetes_stateful_set" "stateful_set" {
               memory : "125Mi"
             }
             limits = {
-              memory : "300Mi"
+              memory : "400Mi"
             }
           }
           readiness_probe {
