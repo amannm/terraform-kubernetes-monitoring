@@ -26,7 +26,7 @@ locals {
       log_level        = "info"
     }
     frontend = {
-      scheduler_address            = var.query_scheduler_hostname
+      scheduler_address            = "${var.query_scheduler_hostname}:${var.grpc_port}"
       max_outstanding_per_tenant   = 100
       scheduler_worker_concurrency = 1
       compress_responses           = true
@@ -51,7 +51,7 @@ locals {
     }
     frontend_worker = {
       parallelism       = local.worker_parallelism
-      scheduler_address = var.query_scheduler_hostname
+      scheduler_address = "${var.query_scheduler_hostname}:${var.grpc_port}"
     }
     querier = {
       query_timeout  = "1m"
