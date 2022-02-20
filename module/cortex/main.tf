@@ -40,7 +40,7 @@ module "ingester" {
   container_image      = var.container_image
   service_http_port    = module.cortex_config.service_http_port
   service_grpc_port    = module.cortex_config.service_grpc_port
-  service_grpclb_port  = 9096
+  service_grpclb_port  = 9095
   etcd_host            = module.cortex_config.etcd_host
   config_filename      = module.cortex_config.config_filename
   config_map_name      = module.cortex_config.config_map_name
@@ -92,7 +92,7 @@ module "querier" {
   container_image      = var.container_image
   service_http_port    = module.cortex_config.service_http_port
   service_grpc_port    = module.cortex_config.service_grpc_port
-  service_grpclb_port  = 9096
+  service_grpclb_port  = 9095
   etcd_host            = module.cortex_config.etcd_host
   config_filename      = module.cortex_config.config_filename
   config_map_name      = module.cortex_config.config_map_name
@@ -110,7 +110,7 @@ module "distributor" {
   container_image      = var.container_image
   service_http_port    = module.cortex_config.service_http_port
   service_grpc_port    = module.cortex_config.service_grpc_port
-  service_grpclb_port  = 9096
+  service_grpclb_port  = 9095
   etcd_host            = module.cortex_config.etcd_host
   config_filename      = module.cortex_config.config_filename
   config_map_name      = module.cortex_config.config_map_name
@@ -128,7 +128,7 @@ module "query_frontend" {
   container_image      = var.container_image
   service_http_port    = module.cortex_config.service_http_port
   service_grpc_port    = module.cortex_config.service_grpc_port
-  service_grpclb_port  = 9096
+  service_grpclb_port  = 9095
   etcd_host            = module.cortex_config.etcd_host
   config_filename      = module.cortex_config.config_filename
   config_map_name      = module.cortex_config.config_map_name
