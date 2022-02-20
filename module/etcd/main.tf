@@ -187,14 +187,14 @@ resource "kubernetes_stateful_set" "stateful_set" {
             period_seconds        = 15
             failure_threshold     = 5
           }
-          liveness_probe {
-            http_get {
-              port = local.client_port
-              path = "/health"
-            }
-            initial_delay_seconds = 90
-            period_seconds        = 15
-          }
+          #          liveness_probe {
+          #            http_get {
+          #              port = local.client_port
+          #              path = "/health"
+          #            }
+          #            initial_delay_seconds = 90
+          #            period_seconds        = 15
+          #          }
           port {
             protocol       = "TCP"
             container_port = local.client_port
