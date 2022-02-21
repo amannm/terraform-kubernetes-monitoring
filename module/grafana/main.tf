@@ -60,44 +60,30 @@ resource "kubernetes_config_map" "config_map" {
   }
 }
 
-resource "kubernetes_persistent_volume_claim" "persistent_volume_claim" {
-  metadata {
-    name      = var.service_name
-    namespace = var.namespace_name
-  }
+resource "kubernetes_stateful_set" "stateful_set" {
   spec {
-    resources {
-      requests = {
-        storage = "${var.storage_volume_size}Gi"
+    replicas     = 1
+    service_name = module.service.headless_service_name
+    update_strategy {
+      rolling_update {
+        partition = 0
       }
     }
-    access_modes = [
-      "ReadWriteOnce"
-    ]
-  }
-}
-
-resource "kubernetes_deployment" "deployment" {
-  metadata {
-    name      = var.service_name
-    namespace = var.namespace_name
-  }
-  spec {
-    replicas = "1"
-    strategy {
-      type = "RollingUpdate"
-    }
-    selector {
-      match_labels = {
-        component = var.service_name
+    volume_claim_template {
+      spec {
+        access_modes = ["ReadWriteOnce"]
+        resources {
+          requests = {
+            storage = "${var.storage_volume_size}Gi"
+          }
+        }
+      }
+      metadata {
+        name      = local.storage_volume_name
+        namespace = var.namespace_name
       }
     }
     template {
-      metadata {
-        labels = {
-          component = var.service_name
-        }
-      }
       spec {
         termination_grace_period_seconds = 30
         security_context {
@@ -110,12 +96,6 @@ resource "kubernetes_deployment" "deployment" {
           name = local.config_volume_name
           config_map {
             name = kubernetes_config_map.config_map.metadata[0].name
-          }
-        }
-        volume {
-          name = local.storage_volume_name
-          persistent_volume_claim {
-            claim_name = kubernetes_persistent_volume_claim.persistent_volume_claim.metadata[0].name
           }
         }
         container {
@@ -169,6 +149,20 @@ resource "kubernetes_deployment" "deployment" {
           }
         }
       }
+      metadata {
+        labels = {
+          component = var.service_name
+        }
+      }
     }
+    selector {
+      match_labels = {
+        component = var.service_name
+      }
+    }
+  }
+  metadata {
+    name      = var.service_name
+    namespace = var.namespace_name
   }
 }
