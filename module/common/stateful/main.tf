@@ -39,10 +39,6 @@ locals {
       mount_path      = var.config_mount_path
       config_map_name = var.config_map_name
     }
-    "storage" = {
-      mount_path = var.storage_mount_path
-      size_limit = var.storage_volume_size
-    }
   }
 }
 
@@ -55,15 +51,29 @@ module "service" {
 
 resource "kubernetes_stateful_set" "deployment" {
   spec {
-    service_name          = module.service.headless_service_name
-    replicas              = var.replicas
-    pod_management_policy = "Parallel"
+    service_name = module.service.headless_service_name
+    replicas     = var.replicas
     update_strategy {
       rolling_update {
         partition = 0
       }
     }
+    volume_claim_template {
+      metadata {
+        name      = "storage"
+        namespace = var.namespace_name
+      }
+      spec {
+        access_modes = ["ReadWriteOnce"]
+        resources {
+          requests = {
+            storage = "${var.storage_volume_size}G"
+          }
+        }
+      }
+    }
     template {
+
       spec {
         service_account_name             = var.service_account_name
         termination_grace_period_seconds = local.lifecycle.max_cleanup_time
