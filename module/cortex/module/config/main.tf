@@ -68,9 +68,10 @@ locals {
     }
     distributor = {
       pool = {
-        health_check_ingesters = false
+        health_check_ingesters = true
       }
-      shard_by_all_labels = true
+      shard_by_all_labels = false
+      remote_timeout      = "5s"
       ring = {
         kvstore           = local.etcd_kvstore
         heartbeat_period  = "5s"
@@ -103,8 +104,7 @@ locals {
       wal_dir = "${var.storage_path}/wal"
     }
     storage = {
-      engine                     = "blocks"
-      index_queries_cache_config = local.fifo_cache["25"]
+      engine = "blocks"
     }
     blocks_storage = {
       backend = "filesystem"
@@ -116,20 +116,15 @@ locals {
       }
       bucket_store = {
         sync_dir = "${var.storage_path}/tsdb-sync"
+        index_cache = {
+          backend = "inmemory"
+          inmemory = {
+            max_size_bytes = pow(2, 26)
+          }
+        }
         bucket_index = {
           enabled = true
         }
-      }
-    }
-    store_gateway = {
-      sharding_enabled = true
-      sharding_ring = {
-        kvstore                     = local.etcd_kvstore
-        heartbeat_period            = "15s"
-        heartbeat_timeout           = "1m"
-        wait_stability_min_duration = "1s"
-        wait_stability_max_duration = "5s"
-        replication_factor          = 1
       }
     }
     compactor = {
@@ -149,6 +144,17 @@ locals {
     }
     purger = {
       enable = false
+    }
+    store_gateway = {
+      sharding_enabled = true
+      sharding_ring = {
+        kvstore                     = local.etcd_kvstore
+        heartbeat_period            = "15s"
+        heartbeat_timeout           = "1m"
+        wait_stability_min_duration = "1s"
+        wait_stability_max_duration = "5s"
+        replication_factor          = 1
+      }
     }
   })
 }
