@@ -20,7 +20,7 @@ locals {
   security = {
     uid                       = 10001
     added_capabilities        = []
-    read_only_root_filesystem = true
+    read_only_root_filesystem = false
   }
   lifecycle = {
     min_readiness_time = 30
