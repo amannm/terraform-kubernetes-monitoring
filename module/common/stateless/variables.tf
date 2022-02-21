@@ -25,6 +25,9 @@ variable "config_map_name" {
 variable "config_filename" {
   type = string
 }
+variable "config_checksum" {
+  type = string
+}
 variable "replicas" {
   type = number
 }

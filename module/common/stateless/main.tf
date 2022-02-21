@@ -187,6 +187,9 @@ resource "kubernetes_deployment" "deployment" {
         labels = {
           component = local.service_name
         }
+        annotations = {
+          "checksum/config" = var.config_checksum
+        }
       }
     }
     selector {

@@ -41,6 +41,7 @@ module "ingester" {
   service_grpc_port    = module.loki_config.service_grpc_port
   etcd_host            = module.loki_config.etcd_host
   config_filename      = module.loki_config.config_filename
+  config_checksum      = module.loki_config.config_checksum
   config_map_name      = module.loki_config.config_map_name
   config_mount_path    = module.loki_config.config_mount_path
   storage_mount_path   = module.loki_config.storage_mount_path
@@ -59,6 +60,7 @@ module "querier" {
   service_grpc_port    = module.loki_config.service_grpc_port
   etcd_host            = module.loki_config.etcd_host
   config_filename      = module.loki_config.config_filename
+  config_checksum      = module.loki_config.config_checksum
   config_map_name      = module.loki_config.config_map_name
   config_mount_path    = module.loki_config.config_mount_path
   storage_mount_path   = module.loki_config.storage_mount_path
@@ -77,6 +79,7 @@ module "distributor" {
   service_grpc_port    = module.loki_config.service_grpc_port
   etcd_host            = module.loki_config.etcd_host
   config_filename      = module.loki_config.config_filename
+  config_checksum      = module.loki_config.config_checksum
   config_map_name      = module.loki_config.config_map_name
   config_mount_path    = module.loki_config.config_mount_path
   storage_mount_path   = module.loki_config.storage_mount_path
@@ -95,6 +98,7 @@ module "query_frontend" {
   service_grpc_port    = module.loki_config.service_grpc_port
   etcd_host            = module.loki_config.etcd_host
   config_filename      = module.loki_config.config_filename
+  config_checksum      = module.loki_config.config_checksum
   config_map_name      = module.loki_config.config_map_name
   config_mount_path    = module.loki_config.config_mount_path
   storage_mount_path   = module.loki_config.storage_mount_path
@@ -113,6 +117,7 @@ module "query_frontend" {
 #  service_grpc_port    = module.loki_config.service_grpc_port
 #  etcd_host            = module.loki_config.etcd_host
 #  config_filename      = module.loki_config.config_filename
+#  config_checksum = module.loki_config.config_checksum
 #  config_map_name      = module.loki_config.config_map_name
 #  config_mount_path    = module.loki_config.config_mount_path
 #  storage_mount_path   = module.loki_config.storage_mount_path

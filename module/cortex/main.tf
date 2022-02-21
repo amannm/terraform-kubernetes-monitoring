@@ -46,6 +46,7 @@ module "ingester" {
   service_grpc_port    = module.cortex_config.service_grpc_port
   etcd_host            = module.cortex_config.etcd_host
   config_filename      = module.cortex_config.config_filename
+  config_checksum      = module.cortex_config.config_checksum
   config_map_name      = module.cortex_config.config_map_name
   config_mount_path    = module.cortex_config.config_mount_path
   storage_mount_path   = module.cortex_config.storage_mount_path
@@ -64,6 +65,7 @@ module "compactor" {
   service_grpc_port    = module.cortex_config.service_grpc_port
   etcd_host            = module.cortex_config.etcd_host
   config_filename      = module.cortex_config.config_filename
+  config_checksum      = module.cortex_config.config_checksum
   config_map_name      = module.cortex_config.config_map_name
   config_mount_path    = module.cortex_config.config_mount_path
   storage_mount_path   = module.cortex_config.storage_mount_path
@@ -82,6 +84,7 @@ module "store-gateway" {
   service_grpc_port    = module.cortex_config.service_grpc_port
   etcd_host            = module.cortex_config.etcd_host
   config_filename      = module.cortex_config.config_filename
+  config_checksum      = module.cortex_config.config_checksum
   config_map_name      = module.cortex_config.config_map_name
   config_mount_path    = module.cortex_config.config_mount_path
   storage_mount_path   = module.cortex_config.storage_mount_path
@@ -100,6 +103,7 @@ module "querier" {
   service_grpc_port    = module.cortex_config.service_grpc_port
   etcd_host            = module.cortex_config.etcd_host
   config_filename      = module.cortex_config.config_filename
+  config_checksum      = module.cortex_config.config_checksum
   config_map_name      = module.cortex_config.config_map_name
   config_mount_path    = module.cortex_config.config_mount_path
   storage_mount_path   = module.cortex_config.storage_mount_path
@@ -118,6 +122,7 @@ module "distributor" {
   service_grpc_port    = module.cortex_config.service_grpc_port
   etcd_host            = module.cortex_config.etcd_host
   config_filename      = module.cortex_config.config_filename
+  config_checksum      = module.cortex_config.config_checksum
   config_map_name      = module.cortex_config.config_map_name
   config_mount_path    = module.cortex_config.config_mount_path
   storage_mount_path   = module.cortex_config.storage_mount_path
@@ -136,6 +141,7 @@ module "query_frontend" {
   service_grpc_port    = module.cortex_config.service_grpc_port
   etcd_host            = module.cortex_config.etcd_host
   config_filename      = module.cortex_config.config_filename
+  config_checksum      = module.cortex_config.config_checksum
   config_map_name      = module.cortex_config.config_map_name
   config_mount_path    = module.cortex_config.config_mount_path
   storage_mount_path   = module.cortex_config.storage_mount_path
