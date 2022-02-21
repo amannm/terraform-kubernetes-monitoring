@@ -9,7 +9,7 @@ locals {
   compactor_component_name       = "compactor"
   store_gateway_component_name   = "store-gateway"
   querier_hostname               = "${var.service_name}-${local.querier_component_name}.${var.namespace_name}.svc.cluster.local"
-  query_frontend_hostname        = "${var.service_name}-${local.query_frontend_component_name}.${var.namespace_name}.svc.cluster.local"
+  query_frontend_hostname        = "${var.service_name}-${local.query_frontend_component_name}-headless.${var.namespace_name}.svc.cluster.local"
   #  query_scheduler_hostname       = "${var.service_name}-${local.query_scheduler_component_name}.${var.namespace_name}.svc.cluster.local"
   distributor_hostname = "${var.service_name}-${local.distributor_component_name}.${var.namespace_name}.svc.cluster.local"
   remote_write_url     = "http://${local.distributor_hostname}:${var.service_port}/api/v1/push"

@@ -47,11 +47,11 @@ locals {
 }
 
 module "service" {
-  source            = "../service"
-  namespace_name    = var.namespace_name
-  service_name      = local.service_name
-  ports             = local.ports
-  non_headless_only = true
+  source         = "../service"
+  namespace_name = var.namespace_name
+  service_name   = local.service_name
+  ports          = local.ports
+  #non_headless_only = true
 }
 
 resource "kubernetes_deployment" "deployment" {
