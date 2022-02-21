@@ -33,7 +33,7 @@ locals {
       max_outstanding_per_tenant   = 100
       scheduler_worker_concurrency = 1
       log_queries_longer_than      = "5s"
-      scheduler_address            = "${var.query_scheduler_hostname}:${var.grpc_port}"
+      #scheduler_address            = "${var.query_scheduler_hostname}:${var.grpc_port}"
     }
     query_range = {
       align_queries_with_step = true
@@ -44,12 +44,13 @@ locals {
         cache = local.fifo_cache["10"]
       }
     }
-    query_scheduler = {
-      max_outstanding_requests_per_tenant = 100
-    }
+    #    query_scheduler = {
+    #      max_outstanding_requests_per_tenant = 100
+    #    }
     frontend_worker = {
-      parallelism       = local.worker_parallelism
-      scheduler_address = "${var.query_scheduler_hostname}:${var.grpc_port}"
+      parallelism = local.worker_parallelism
+      #scheduler_address = "${var.query_scheduler_hostname}:${var.grpc_port}"
+      frontend_address = "${var.query_frontend_hostname}:${var.grpc_port}"
     }
     querier = {
       active_query_tracker_dir = "${var.storage_path}/active-query-tracker"

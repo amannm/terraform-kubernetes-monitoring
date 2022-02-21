@@ -27,7 +27,7 @@ locals {
       log_level        = "info"
     }
     frontend = {
-      scheduler_address            = "${var.query_scheduler_hostname}:${var.grpc_port}"
+      #scheduler_address            = "${var.query_scheduler_hostname}:${var.grpc_port}"
       max_outstanding_per_tenant   = 100
       scheduler_worker_concurrency = 1
       compress_responses           = true
@@ -43,16 +43,17 @@ locals {
         cache = local.fifo_cache["10"]
       }
     }
-    query_scheduler = {
-      max_outstanding_requests_per_tenant = 100
-      use_scheduler_ring                  = true
-      scheduler_ring = {
-        kvstore = local.etcd_kvstore
-      }
-    }
+    #    query_scheduler = {
+    #      max_outstanding_requests_per_tenant = 100
+    #      use_scheduler_ring                  = true
+    #      scheduler_ring = {
+    #        kvstore = local.etcd_kvstore
+    #      }
+    #    }
     frontend_worker = {
-      parallelism       = local.worker_parallelism
-      scheduler_address = "${var.query_scheduler_hostname}:${var.grpc_port}"
+      parallelism = local.worker_parallelism
+      #      scheduler_address = "${var.query_scheduler_hostname}:${var.grpc_port}"
+      frontend_address = "${var.query_frontend_hostname}:${var.grpc_port}"
     }
     querier = {
       query_timeout  = "1m"

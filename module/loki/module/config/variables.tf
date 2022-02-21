@@ -28,9 +28,9 @@ variable "storage_path" {
 variable "query_frontend_hostname" {
   type = string
 }
-variable "query_scheduler_hostname" {
-  type = string
-}
+#variable "query_scheduler_hostname" {
+#  type = string
+#}
 variable "querier_hostname" {
   type = string
 }
