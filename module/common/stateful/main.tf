@@ -73,12 +73,13 @@ resource "kubernetes_stateful_set" "deployment" {
       }
     }
     template {
-
       spec {
         service_account_name             = var.service_account_name
         termination_grace_period_seconds = local.lifecycle.max_cleanup_time
         security_context {
-          fs_group = local.security.uid
+          run_as_user  = local.security.uid
+          run_as_group = local.security.uid
+          fs_group     = local.security.uid
         }
         container {
           name              = local.service_name
