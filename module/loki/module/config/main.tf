@@ -91,7 +91,7 @@ locals {
           // distributor will refuse to write unless floor(replication_factor / 2) + 1 replicas are ACTIVE
           replication_factor = 1
         }
-        join_after         = "5s"
+        join_after         = "30s"
         min_ready_duration = "15s"
         heartbeat_period   = "5s"
         final_sleep        = "30s"

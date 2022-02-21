@@ -88,7 +88,7 @@ locals {
           heartbeat_timeout  = "1m"
           replication_factor = 1
         }
-        join_after             = "5s"
+        join_after             = "30s"
         heartbeat_period       = "5s"
         min_ready_duration     = "15s"
         final_sleep            = "30s"
