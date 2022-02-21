@@ -36,7 +36,7 @@ module "service_account" {
 }
 
 module "ingester" {
-  source               = "../common/stateless"
+  source               = "../common/stateful"
   namespace_name       = var.namespace_name
   system_name          = var.service_name
   component_name       = local.ingester_component_name
