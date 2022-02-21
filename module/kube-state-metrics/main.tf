@@ -135,10 +135,10 @@ resource "kubernetes_deployment" "deployment" {
           resources {
             requests = {
               cpu : "75m"
-              memory : "75Mi"
+              memory : "30Mi"
             }
             limits = {
-              memory : "150Mi"
+              memory : "30Mi"
             }
           }
           readiness_probe {

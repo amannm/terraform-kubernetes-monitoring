@@ -47,6 +47,11 @@ module "ingester" {
   storage_mount_path   = module.loki_config.storage_mount_path
   storage_volume_size  = 4
   replicas             = 1
+  resources = {
+    cpu_min    = 75
+    memory_min = 50
+    memory_max = 80
+  }
 }
 
 module "querier" {
@@ -66,6 +71,11 @@ module "querier" {
   storage_mount_path   = module.loki_config.storage_mount_path
   storage_volume_size  = 2
   replicas             = 1
+  resources = {
+    cpu_min    = 75
+    memory_min = 40
+    memory_max = 70
+  }
 }
 
 module "distributor" {
@@ -85,6 +95,11 @@ module "distributor" {
   storage_mount_path   = module.loki_config.storage_mount_path
   storage_volume_size  = 1
   replicas             = 1
+  resources = {
+    cpu_min    = 75
+    memory_min = 20
+    memory_max = 70
+  }
 }
 
 module "query_frontend" {
@@ -104,6 +119,11 @@ module "query_frontend" {
   storage_mount_path   = module.loki_config.storage_mount_path
   storage_volume_size  = 1
   replicas             = local.query_frontend_replicas
+  resources = {
+    cpu_min    = 75
+    memory_min = 16
+    memory_max = 40
+  }
 }
 
 #module "query_scheduler" {

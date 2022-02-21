@@ -52,6 +52,11 @@ module "ingester" {
   storage_mount_path   = module.cortex_config.storage_mount_path
   storage_volume_size  = 1
   replicas             = 1
+  resources = {
+    cpu_min    = 100
+    memory_min = 300
+    memory_max = 400
+  }
 }
 
 module "compactor" {
@@ -71,6 +76,11 @@ module "compactor" {
   storage_mount_path   = module.cortex_config.storage_mount_path
   storage_volume_size  = 1
   replicas             = 1
+  resources = {
+    cpu_min    = 75
+    memory_min = 26
+    memory_max = 50
+  }
 }
 
 module "store-gateway" {
@@ -90,6 +100,11 @@ module "store-gateway" {
   storage_mount_path   = module.cortex_config.storage_mount_path
   storage_volume_size  = 1
   replicas             = 1
+  resources = {
+    cpu_min    = 75
+    memory_min = 30
+    memory_max = 50
+  }
 }
 
 module "querier" {
@@ -109,6 +124,11 @@ module "querier" {
   storage_mount_path   = module.cortex_config.storage_mount_path
   storage_volume_size  = 1
   replicas             = 1
+  resources = {
+    cpu_min    = 75
+    memory_min = 25
+    memory_max = 50
+  }
 }
 
 module "distributor" {
@@ -128,6 +148,11 @@ module "distributor" {
   storage_mount_path   = module.cortex_config.storage_mount_path
   storage_volume_size  = 1
   replicas             = 1
+  resources = {
+    cpu_min    = 75
+    memory_min = 20
+    memory_max = 70
+  }
 }
 
 module "query_frontend" {
@@ -147,6 +172,11 @@ module "query_frontend" {
   storage_mount_path   = module.cortex_config.storage_mount_path
   storage_volume_size  = 1
   replicas             = local.query_frontend_replicas
+  resources = {
+    cpu_min    = 75
+    memory_min = 40
+    memory_max = 100
+  }
 }
 
 #module "query_scheduler" {

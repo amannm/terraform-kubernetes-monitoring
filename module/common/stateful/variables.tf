@@ -31,6 +31,13 @@ variable "config_checksum" {
 variable "replicas" {
   type = number
 }
+variable "resources" {
+  type = object({
+    cpu_min    = number
+    memory_min = number
+    memory_max = number
+  })
+}
 variable "service_account_name" {
   type = string
 }

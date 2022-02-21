@@ -170,10 +170,10 @@ resource "kubernetes_stateful_set" "stateful_set" {
           resources {
             requests = {
               cpu : "100m"
-              memory : "125Mi"
+              memory : "100Mi"
             }
             limits = {
-              memory : "400Mi"
+              memory : "200Mi"
             }
           }
           readiness_probe {

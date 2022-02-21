@@ -4,9 +4,9 @@ locals {
     "-config.file=${local.volumes.config.mount_path}/${var.config_filename}",
     "-target=${var.component_name}",
   ]
-  cpu_min    = 100
-  memory_min = 100
-  memory_max = 400
+  cpu_min    = var.resources.cpu_min
+  memory_min = var.resources.memory_min
+  memory_max = var.resources.memory_max
   ports = {
     http = {
       port        = var.service_http_port
