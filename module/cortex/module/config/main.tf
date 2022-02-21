@@ -58,6 +58,7 @@ locals {
       max_concurrent           = local.worker_parallelism * var.max_query_frontend_replicas + local.worker_parallelism
     }
     limits = {
+      max_label_names_per_series        = 50
       enforce_metric_name               = false
       ingestion_rate_strategy           = "global"
       compactor_blocks_retention_period = "24h"
@@ -100,10 +101,6 @@ locals {
     }
     flusher = {
       wal_dir = "${var.storage_path}/wal"
-    }
-    table_manager = {
-      retention_deletes_enabled = true
-      retention_period          = "0s"
     }
     storage = {
       engine                     = "blocks"
