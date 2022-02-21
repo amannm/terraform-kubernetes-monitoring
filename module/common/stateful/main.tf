@@ -1,5 +1,6 @@
 locals {
-  service_name = "${var.system_name}-${var.component_name}"
+  service_name        = "${var.system_name}-${var.component_name}"
+  storage_volume_name = "storage"
   args = [
     "-config.file=${local.volumes.config.mount_path}/${var.config_filename}",
     "-target=${var.component_name}",
@@ -20,7 +21,7 @@ locals {
   security = {
     uid                       = 10001
     added_capabilities        = []
-    read_only_root_filesystem = false
+    read_only_root_filesystem = true
   }
   lifecycle = {
     min_readiness_time = 30
@@ -38,6 +39,9 @@ locals {
     "config" = {
       mount_path      = var.config_mount_path
       config_map_name = var.config_map_name
+    }
+    (local.storage_volume_name) = {
+      mount_path = var.storage_mount_path
     }
   }
 }
@@ -60,7 +64,7 @@ resource "kubernetes_stateful_set" "deployment" {
     }
     volume_claim_template {
       metadata {
-        name      = "storage"
+        name      = local.storage_volume_name
         namespace = var.namespace_name
       }
       spec {
@@ -77,9 +81,7 @@ resource "kubernetes_stateful_set" "deployment" {
         service_account_name             = var.service_account_name
         termination_grace_period_seconds = local.lifecycle.max_cleanup_time
         security_context {
-          run_as_user  = local.security.uid
-          run_as_group = local.security.uid
-          fs_group     = local.security.uid
+          fs_group = local.security.uid
         }
         container {
           name              = local.service_name

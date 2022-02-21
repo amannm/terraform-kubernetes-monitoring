@@ -39,16 +39,6 @@ module "grafana_agent" {
   logs_remote_write_url    = module.loki.remote_write_url
 }
 
-#module "prometheus_server" {
-#  source                 = "./module/prometheus-server"
-#  namespace_name         = kubernetes_namespace.namespace.metadata[0].name
-#  service_name           = "prometheus-server"
-#  service_port           = var.prometheus_server_port
-#  storage_volume_size    = 4
-#  storage_retention_days = 1
-#  server_container_image = "quay.io/prometheus/prometheus:latest"
-#}
-
 module "grafana" {
   source          = "./module/grafana"
   namespace_name  = kubernetes_namespace.namespace.metadata[0].name
