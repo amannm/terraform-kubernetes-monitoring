@@ -126,6 +126,9 @@ locals {
 
 locals {
   metrics_config = {
+    global = {
+      scrape_interval = "1m"
+    }
     scraping_service = {
       enabled                       = true
       dangerous_allow_reading_files = true

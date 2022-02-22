@@ -28,7 +28,12 @@ locals {
     added_capabilities        = []
     read_only_root_filesystem = true
   }
-  lifecycle = var.pod_lifecycle
+  lifecycle = {
+    min_readiness_time = var.pod_lifecycle.min_readiness_time
+    max_readiness_time = var.pod_lifecycle.max_readiness_time
+    max_cleanup_time   = var.pod_lifecycle.max_cleanup_time
+    shutdown_hook_path = var.pod_lifecycle.shutdown_hook_path
+  }
   probes = {
     port                   = var.service_http_port
     readiness_path         = "/ready"
