@@ -12,6 +12,14 @@ resource "kubernetes_namespace" "namespace" {
   }
 }
 
+module "grafana" {
+  source          = "./module/grafana"
+  namespace_name  = kubernetes_namespace.namespace.metadata[0].name
+  service_name    = "grafana"
+  service_port    = var.grafana_port
+  container_image = "grafana/grafana:latest"
+}
+
 module "shared_etcd" {
   source              = "./module/etcd"
   namespace_name      = var.namespace_name
@@ -39,12 +47,14 @@ module "grafana_agent" {
   logs_remote_write_url    = module.loki.remote_write_url
 }
 
-module "grafana" {
-  source          = "./module/grafana"
-  namespace_name  = kubernetes_namespace.namespace.metadata[0].name
-  service_name    = "grafana"
-  service_port    = var.grafana_port
-  container_image = "grafana/grafana:latest"
+module "cortex" {
+  source              = "./module/cortex"
+  namespace_name      = kubernetes_namespace.namespace.metadata[0].name
+  service_name        = "cortex"
+  service_port        = var.cortex_port
+  container_image     = "quay.io/cortexproject/cortex:v1.11.0"
+  storage_volume_size = 2
+  etcd_host           = module.shared_etcd.client_endpoint_host
 }
 
 module "loki" {
@@ -53,16 +63,6 @@ module "loki" {
   service_name        = "loki"
   service_port        = var.loki_port
   container_image     = "grafana/loki:2.4.2"
-  storage_volume_size = 2
-  etcd_host           = module.shared_etcd.client_endpoint_host
-}
-
-module "cortex" {
-  source              = "./module/cortex"
-  namespace_name      = kubernetes_namespace.namespace.metadata[0].name
-  service_name        = "cortex"
-  service_port        = var.cortex_port
-  container_image     = "quay.io/cortexproject/cortex:v1.11.0"
   storage_volume_size = 2
   etcd_host           = module.shared_etcd.client_endpoint_host
 }

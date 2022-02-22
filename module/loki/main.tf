@@ -45,7 +45,7 @@ module "ingester" {
   config_map_name      = module.loki_config.config_map_name
   config_mount_path    = module.loki_config.config_mount_path
   storage_mount_path   = module.loki_config.storage_mount_path
-  storage_volume_size  = 4
+  storage_volume_size  = 1
   replicas             = 1
   resources = {
     cpu_min    = 75
@@ -69,7 +69,7 @@ module "querier" {
   config_map_name      = module.loki_config.config_map_name
   config_mount_path    = module.loki_config.config_mount_path
   storage_mount_path   = module.loki_config.storage_mount_path
-  storage_volume_size  = 2
+  storage_volume_size  = 1
   replicas             = 1
   resources = {
     cpu_min    = 75

@@ -51,7 +51,21 @@ module "service" {
   namespace_name = var.namespace_name
   service_name   = local.service_name
   ports          = local.ports
-  #non_headless_only = true
+}
+
+resource "kubernetes_pod_disruption_budget" "pdb" {
+  metadata {
+    name      = local.service_name
+    namespace = var.namespace_name
+  }
+  spec {
+    min_available = "1"
+    selector {
+      match_labels = {
+        component = local.service_name
+      }
+    }
+  }
 }
 
 resource "kubernetes_deployment" "deployment" {
