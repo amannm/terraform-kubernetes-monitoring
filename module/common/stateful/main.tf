@@ -150,7 +150,7 @@ resource "kubernetes_stateful_set" "deployment" {
             period_seconds        = local.probes.readiness_polling_rate
             success_threshold     = 1
             failure_threshold     = ceil(local.lifecycle.max_readiness_time / local.probes.readiness_polling_rate)
-            timeout_seconds       = 1
+            timeout_seconds       = 5
           }
           #          liveness_probe {
           #            http_get {
