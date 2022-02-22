@@ -52,10 +52,15 @@ module "ingester" {
   storage_mount_path   = module.cortex_config.storage_mount_path
   storage_volume_size  = 1
   replicas             = 1
-  resources = {
+  pod_resources = {
     cpu_min    = 100
     memory_min = 300
     memory_max = 400
+  }
+  pod_lifecycle = {
+    min_readiness_time = 30
+    max_readiness_time = 90
+    max_cleanup_time   = 300
   }
 }
 
@@ -76,10 +81,15 @@ module "compactor" {
   storage_mount_path   = module.cortex_config.storage_mount_path
   storage_volume_size  = 1
   replicas             = 1
-  resources = {
+  pod_resources = {
     cpu_min    = 75
     memory_min = 26
     memory_max = 50
+  }
+  pod_lifecycle = {
+    min_readiness_time = 30
+    max_readiness_time = 90
+    max_cleanup_time   = 300
   }
 }
 
@@ -100,10 +110,15 @@ module "store-gateway" {
   storage_mount_path   = module.cortex_config.storage_mount_path
   storage_volume_size  = 1
   replicas             = 1
-  resources = {
+  pod_resources = {
     cpu_min    = 75
     memory_min = 30
     memory_max = 50
+  }
+  pod_lifecycle = {
+    min_readiness_time = 30
+    max_readiness_time = 90
+    max_cleanup_time   = 300
   }
 }
 

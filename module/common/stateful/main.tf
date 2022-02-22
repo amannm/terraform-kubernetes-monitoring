@@ -1,3 +1,8 @@
+terraform {
+  experiments = [
+    module_variable_optional_attrs
+  ]
+}
 locals {
   service_name        = "${var.system_name}-${var.component_name}"
   storage_volume_name = "storage"
@@ -5,9 +10,9 @@ locals {
     "-config.file=${local.volumes.config.mount_path}/${var.config_filename}",
     "-target=${var.component_name}",
   ]
-  cpu_min    = var.resources.cpu_min
-  memory_min = var.resources.memory_min
-  memory_max = var.resources.memory_max
+  cpu_min    = var.pod_resources.cpu_min
+  memory_min = var.pod_resources.memory_min
+  memory_max = var.pod_resources.memory_max
   ports = {
     http = {
       port        = var.service_http_port
@@ -23,11 +28,7 @@ locals {
     added_capabilities        = []
     read_only_root_filesystem = true
   }
-  lifecycle = {
-    min_readiness_time = 30
-    max_readiness_time = 90
-    max_cleanup_time   = 300
-  }
+  lifecycle = var.pod_lifecycle
   probes = {
     port                   = var.service_http_port
     readiness_path         = "/ready"
@@ -113,6 +114,17 @@ resource "kubernetes_stateful_set" "deployment" {
             capabilities {
               add  = local.security.added_capabilities
               drop = local.security.uid != 0 ? ["ALL"] : []
+            }
+          }
+          dynamic "lifecycle" {
+            for_each = { for k, v in local.lifecycle : k => v if k == "shutdown_hook_path" && v != null }
+            content {
+              pre_stop {
+                http_get {
+                  path = lifecycle.value
+                  port = local.ports.http.target_port
+                }
+              }
             }
           }
           resources {

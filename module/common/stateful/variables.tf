@@ -31,11 +31,19 @@ variable "config_checksum" {
 variable "replicas" {
   type = number
 }
-variable "resources" {
+variable "pod_resources" {
   type = object({
     cpu_min    = number
     memory_min = number
     memory_max = number
+  })
+}
+variable "pod_lifecycle" {
+  type = object({
+    min_readiness_time = number
+    max_readiness_time = number
+    max_cleanup_time   = number
+    shutdown_hook_path = optional(string)
   })
 }
 variable "service_account_name" {

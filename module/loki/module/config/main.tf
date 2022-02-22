@@ -77,7 +77,7 @@ locals {
         heartbeat_timeout = "1m"
       }
     }
-    ingester_client_config = {
+    ingester_client = {
       pool_config = {
         health_check_ingesters = true
         client_cleanup_period  = "15s"

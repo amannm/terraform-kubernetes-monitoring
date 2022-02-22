@@ -47,10 +47,16 @@ module "ingester" {
   storage_mount_path   = module.loki_config.storage_mount_path
   storage_volume_size  = 1
   replicas             = 1
-  resources = {
+  pod_resources = {
     cpu_min    = 75
     memory_min = 50
     memory_max = 80
+  }
+  pod_lifecycle = {
+    min_readiness_time = 30
+    max_readiness_time = 90
+    max_cleanup_time   = 300
+    shutdown_hook_path = "/ingester/shutdown"
   }
 }
 
@@ -71,10 +77,15 @@ module "querier" {
   storage_mount_path   = module.loki_config.storage_mount_path
   storage_volume_size  = 1
   replicas             = 1
-  resources = {
+  pod_resources = {
     cpu_min    = 75
     memory_min = 40
     memory_max = 70
+  }
+  pod_lifecycle = {
+    min_readiness_time = 30
+    max_readiness_time = 90
+    max_cleanup_time   = 300
   }
 }
 
