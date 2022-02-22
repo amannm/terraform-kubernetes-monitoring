@@ -55,7 +55,7 @@ module "ingester" {
   pod_lifecycle = {
     min_readiness_time = 30
     max_readiness_time = 90
-    max_cleanup_time   = 300
+    max_cleanup_time   = 30
     shutdown_hook_path = "/ingester/shutdown"
   }
 }
@@ -85,7 +85,7 @@ module "querier" {
   pod_lifecycle = {
     min_readiness_time = 30
     max_readiness_time = 90
-    max_cleanup_time   = 300
+    max_cleanup_time   = 30
   }
 }
 
