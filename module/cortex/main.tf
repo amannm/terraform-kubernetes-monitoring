@@ -142,7 +142,7 @@ module "querier" {
   resources = {
     cpu_min    = 75
     memory_min = 25
-    memory_max = 70
+    memory_max = 150
   }
 }
 
