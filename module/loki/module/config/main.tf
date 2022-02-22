@@ -77,6 +77,12 @@ locals {
         heartbeat_timeout = "1m"
       }
     }
+    ingester_client_config = {
+      pool_config = {
+        health_check_ingesters = true
+        client_cleanup_period  = "15s"
+      }
+    }
     ingester = {
       chunk_block_size     = pow(2, 18)
       chunk_target_size    = pow(2, 18) * 6

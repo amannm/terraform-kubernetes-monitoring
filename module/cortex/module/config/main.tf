@@ -68,7 +68,8 @@ locals {
     }
     distributor = {
       pool = {
-        health_check_ingesters = false
+        health_check_ingesters = true
+        client_cleanup_period  = "15s"
       }
       shard_by_all_labels = false
       remote_timeout      = "5s"
