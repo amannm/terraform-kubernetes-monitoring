@@ -28,7 +28,7 @@ locals {
     read_only_root_filesystem = true
   }
   lifecycle = {
-    min_readiness_time = 30
+    min_readiness_time = 60
     max_readiness_time = 90
     max_cleanup_time   = 30
   }
