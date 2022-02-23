@@ -17,7 +17,7 @@ locals {
   }
 
   lifecycle = {
-    min_readiness_time = 30
+    min_readiness_time = 10
     max_readiness_time = 90
     max_cleanup_time   = 10
   }
@@ -136,6 +136,7 @@ module "service" {
 
 resource "kubernetes_daemonset" "daemonset" {
   spec {
+    min_ready_seconds = local.lifecycle.min_readiness_time
     template {
       spec {
         termination_grace_period_seconds = local.lifecycle.max_cleanup_time
