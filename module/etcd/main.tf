@@ -1,4 +1,9 @@
 locals {
+  preemptible_node_label = var.preemptible_node_label_name != null && var.preemptible_node_label_value != null ? {
+    (var.preemptible_node_label_name) = var.preemptible_node_label_value
+  } : {}
+}
+locals {
   client_port             = 2379
   cluster_domain          = "cluster.local"
   peer_port               = 2380
@@ -125,6 +130,20 @@ resource "kubernetes_stateful_set" "stateful_set" {
       }
       spec {
         affinity {
+          dynamic "node_affinity" {
+            for_each = { for k, v in local.preemptible_node_label : k => v }
+            content {
+              required_during_scheduling_ignored_during_execution {
+                node_selector_term {
+                  match_expressions {
+                    key      = k
+                    operator = "NotIn"
+                    values   = [v]
+                  }
+                }
+              }
+            }
+          }
           pod_anti_affinity {
             required_during_scheduling_ignored_during_execution {
               label_selector {

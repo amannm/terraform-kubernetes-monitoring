@@ -1,4 +1,9 @@
 locals {
+  preemptible_node_label = var.preemptible_node_label_name != null && var.preemptible_node_label_value != null ? {
+    (var.preemptible_node_label_name) = var.preemptible_node_label_value
+  } : {}
+}
+locals {
   health_check_path = "/api/health"
 
   config_volume_name       = "config"
@@ -85,6 +90,43 @@ resource "kubernetes_stateful_set" "stateful_set" {
     }
     template {
       spec {
+        affinity {
+          dynamic "node_affinity" {
+            for_each = { for k, v in local.preemptible_node_label : k => v }
+            content {
+              required_during_scheduling_ignored_during_execution {
+                node_selector_term {
+                  match_expressions {
+                    key      = k
+                    operator = "NotIn"
+                    values   = [v]
+                  }
+                }
+              }
+            }
+          }
+          pod_anti_affinity {
+            required_during_scheduling_ignored_during_execution {
+              label_selector {
+                match_labels = {
+                  component = var.service_name
+                }
+              }
+              topology_key = "kubernetes.io/hostname"
+            }
+            preferred_during_scheduling_ignored_during_execution {
+              weight = 100
+              pod_affinity_term {
+                label_selector {
+                  match_labels = {
+                    component = var.service_name
+                  }
+                }
+                topology_key = "failure-domain.beta.kubernetes.io/zone"
+              }
+            }
+          }
+        }
         termination_grace_period_seconds = 30
         security_context {
           run_as_user         = "472"

@@ -8,6 +8,12 @@ variable "service_name" {
 variable "service_port" {
   type = number
 }
+variable "preemptible_node_label_name" {
+  type = string
+}
+variable "preemptible_node_label_value" {
+  type = string
+}
 variable "container_image" {
   type    = string
   default = "grafana/grafana:8.3.4"

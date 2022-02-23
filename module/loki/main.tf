@@ -94,22 +94,24 @@ module "querier" {
 }
 
 module "distributor" {
-  source               = "../common/stateless"
-  namespace_name       = var.namespace_name
-  system_name          = var.service_name
-  component_name       = local.distributor_component_name
-  service_account_name = module.service_account.name
-  container_image      = var.container_image
-  service_http_port    = module.loki_config.service_http_port
-  service_grpc_port    = module.loki_config.service_grpc_port
-  etcd_host            = module.loki_config.etcd_host
-  config_filename      = module.loki_config.config_filename
-  config_checksum      = module.loki_config.config_checksum
-  config_map_name      = module.loki_config.config_map_name
-  config_mount_path    = module.loki_config.config_mount_path
-  storage_mount_path   = module.loki_config.storage_mount_path
-  storage_volume_size  = 1
-  replicas             = 1
+  source                       = "../common/stateless"
+  namespace_name               = var.namespace_name
+  system_name                  = var.service_name
+  preemptible_node_label_name  = var.preemptible_node_label_name
+  preemptible_node_label_value = var.preemptible_node_label_value
+  component_name               = local.distributor_component_name
+  service_account_name         = module.service_account.name
+  container_image              = var.container_image
+  service_http_port            = module.loki_config.service_http_port
+  service_grpc_port            = module.loki_config.service_grpc_port
+  etcd_host                    = module.loki_config.etcd_host
+  config_filename              = module.loki_config.config_filename
+  config_checksum              = module.loki_config.config_checksum
+  config_map_name              = module.loki_config.config_map_name
+  config_mount_path            = module.loki_config.config_mount_path
+  storage_mount_path           = module.loki_config.storage_mount_path
+  storage_volume_size          = 1
+  replicas                     = 1
   resources = {
     cpu_min    = 75
     memory_min = 20
@@ -118,22 +120,24 @@ module "distributor" {
 }
 
 module "query_frontend" {
-  source               = "../common/stateless"
-  namespace_name       = var.namespace_name
-  system_name          = var.service_name
-  component_name       = local.query_frontend_component_name
-  service_account_name = module.service_account.name
-  container_image      = var.container_image
-  service_http_port    = module.loki_config.service_http_port
-  service_grpc_port    = module.loki_config.service_grpc_port
-  etcd_host            = module.loki_config.etcd_host
-  config_filename      = module.loki_config.config_filename
-  config_checksum      = module.loki_config.config_checksum
-  config_map_name      = module.loki_config.config_map_name
-  config_mount_path    = module.loki_config.config_mount_path
-  storage_mount_path   = module.loki_config.storage_mount_path
-  storage_volume_size  = 1
-  replicas             = local.query_frontend_replicas
+  source                       = "../common/stateless"
+  namespace_name               = var.namespace_name
+  system_name                  = var.service_name
+  preemptible_node_label_name  = var.preemptible_node_label_name
+  preemptible_node_label_value = var.preemptible_node_label_value
+  component_name               = local.query_frontend_component_name
+  service_account_name         = module.service_account.name
+  container_image              = var.container_image
+  service_http_port            = module.loki_config.service_http_port
+  service_grpc_port            = module.loki_config.service_grpc_port
+  etcd_host                    = module.loki_config.etcd_host
+  config_filename              = module.loki_config.config_filename
+  config_checksum              = module.loki_config.config_checksum
+  config_map_name              = module.loki_config.config_map_name
+  config_mount_path            = module.loki_config.config_mount_path
+  storage_mount_path           = module.loki_config.storage_mount_path
+  storage_volume_size          = 1
+  replicas                     = local.query_frontend_replicas
   resources = {
     cpu_min    = 75
     memory_min = 16

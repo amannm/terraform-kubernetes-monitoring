@@ -1,4 +1,9 @@
 locals {
+  preemptible_node_label = var.preemptible_node_label_name != null && var.preemptible_node_label_value != null ? {
+    (var.preemptible_node_label_name) = var.preemptible_node_label_value
+  } : {}
+}
+locals {
   service_name = "${var.system_name}-${var.component_name}"
   args = [
     "-config.file=${local.volumes.config.mount_path}/${var.config_filename}",
@@ -174,6 +179,21 @@ resource "kubernetes_deployment" "deployment" {
           }
         }
         affinity {
+          dynamic "node_affinity" {
+            for_each = { for k, v in local.preemptible_node_label : k => v }
+            content {
+              preferred_during_scheduling_ignored_during_execution {
+                weight = 100
+                preference {
+                  match_expressions {
+                    key      = k
+                    operator = "In"
+                    values   = [v]
+                  }
+                }
+              }
+            }
+          }
           pod_anti_affinity {
             required_during_scheduling_ignored_during_execution {
               label_selector {

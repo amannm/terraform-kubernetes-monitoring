@@ -1,4 +1,9 @@
 locals {
+  preemptible_node_label = var.preemptible_node_label_name != null && var.preemptible_node_label_value != null ? {
+    (var.preemptible_node_label_name) = var.preemptible_node_label_value
+  } : {}
+}
+locals {
   enabled_resources = {
     certificatesigningrequests      = ["certificates.k8s.io"]
     configmaps                      = [""]
@@ -108,6 +113,44 @@ resource "kubernetes_deployment" "deployment" {
         }
       }
       spec {
+        affinity {
+          dynamic "node_affinity" {
+            for_each = { for k, v in local.preemptible_node_label : k => v }
+            content {
+              preferred_during_scheduling_ignored_during_execution {
+                weight = 100
+                preference {
+                  match_expressions {
+                    key      = k
+                    operator = "In"
+                    values   = [v]
+                  }
+                }
+              }
+            }
+          }
+          pod_anti_affinity {
+            required_during_scheduling_ignored_during_execution {
+              label_selector {
+                match_labels = {
+                  component = var.service_name
+                }
+              }
+              topology_key = "kubernetes.io/hostname"
+            }
+            preferred_during_scheduling_ignored_during_execution {
+              weight = 100
+              pod_affinity_term {
+                label_selector {
+                  match_labels = {
+                    component = var.service_name
+                  }
+                }
+                topology_key = "failure-domain.beta.kubernetes.io/zone"
+              }
+            }
+          }
+        }
         termination_grace_period_seconds = 10
         service_account_name             = kubernetes_service_account.service_account.metadata[0].name
         security_context {

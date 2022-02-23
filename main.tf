@@ -13,28 +13,34 @@ resource "kubernetes_namespace" "namespace" {
 }
 
 module "grafana" {
-  source          = "./module/grafana"
-  namespace_name  = kubernetes_namespace.namespace.metadata[0].name
-  service_name    = "grafana"
-  service_port    = var.grafana_port
-  container_image = "grafana/grafana:latest"
+  source                       = "./module/grafana"
+  namespace_name               = kubernetes_namespace.namespace.metadata[0].name
+  service_name                 = "grafana"
+  service_port                 = var.grafana_port
+  container_image              = "grafana/grafana:latest"
+  preemptible_node_label_name  = var.preemptible_node_label_name
+  preemptible_node_label_value = var.preemptible_node_label_value
 }
 
 module "shared_etcd" {
-  source              = "./module/etcd"
-  namespace_name      = var.namespace_name
-  service_name        = "etcd"
-  container_image     = "quay.io/coreos/etcd:v3.5.2"
-  cluster_size        = 1
-  storage_volume_size = 1
+  source                       = "./module/etcd"
+  namespace_name               = var.namespace_name
+  service_name                 = "etcd"
+  container_image              = "quay.io/coreos/etcd:v3.5.2"
+  cluster_size                 = 1
+  storage_volume_size          = 1
+  preemptible_node_label_name  = var.preemptible_node_label_name
+  preemptible_node_label_value = var.preemptible_node_label_value
 }
 
 module "kube_state_metrics" {
-  source          = "./module/kube-state-metrics"
-  namespace_name  = kubernetes_namespace.namespace.metadata[0].name
-  service_name    = "kube-state-metrics"
-  service_port    = var.kube_state_metrics_port
-  container_image = "k8s.gcr.io/kube-state-metrics/kube-state-metrics:v2.3.0"
+  source                       = "./module/kube-state-metrics"
+  namespace_name               = kubernetes_namespace.namespace.metadata[0].name
+  service_name                 = "kube-state-metrics"
+  service_port                 = var.kube_state_metrics_port
+  container_image              = "k8s.gcr.io/kube-state-metrics/kube-state-metrics:v2.3.0"
+  preemptible_node_label_name  = var.preemptible_node_label_name
+  preemptible_node_label_value = var.preemptible_node_label_value
 }
 
 module "grafana_agent" {
