@@ -216,9 +216,9 @@ resource "kubernetes_stateful_set" "deployment" {
               required_during_scheduling_ignored_during_execution {
                 node_selector_term {
                   match_expressions {
-                    key      = k
+                    key      = node_affinity.key
                     operator = "NotIn"
-                    values   = [v]
+                    values   = [node_affinity.value]
                   }
                 }
               }

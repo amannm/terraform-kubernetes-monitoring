@@ -121,9 +121,9 @@ resource "kubernetes_deployment" "deployment" {
                 weight = 100
                 preference {
                   match_expressions {
-                    key      = k
+                    key      = node_affinity.key
                     operator = "In"
-                    values   = [v]
+                    values   = [node_affinity.value]
                   }
                 }
               }
