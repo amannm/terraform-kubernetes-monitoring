@@ -2,8 +2,7 @@ variable "namespace_name" {
   type = string
 }
 variable "resource_name" {
-  type    = string
-  default = "grafana-agent"
+  type = string
 }
 variable "preemptible_node_label_name" {
   type = string
@@ -12,8 +11,7 @@ variable "preemptible_node_label_value" {
   type = string
 }
 variable "agent_container_image" {
-  type    = string
-  default = "grafana/agent:v0.22.0"
+  type = string
 }
 variable "agent_container_port" {
   type    = number
@@ -24,8 +22,7 @@ variable "metrics_remote_write_url" {
   default = null
 }
 variable "agentctl_container_image" {
-  type    = string
-  default = "grafana/agentctl:v0.22.0"
+  type = string
 }
 variable "etcd_host" {
   type = string

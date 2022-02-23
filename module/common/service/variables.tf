@@ -16,6 +16,10 @@ variable "headless_only" {
   type    = bool
   default = false
 }
+variable "wait_for_readiness" {
+  type    = bool
+  default = false
+}
 variable "ports" {
   type = map(object({
     port        = number

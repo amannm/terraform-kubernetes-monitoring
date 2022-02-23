@@ -126,11 +126,12 @@ module "agent_config" {
 }
 
 module "service" {
-  source         = "../common/service"
-  namespace_name = var.namespace_name
-  service_name   = var.resource_name
-  ports          = local.ports
-  headless_only  = true
+  source             = "../common/service"
+  namespace_name     = var.namespace_name
+  service_name       = var.resource_name
+  ports              = local.ports
+  headless_only      = true
+  wait_for_readiness = true
 }
 
 resource "kubernetes_daemonset" "daemonset" {
