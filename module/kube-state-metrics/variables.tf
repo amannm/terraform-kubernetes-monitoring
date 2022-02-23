@@ -13,7 +13,7 @@ variable "preemptible_node_label_name" {
   type = string
 }
 variable "preemptible_node_label_value" {
-  type = any
+  type = string
 }
 variable "container_image" {
   type    = string

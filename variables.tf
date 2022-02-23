@@ -23,6 +23,6 @@ variable "preemptible_node_label_name" {
   default = null
 }
 variable "preemptible_node_label_value" {
-  type    = any
+  type    = string
   default = null
 }
