@@ -48,21 +48,25 @@ module "grafana_agent" {
 }
 
 module "cortex" {
-  source              = "./module/cortex"
-  namespace_name      = kubernetes_namespace.namespace.metadata[0].name
-  service_name        = "cortex"
-  service_port        = var.cortex_port
-  container_image     = "quay.io/cortexproject/cortex:v1.11.0"
-  storage_volume_size = 2
-  etcd_host           = module.shared_etcd.client_endpoint_host
+  source                       = "./module/cortex"
+  namespace_name               = kubernetes_namespace.namespace.metadata[0].name
+  service_name                 = "cortex"
+  service_port                 = var.cortex_port
+  container_image              = "quay.io/cortexproject/cortex:v1.11.0"
+  storage_volume_size          = 2
+  etcd_host                    = module.shared_etcd.client_endpoint_host
+  preemptible_node_label_name  = var.preemptible_node_label_name
+  preemptible_node_label_value = var.preemptible_node_label_value
 }
 
 module "loki" {
-  source              = "./module/loki"
-  namespace_name      = kubernetes_namespace.namespace.metadata[0].name
-  service_name        = "loki"
-  service_port        = var.loki_port
-  container_image     = "grafana/loki:2.4.2"
-  storage_volume_size = 2
-  etcd_host           = module.shared_etcd.client_endpoint_host
+  source                       = "./module/loki"
+  namespace_name               = kubernetes_namespace.namespace.metadata[0].name
+  service_name                 = "loki"
+  service_port                 = var.loki_port
+  container_image              = "grafana/loki:2.4.2"
+  storage_volume_size          = 2
+  etcd_host                    = module.shared_etcd.client_endpoint_host
+  preemptible_node_label_name  = var.preemptible_node_label_name
+  preemptible_node_label_value = var.preemptible_node_label_value
 }

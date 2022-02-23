@@ -4,6 +4,11 @@ terraform {
   ]
 }
 locals {
+  preemptible_node_label = var.preemptible_node_label_name != null && var.preemptible_node_label_value != null ? {
+    (var.preemptible_node_label_name) = var.preemptible_node_label_value
+  } : {}
+}
+locals {
   service_name        = "${var.system_name}-${var.component_name}"
   storage_volume_name = "storage"
   args = [
@@ -205,24 +210,38 @@ resource "kubernetes_stateful_set" "deployment" {
           }
         }
         affinity {
+          dynamic "node_affinity" {
+            for_each = { for k, v in local.preemptible_node_label : k => v }
+            content {
+              required_during_scheduling_ignored_during_execution {
+                node_selector_term {
+                  match_expressions {
+                    key      = k
+                    operator = "NotIn"
+                    values   = [v]
+                  }
+                }
+              }
+            }
+          }
           pod_anti_affinity {
             required_during_scheduling_ignored_during_execution {
+              topology_key = "kubernetes.io/hostname"
               label_selector {
                 match_labels = {
                   component = local.service_name
                 }
               }
-              topology_key = "kubernetes.io/hostname"
             }
             preferred_during_scheduling_ignored_during_execution {
               weight = 100
               pod_affinity_term {
+                topology_key = "topology.kubernetes.io/zone"
                 label_selector {
                   match_labels = {
                     component = local.service_name
                   }
                 }
-                topology_key = "failure-domain.beta.kubernetes.io/zone"
               }
             }
           }

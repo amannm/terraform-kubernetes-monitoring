@@ -18,3 +18,11 @@ variable "loki_port" {
   type    = number
   default = 3100
 }
+variable "preemptible_node_label_name" {
+  type    = string
+  default = null
+}
+variable "preemptible_node_label_value" {
+  type    = string
+  default = null
+}
