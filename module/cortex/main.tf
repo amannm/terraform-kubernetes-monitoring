@@ -1,5 +1,5 @@
 locals {
-  query_frontend_replicas        = 1
+  query_frontend_replicas        = 2
   prometheus_api_path            = "/prometheus"
   querier_component_name         = "querier"
   query_scheduler_component_name = "query-scheduler"
@@ -146,7 +146,7 @@ module "querier" {
   config_mount_path            = module.cortex_config.config_mount_path
   storage_mount_path           = module.cortex_config.storage_mount_path
   storage_volume_size          = 1
-  replicas                     = 1
+  replicas                     = 2
   resources = {
     cpu_min    = 75
     memory_min = 25
@@ -172,7 +172,7 @@ module "distributor" {
   config_mount_path            = module.cortex_config.config_mount_path
   storage_mount_path           = module.cortex_config.storage_mount_path
   storage_volume_size          = 1
-  replicas                     = 1
+  replicas                     = 2
   resources = {
     cpu_min    = 75
     memory_min = 20

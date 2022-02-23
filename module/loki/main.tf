@@ -1,5 +1,5 @@
 locals {
-  query_frontend_replicas        = 1
+  query_frontend_replicas        = 2
   querier_component_name         = "querier"
   query_frontend_component_name  = "query-frontend"
   query_scheduler_component_name = "query-scheduler"
@@ -111,7 +111,7 @@ module "distributor" {
   config_mount_path            = module.loki_config.config_mount_path
   storage_mount_path           = module.loki_config.storage_mount_path
   storage_volume_size          = 1
-  replicas                     = 1
+  replicas                     = 2
   resources = {
     cpu_min    = 75
     memory_min = 20
