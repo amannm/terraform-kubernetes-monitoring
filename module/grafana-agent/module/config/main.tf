@@ -24,15 +24,17 @@ resource "kubernetes_config_map" "config_map" {
 }
 
 module "metrics" {
-  count                    = var.metrics_config == null ? 0 : 1
-  source                   = "./module/metrics"
-  namespace_name           = var.namespace_name
-  resource_name            = "${var.service_name}-metrics"
-  agentctl_container_image = var.metrics_config.agentctl_container_image
-  agent_host               = var.metrics_config.agent_host
-  remote_write_url         = var.metrics_config.remote_write_url
-  etcd_host                = var.metrics_config.etcd_host
-  refresh_rate             = 30
+  count                        = var.metrics_config == null ? 0 : 1
+  source                       = "./module/metrics"
+  namespace_name               = var.namespace_name
+  resource_name                = "${var.service_name}-metrics"
+  preemptible_node_label_name  = var.preemptible_node_label_name
+  preemptible_node_label_value = var.preemptible_node_label_value
+  agentctl_container_image     = var.metrics_config.agentctl_container_image
+  agent_host                   = var.metrics_config.agent_host
+  remote_write_url             = var.metrics_config.remote_write_url
+  etcd_host                    = var.metrics_config.etcd_host
+  refresh_rate                 = 30
 }
 
 module "logs" {

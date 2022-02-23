@@ -5,6 +5,12 @@ variable "resource_name" {
   type    = string
   default = "grafana-agent"
 }
+variable "preemptible_node_label_name" {
+  type = string
+}
+variable "preemptible_node_label_value" {
+  type = string
+}
 variable "agent_container_image" {
   type    = string
   default = "grafana/agent:v0.22.0"

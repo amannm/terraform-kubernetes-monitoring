@@ -101,11 +101,13 @@ module "service_account" {
 }
 
 module "agent_config" {
-  source               = "./module/config"
-  namespace_name       = var.namespace_name
-  service_name         = var.resource_name
-  config_filename      = local.config_filename
-  agent_container_port = var.agent_container_port
+  source                       = "./module/config"
+  namespace_name               = var.namespace_name
+  service_name                 = var.resource_name
+  preemptible_node_label_name  = var.preemptible_node_label_name
+  preemptible_node_label_value = var.preemptible_node_label_value
+  config_filename              = local.config_filename
+  agent_container_port         = var.agent_container_port
   node_exporter_config = {
     host_root_volume_mount_path = local.volumes.root.mount_path
     host_sys_volume_mount_path  = local.volumes.sys.mount_path
