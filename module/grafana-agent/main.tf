@@ -10,7 +10,7 @@ locals {
 
   cpu_min    = "75"
   memory_min = "125"
-  memory_max = "300"
+  memory_max = "400"
 
   pod_environment_variables = {
     "HOSTNAME" = "spec.nodeName"
