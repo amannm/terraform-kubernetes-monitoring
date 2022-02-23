@@ -198,7 +198,7 @@ resource "kubernetes_cron_job" "config_update_job" {
         name = var.resource_name
       }
       spec {
-        ttl_seconds_after_finished = "120"
+        ttl_seconds_after_finished = "30"
         template {
           metadata {
             name = var.resource_name
@@ -222,7 +222,7 @@ resource "kubernetes_cron_job" "config_update_job" {
               }
             }
             restart_policy          = "OnFailure"
-            active_deadline_seconds = 600
+            active_deadline_seconds = 15
             volume {
               name = local.config_volume_name
               config_map {
