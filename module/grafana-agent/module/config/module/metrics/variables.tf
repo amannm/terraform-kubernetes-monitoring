@@ -8,7 +8,7 @@ variable "preemptible_node_label_name" {
   type = string
 }
 variable "preemptible_node_label_value" {
-  type = string
+  type = any
 }
 variable "agentctl_container_image" {
   type = string
