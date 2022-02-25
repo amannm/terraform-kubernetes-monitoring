@@ -135,7 +135,7 @@ resource "kubernetes_deployment" "deployment" {
             period_seconds        = local.probes.liveness_polling_rate
             success_threshold     = 1
             failure_threshold     = 1
-            timeout_seconds       = 2
+            timeout_seconds       = 5
           }
           dynamic "port" {
             for_each = local.ports
