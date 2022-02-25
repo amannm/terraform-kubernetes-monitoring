@@ -161,7 +161,7 @@ resource "kubernetes_stateful_set" "stateful_set" {
                     component = var.service_name
                   }
                 }
-                topology_key = "failure-domain.beta.kubernetes.io/zone"
+                topology_key = "topology.kubernetes.io/zone"
               }
             }
           }
@@ -188,7 +188,7 @@ resource "kubernetes_stateful_set" "stateful_set" {
           }
           resources {
             requests = {
-              cpu : "100m"
+              cpu : "75m"
               memory : "100Mi"
             }
             limits = {

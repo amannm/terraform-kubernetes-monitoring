@@ -146,7 +146,7 @@ resource "kubernetes_deployment" "deployment" {
                     component = var.service_name
                   }
                 }
-                topology_key = "failure-domain.beta.kubernetes.io/zone"
+                topology_key = "topology.kubernetes.io/zone"
               }
             }
           }
@@ -177,7 +177,7 @@ resource "kubernetes_deployment" "deployment" {
           }
           resources {
             requests = {
-              cpu : "75m"
+              cpu : "50m"
               memory : "30Mi"
             }
             limits = {
