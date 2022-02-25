@@ -117,9 +117,9 @@ module "store-gateway" {
   storage_volume_size          = 1
   replicas                     = 1
   pod_resources = {
-    cpu_min    = 75
-    memory_min = 30
-    memory_max = 50
+    cpu_min    = 50
+    memory_min = 17
+    memory_max = 30
   }
   pod_lifecycle = {
     min_readiness_time = 30
@@ -150,7 +150,7 @@ module "querier" {
   resources = {
     cpu_min    = 75
     memory_min = 25
-    memory_max = 150
+    memory_max = 200
   }
 }
 

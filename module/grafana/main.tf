@@ -147,10 +147,10 @@ resource "kubernetes_stateful_set" "stateful_set" {
           resources {
             requests = {
               cpu    = "100m"
-              memory = "85Mi"
+              memory = "55Mi"
             }
             limits = {
-              memory = "120Mi"
+              memory = "70Mi"
             }
           }
           port {
