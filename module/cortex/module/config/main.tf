@@ -81,6 +81,7 @@ locals {
       }
     }
     ingester = {
+      max_chunk_age        = "5m"
       max_chunk_idle_time  = "30m"
       flush_period         = "1m"
       max_transfer_retries = 0
