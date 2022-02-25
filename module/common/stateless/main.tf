@@ -182,9 +182,8 @@ resource "kubernetes_deployment" "deployment" {
           dynamic "node_affinity" {
             for_each = { for k, v in local.preemptible_node_label : k => v }
             content {
-              preferred_during_scheduling_ignored_during_execution {
-                weight = 100
-                preference {
+              required_during_scheduling_ignored_during_execution {
+                node_selector_term {
                   match_expressions {
                     key      = node_affinity.key
                     operator = "In"
