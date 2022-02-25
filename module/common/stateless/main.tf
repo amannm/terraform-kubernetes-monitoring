@@ -36,8 +36,8 @@ locals {
     port                   = var.service_http_port
     readiness_path         = "/ready"
     liveness_path          = "/ready"
-    readiness_polling_rate = 10
-    liveness_polling_rate  = 30
+    readiness_polling_rate = 5
+    liveness_polling_rate  = 5
   }
   volumes = {
     "config" = {
@@ -134,8 +134,8 @@ resource "kubernetes_deployment" "deployment" {
             initial_delay_seconds = local.lifecycle.max_readiness_time
             period_seconds        = local.probes.liveness_polling_rate
             success_threshold     = 1
-            failure_threshold     = 3
-            timeout_seconds       = 5
+            failure_threshold     = 1
+            timeout_seconds       = 2
           }
           dynamic "port" {
             for_each = local.ports
