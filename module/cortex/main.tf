@@ -56,7 +56,7 @@ module "ingester" {
   replicas                     = 1
   pod_resources = {
     cpu_min    = 100
-    memory_min = 240
+    memory_min = 350
     memory_max = 600
   }
   pod_lifecycle = {
@@ -86,7 +86,7 @@ module "compactor" {
   storage_volume_size          = 1
   replicas                     = 1
   pod_resources = {
-    cpu_min    = 75
+    cpu_min    = 100
     memory_min = 26
     memory_max = 50
   }
@@ -117,7 +117,7 @@ module "store-gateway" {
   storage_volume_size          = 1
   replicas                     = 1
   pod_resources = {
-    cpu_min    = 75
+    cpu_min    = 100
     memory_min = 30
     memory_max = 50
   }

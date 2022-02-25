@@ -70,7 +70,7 @@ resource "kubernetes_pod_disruption_budget" "pdb" {
     namespace = var.namespace_name
   }
   spec {
-    min_available = "1"
+    max_unavailable = 1
     selector {
       match_labels = {
         component = local.service_name
