@@ -87,6 +87,7 @@ module "service" {
       target_port = local.peer_port
     }
   }
+  wait_for_readiness = false
 }
 
 resource "kubernetes_stateful_set" "stateful_set" {
