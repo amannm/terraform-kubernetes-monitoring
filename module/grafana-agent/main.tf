@@ -8,9 +8,9 @@ locals {
     "-enable-features=integrations-next",
   ]
 
-  cpu_min    = "75"
-  memory_min = "125"
-  memory_max = "500"
+  cpu_min    = 75
+  memory_min = 125
+  memory_max = 500
 
   pod_environment_variables = {
     "HOSTNAME" = "spec.nodeName"

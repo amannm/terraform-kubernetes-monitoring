@@ -198,7 +198,7 @@ resource "kubernetes_cron_job" "config_update_job" {
         name = var.resource_name
       }
       spec {
-        ttl_seconds_after_finished = "30"
+        ttl_seconds_after_finished = 30
         template {
           metadata {
             name = var.resource_name
