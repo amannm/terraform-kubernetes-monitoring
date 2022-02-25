@@ -7,7 +7,7 @@ resource "kubernetes_config_map" "config_map" {
     (var.config_filename) = yamlencode({
       server = {
         http_listen_port = var.agent_container_port
-        log_level        = "info"
+        log_level        = "debug"
       }
       metrics = var.metrics_config == null ? null : module.metrics[0].agent_metrics_config
       logs    = var.logs_config == null ? null : module.logs[0].agent_logs_config
