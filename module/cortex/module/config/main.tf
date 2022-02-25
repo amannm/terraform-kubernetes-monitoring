@@ -48,7 +48,7 @@ locals {
     #      max_outstanding_requests_per_tenant = 100
     #    }
     frontend_worker = {
-      parallelism = local.worker_parallelism
+      match_max_concurrent = true
       #scheduler_address = "${var.query_scheduler_hostname}:${var.grpc_port}"
       frontend_address = "${var.query_frontend_hostname}:${var.grpc_port}"
     }
