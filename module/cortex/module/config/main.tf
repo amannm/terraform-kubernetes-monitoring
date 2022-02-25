@@ -35,15 +35,7 @@ locals {
       log_queries_longer_than      = "5s"
       #scheduler_address            = "${var.query_scheduler_hostname}:${var.grpc_port}"
     }
-    query_range = {
-      align_queries_with_step = true
-      split_queries_by_interval : "15m"
-      max_retries   = 5
-      cache_results = true
-      results_cache = {
-        cache = local.fifo_cache["10"]
-      }
-    }
+
     #    query_scheduler = {
     #      max_outstanding_requests_per_tenant = 100
     #    }
@@ -56,6 +48,15 @@ locals {
       active_query_tracker_dir = "${var.storage_path}/active-query-tracker"
       timeout                  = "1m"
       max_concurrent           = local.worker_parallelism * var.max_query_frontend_replicas + local.worker_parallelism
+    }
+    query_range = {
+      align_queries_with_step = true
+      split_queries_by_interval : "15m"
+      max_retries   = 5
+      cache_results = true
+      results_cache = {
+        cache = local.fifo_cache["10"]
+      }
     }
     limits = {
       max_label_names_per_series        = 50
