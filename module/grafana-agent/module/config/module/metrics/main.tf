@@ -131,7 +131,7 @@ locals {
 locals {
   metrics_config = {
     global = {
-      scrape_interval = "1m"
+      scrape_interval = "5m"
     }
     scraping_service = {
       enabled                       = true
