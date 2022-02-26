@@ -91,6 +91,21 @@ resource "kubernetes_cluster_role_binding" "cluster_role_binding" {
   }
 }
 
+resource "kubernetes_pod_disruption_budget" "pdb" {
+  metadata {
+    name      = var.service_name
+    namespace = var.namespace_name
+  }
+  spec {
+    min_available = 1
+    selector {
+      match_labels = {
+        component = var.service_name
+      }
+    }
+  }
+}
+
 resource "kubernetes_deployment" "deployment" {
   metadata {
     name      = var.service_name
