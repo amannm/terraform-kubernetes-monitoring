@@ -160,7 +160,7 @@ module "querier" {
   pod_resources = {
     cpu_min    = 50
     memory_min = 25
-    memory_max = 400
+    memory_max = 300
   }
   pod_lifecycle = {
     min_readiness_time = 30
