@@ -189,7 +189,7 @@ resource "kubernetes_stateful_set" "stateful_set" {
           }
           resources {
             requests = {
-              cpu : "75m"
+              cpu : "50m"
               memory : "100Mi"
             }
             limits = {
