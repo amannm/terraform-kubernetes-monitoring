@@ -102,6 +102,24 @@ locals {
     metrics_path          = "/metrics"
     kubernetes_sd_configs = local.kubernetes_sd_config["endpoints"]
     relabel_configs = [
+      {
+        source_labels : ["__meta_kubernetes_service_annotation_prometheus_io_scheme"]
+        action       = "replace"
+        target_label = "__scheme__"
+        regex        = "(https?)"
+      },
+      {
+        source_labels : ["__address__", "__meta_kubernetes_service_annotation_prometheus_io_port"]
+        action       = "replace"
+        target_label = "__address__"
+        regex        = "([^:]+)(?::\\d+)?;(\\d+)"
+      },
+      {
+        source_labels = ["__meta_kubernetes_service_annotation_prometheus_io_path"]
+        action        = "replace"
+        target_label  = "__metrics_path__"
+        regex         = "(.+)"
+      },
       local.kubernetes_sd_label_remap["service"],
       local.kubernetes_sd_name_label_rename["namespace"],
       local.kubernetes_sd_name_label_rename["service"],
@@ -119,6 +137,24 @@ locals {
         action        = "drop"
         source_labels = ["__meta_kubernetes_pod_phase"]
         regex         = "Pending|Succeeded|Failed|Completed"
+      },
+      {
+        source_labels : ["__meta_kubernetes_pod_annotation_prometheus_io_scheme"]
+        action       = "replace"
+        target_label = "__scheme__"
+        regex        = "(https?)"
+      },
+      {
+        source_labels : ["__address__", "__meta_pod_service_annotation_prometheus_io_port"]
+        action       = "replace"
+        target_label = "__address__"
+        regex        = "([^:]+)(?::\\d+)?;(\\d+)"
+      },
+      {
+        source_labels = ["__meta_kubernetes_pod_annotation_prometheus_io_path"]
+        action        = "replace"
+        target_label  = "__metrics_path__"
+        regex         = "(.+)"
       },
       local.kubernetes_sd_label_remap["pod"],
       local.kubernetes_sd_name_label_rename["namespace"],
