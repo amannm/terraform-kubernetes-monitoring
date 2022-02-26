@@ -8,7 +8,7 @@ locals {
     "-enable-features=integrations-next",
   ]
 
-  cpu_min    = 75
+  cpu_min    = 50
   memory_min = 125
   memory_max = 500
 

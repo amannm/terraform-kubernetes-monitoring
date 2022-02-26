@@ -55,7 +55,7 @@ module "ingester" {
   storage_volume_size          = 1
   replicas                     = 1
   pod_resources = {
-    cpu_min    = 75
+    cpu_min    = 50
     memory_min = 350
     memory_max = 500
   }
@@ -86,7 +86,7 @@ module "compactor" {
   storage_volume_size          = 1
   replicas                     = 1
   pod_resources = {
-    cpu_min    = 75
+    cpu_min    = 50
     memory_min = 26
     memory_max = 50
   }
@@ -148,7 +148,7 @@ module "querier" {
   storage_volume_size          = 1
   replicas                     = 2
   pod_resources = {
-    cpu_min    = 75
+    cpu_min    = 50
     memory_min = 25
     memory_max = 200
   }
@@ -179,7 +179,7 @@ module "distributor" {
   storage_volume_size          = 1
   replicas                     = 2
   pod_resources = {
-    cpu_min    = 75
+    cpu_min    = 50
     memory_min = 20
     memory_max = 70
   }
@@ -210,7 +210,7 @@ module "query_frontend" {
   storage_volume_size          = 1
   replicas                     = local.query_frontend_replicas
   pod_resources = {
-    cpu_min    = 75
+    cpu_min    = 50
     memory_min = 40
     memory_max = 100
   }

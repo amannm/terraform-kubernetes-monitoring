@@ -82,7 +82,7 @@ module "querier" {
   storage_volume_size          = 1
   replicas                     = 1
   pod_resources = {
-    cpu_min    = 75
+    cpu_min    = 50
     memory_min = 40
     memory_max = 70
   }
@@ -113,7 +113,7 @@ module "distributor" {
   storage_volume_size          = 1
   replicas                     = 2
   pod_resources = {
-    cpu_min    = 75
+    cpu_min    = 50
     memory_min = 20
     memory_max = 70
   }
@@ -144,7 +144,7 @@ module "query_frontend" {
   storage_volume_size          = 1
   replicas                     = local.query_frontend_replicas
   pod_resources = {
-    cpu_min    = 75
+    cpu_min    = 50
     memory_min = 16
     memory_max = 40
   }
