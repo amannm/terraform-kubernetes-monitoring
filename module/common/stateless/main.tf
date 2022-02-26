@@ -1,3 +1,8 @@
+terraform {
+  experiments = [
+    module_variable_optional_attrs
+  ]
+}
 locals {
   preemptible_node_label = var.preemptible_node_label_name != null && var.preemptible_node_label_value != null ? {
     (var.preemptible_node_label_name) = var.preemptible_node_label_value
