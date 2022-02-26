@@ -13,6 +13,16 @@ locals {
   #  query_scheduler_hostname       = "${var.service_name}-${local.query_scheduler_component_name}.${var.namespace_name}.svc.cluster.local"
   distributor_hostname = "${var.service_name}-${local.distributor_component_name}.${var.namespace_name}.svc.cluster.local"
   remote_write_url     = "http://${local.distributor_hostname}:${var.service_port}/api/v1/push"
+  partition_by_labels = {
+    component = [
+      module.compactor.service_name,
+      module.store-gateway.service_name,
+      module.ingester.service_name,
+      module.distributor.service_name,
+      module.querier.service_name,
+      module.query_frontend.service_name,
+    ],
+  }
 }
 
 module "cortex_config" {

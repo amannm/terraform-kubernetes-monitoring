@@ -5,7 +5,11 @@ terraform {
     }
   }
 }
-
+locals {
+  partition_by_labels = {
+    component = distinct(flatten([for k, v in module.cortex.partition_by_labels : v if k == "component"]))
+  }
+}
 resource "kubernetes_namespace" "namespace" {
   metadata {
     name = var.namespace_name
@@ -54,7 +58,7 @@ module "grafana_agent" {
   etcd_host                    = module.shared_etcd.client_endpoint_host
   metrics_remote_write_url     = module.cortex.remote_write_url
   logs_remote_write_url        = module.loki.remote_write_url
-  partition_by_labels          = {}
+  partition_by_labels          = local.partition_by_labels
 }
 
 module "cortex" {
