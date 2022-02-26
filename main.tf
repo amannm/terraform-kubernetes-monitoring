@@ -54,6 +54,7 @@ module "grafana_agent" {
   etcd_host                    = module.shared_etcd.client_endpoint_host
   metrics_remote_write_url     = module.cortex.remote_write_url
   logs_remote_write_url        = module.loki.remote_write_url
+  partition_by_labels          = {}
 }
 
 module "cortex" {

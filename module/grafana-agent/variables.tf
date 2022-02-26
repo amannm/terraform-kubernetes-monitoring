@@ -31,3 +31,6 @@ variable "logs_remote_write_url" {
   type    = string
   default = null
 }
+variable "partition_by_labels" {
+  type = map(list(string))
+}

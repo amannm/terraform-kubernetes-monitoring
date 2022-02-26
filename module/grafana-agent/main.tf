@@ -123,6 +123,7 @@ module "agent_config" {
     positions_volume_mount_path = local.volumes.positions.mount_path
     remote_write_url            = var.logs_remote_write_url
   }
+  partition_by_labels = var.partition_by_labels
 }
 
 module "service" {
