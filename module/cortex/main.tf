@@ -146,11 +146,11 @@ module "querier" {
   config_mount_path            = module.cortex_config.config_mount_path
   storage_mount_path           = module.cortex_config.storage_mount_path
   storage_volume_size          = 1
-  replicas                     = 2
+  replicas                     = 1
   pod_resources = {
     cpu_min    = 50
     memory_min = 25
-    memory_max = 200
+    memory_max = 300
   }
   pod_lifecycle = {
     min_readiness_time = 30
