@@ -193,8 +193,18 @@ locals {
   }
 }
 
+// TODO: further partition pod and service endpoint jobs
 locals {
-  config_filename          = "agent.yaml"
+  jobs = {
+    node                 = local.node_job
+    cadvisor             = local.node_cadvisor_job
+    api_service_endpoint = local.api_service_endpoint_job
+    service_endpoints    = local.service_endpoints_job
+    pods                 = local.pods_job
+  }
+}
+
+locals {
   config_volume_name       = "config"
   config_volume_mount_path = "/etc/configs"
 }
@@ -204,14 +214,8 @@ resource "kubernetes_config_map" "config_map" {
     namespace = var.namespace_name
   }
   data = {
-    (local.config_filename) = yamlencode({
-      scrape_configs = [
-        local.node_job,
-        local.node_cadvisor_job,
-        local.api_service_endpoint_job,
-        local.service_endpoints_job,
-        local.pods_job,
-      ]
+    for k, v in local.jobs : "${k}.yaml" => yamlencode({
+      scrape_configs = [v]
       remote_write = [
         {
           url = var.remote_write_url

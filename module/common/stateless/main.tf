@@ -9,7 +9,8 @@ locals {
   } : {}
 }
 locals {
-  service_name = "${var.system_name}-${var.component_name}"
+  service_name        = "${var.system_name}-${var.component_name}"
+  storage_volume_name = "storage"
   args = [
     "-config.file=${local.volumes.config.mount_path}/${var.config_filename}",
     "-target=${var.component_name}",
@@ -50,7 +51,7 @@ locals {
       mount_path      = var.config_mount_path
       config_map_name = var.config_map_name
     }
-    "storage" = {
+    (local.storage_volume_name) = {
       mount_path = var.storage_mount_path
       size_limit = var.storage_volume_size
     }
@@ -212,22 +213,22 @@ resource "kubernetes_deployment" "deployment" {
           }
           pod_anti_affinity {
             required_during_scheduling_ignored_during_execution {
+              topology_key = "kubernetes.io/hostname"
               label_selector {
                 match_labels = {
                   component = local.service_name
                 }
               }
-              topology_key = "kubernetes.io/hostname"
             }
             preferred_during_scheduling_ignored_during_execution {
               weight = 100
               pod_affinity_term {
+                topology_key = "topology.kubernetes.io/zone"
                 label_selector {
                   match_labels = {
                     component = local.service_name
                   }
                 }
-                topology_key = "topology.kubernetes.io/zone"
               }
             }
           }
