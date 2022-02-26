@@ -9,9 +9,9 @@ locals {
     "-config.file=${local.volumes.config.mount_path}/${var.config_filename}",
     "-target=${var.component_name}",
   ]
-  cpu_min    = var.resources.cpu_min
-  memory_min = var.resources.memory_min
-  memory_max = var.resources.memory_max
+  cpu_min    = var.pod_resources.cpu_min
+  memory_min = var.pod_resources.memory_min
+  memory_max = var.pod_resources.memory_max
   ports = {
     http = {
       port        = var.service_http_port
@@ -28,9 +28,10 @@ locals {
     read_only_root_filesystem = true
   }
   lifecycle = {
-    min_readiness_time = 60
-    max_readiness_time = 90
-    max_cleanup_time   = 30
+    min_readiness_time = var.pod_lifecycle.min_readiness_time
+    max_readiness_time = var.pod_lifecycle.max_readiness_time
+    max_cleanup_time   = var.pod_lifecycle.max_cleanup_time
+    shutdown_hook_path = var.pod_lifecycle.shutdown_hook_path
   }
   probes = {
     port                   = var.service_http_port
@@ -104,6 +105,17 @@ resource "kubernetes_deployment" "deployment" {
             capabilities {
               add  = local.security.added_capabilities
               drop = local.security.uid != 0 ? ["ALL"] : []
+            }
+          }
+          dynamic "lifecycle" {
+            for_each = { for k, v in local.lifecycle : k => v if k == "shutdown_hook_path" && v != null }
+            content {
+              pre_stop {
+                http_get {
+                  path = lifecycle.value
+                  port = local.ports.http.target_port
+                }
+              }
             }
           }
           resources {

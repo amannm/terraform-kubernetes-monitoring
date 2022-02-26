@@ -112,10 +112,15 @@ module "distributor" {
   storage_mount_path           = module.loki_config.storage_mount_path
   storage_volume_size          = 1
   replicas                     = 2
-  resources = {
+  pod_resources = {
     cpu_min    = 75
     memory_min = 20
     memory_max = 70
+  }
+  pod_lifecycle = {
+    min_readiness_time = 30
+    max_readiness_time = 90
+    max_cleanup_time   = 30
   }
 }
 
@@ -138,10 +143,15 @@ module "query_frontend" {
   storage_mount_path           = module.loki_config.storage_mount_path
   storage_volume_size          = 1
   replicas                     = local.query_frontend_replicas
-  resources = {
+  pod_resources = {
     cpu_min    = 75
     memory_min = 16
     memory_max = 40
+  }
+  pod_lifecycle = {
+    min_readiness_time = 30
+    max_readiness_time = 90
+    max_cleanup_time   = 30
   }
 }
 
