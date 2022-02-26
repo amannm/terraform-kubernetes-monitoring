@@ -26,5 +26,5 @@ variable "etcd_host" {
   type = string
 }
 variable "partition_by_labels" {
-  type = map(list(string))
+  type = map(set(string))
 }

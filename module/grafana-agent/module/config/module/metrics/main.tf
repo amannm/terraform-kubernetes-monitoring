@@ -136,31 +136,6 @@ locals {
           ]
         )
       },
-      flatten([
-        for label_name, label_value_list in var.partition_by_labels : [
-          for label_value in label_value_list : {
-            job_name              = "kubernetes-service-endpoints-${label_name}-${label_value}"
-            scheme                = "http"
-            metrics_path          = "/metrics"
-            kubernetes_sd_configs = local.kubernetes_sd_config["endpoints"]
-            relabel_configs = concat(
-              [
-                {
-                  action        = "keep"
-                  source_labels = ["__meta_kubernetes_service_label_${label_name}"]
-                  regex         = label_value
-                },
-              ],
-              local.prometheus_override_labels_relabel_configs["service"],
-              [
-                local.kubernetes_sd_label_remap["service"],
-                local.kubernetes_sd_name_label_rename["namespace"],
-                local.kubernetes_sd_name_label_rename["service"],
-              ]
-            )
-          }
-        ]
-      ]),
       {
         job_name              = "kubernetes-pods"
         scheme                = "http"
@@ -192,6 +167,31 @@ locals {
         )
       }
     ],
+    flatten([
+      for label_name, label_value_list in var.partition_by_labels : [
+        for label_value in label_value_list : {
+          job_name              = "kubernetes-service-endpoints-${label_name}-${label_value}"
+          scheme                = "http"
+          metrics_path          = "/metrics"
+          kubernetes_sd_configs = local.kubernetes_sd_config["endpoints"]
+          relabel_configs = concat(
+            [
+              {
+                action        = "keep"
+                source_labels = ["__meta_kubernetes_service_label_${label_name}"]
+                regex         = label_value
+              },
+            ],
+            local.prometheus_override_labels_relabel_configs["service"],
+            [
+              local.kubernetes_sd_label_remap["service"],
+              local.kubernetes_sd_name_label_rename["namespace"],
+              local.kubernetes_sd_name_label_rename["service"],
+            ]
+          )
+        }
+      ]
+    ]),
     flatten([
       for label_name, label_value_list in var.partition_by_labels : [
         for label_value in label_value_list : {
