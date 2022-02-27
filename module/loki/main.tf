@@ -1,5 +1,5 @@
 locals {
-  query_frontend_replicas        = 2
+  query_frontend_replicas        = 1
   querier_component_name         = "querier"
   query_frontend_component_name  = "query-frontend"
   query_scheduler_component_name = "query-scheduler"
