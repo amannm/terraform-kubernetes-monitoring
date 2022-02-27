@@ -126,6 +126,9 @@ resource "kubernetes_deployment" "deployment" {
         labels = {
           component = var.service_name
         }
+        annotations = {
+          "cluster-autoscaler.kubernetes.io/safe-to-evict" = true
+        }
       }
       spec {
         affinity {

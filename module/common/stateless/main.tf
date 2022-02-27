@@ -239,7 +239,8 @@ resource "kubernetes_deployment" "deployment" {
           component = local.service_name
         }
         annotations = {
-          "checksum/config" = var.config_checksum
+          "cluster-autoscaler.kubernetes.io/safe-to-evict" = true
+          "checksum/config"                                = var.config_checksum
         }
       }
     }
