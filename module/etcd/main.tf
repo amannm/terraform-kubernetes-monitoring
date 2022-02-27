@@ -4,6 +4,7 @@ locals {
   } : {}
 }
 locals {
+  snapshot_count          = 1000
   client_port             = 2379
   cluster_domain          = "cluster.local"
   peer_port               = 2380
@@ -39,7 +40,8 @@ locals {
               echo "existing local data found -- re-joining existing cluster using existing membership"
               etcdctl member update --endpoints="$ALL_CLIENT_ENDPOINTS" $MEMBER_ID --peer-urls=http://$${HOSTNAME}:${local.peer_port}
               exec etcd --name $${POD_NAME} --data-dir ${local.data_volume_mount_path}/default.etcd --listen-peer-urls http://0.0.0.0:${local.peer_port} --listen-client-urls http://0.0.0.0:${local.client_port} \
-                  --advertise-client-urls http://$${HOSTNAME}:${local.client_port},http://${local.service_client_endpoint}
+                  --advertise-client-urls http://$${HOSTNAME}:${local.client_port},http://${local.service_client_endpoint} \
+                  --snapshot-count=${local.snapshot_count}
           else
               echo "existing local data not found -- removing existing membership"
               etcdctl member remove --endpoints="$ALL_CLIENT_ENDPOINTS" $MEMBER_ID
@@ -51,13 +53,15 @@ locals {
       exec etcd --name $${POD_NAME} --data-dir ${local.data_volume_mount_path}/default.etcd --listen-peer-urls http://0.0.0.0:${local.peer_port} --listen-client-urls http://0.0.0.0:${local.client_port} \
           --advertise-client-urls http://$${HOSTNAME}:${local.client_port},http://${local.service_client_endpoint} \
           --initial-advertise-peer-urls http://$${HOSTNAME}:${local.peer_port} \
-          --initial-cluster $${ETCD_INITIAL_CLUSTER} --initial-cluster-state $${ETCD_INITIAL_CLUSTER_STATE}
+          --initial-cluster $${ETCD_INITIAL_CLUSTER} --initial-cluster-state $${ETCD_INITIAL_CLUSTER_STATE} \
+          --snapshot-count=${local.snapshot_count}
   else
       echo "existing cluster not found -- founding new cluster"
       exec etcd --name $${POD_NAME} --data-dir ${local.data_volume_mount_path}/default.etcd --listen-peer-urls http://0.0.0.0:${local.peer_port} --listen-client-urls http://0.0.0.0:${local.client_port} \
           --advertise-client-urls http://$${HOSTNAME}:${local.client_port},http://${local.service_client_endpoint} \
           --initial-advertise-peer-urls http://$${HOSTNAME}:${local.peer_port} \
-          --initial-cluster "$${POD_NAME}=http://$${HOSTNAME}:${local.peer_port}" --initial-cluster-state new --initial-cluster-token ${var.service_name}-cluster
+          --initial-cluster "$${POD_NAME}=http://$${HOSTNAME}:${local.peer_port}" --initial-cluster-state new --initial-cluster-token ${var.service_name}-cluster \
+          --snapshot-count=${local.snapshot_count}
   fi
   EOT
 
