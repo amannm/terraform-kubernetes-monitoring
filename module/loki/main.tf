@@ -71,7 +71,7 @@ module "ingester" {
 }
 
 module "querier" {
-  source                       = "../common/stateful"
+  source                       = "../common/stateless"
   namespace_name               = var.namespace_name
   system_name                  = var.service_name
   preemptible_node_label_name  = var.preemptible_node_label_name
