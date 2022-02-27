@@ -1,5 +1,5 @@
 locals {
-  query_frontend_replicas        = 1
+  query_frontend_replicas        = 2
   prometheus_api_path            = "/prometheus"
   querier_component_name         = "querier"
   query_scheduler_component_name = "query-scheduler"
