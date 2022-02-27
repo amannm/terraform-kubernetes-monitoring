@@ -66,8 +66,8 @@ module "ingester" {
   replicas                     = 1
   pod_resources = {
     cpu_min    = 50
-    memory_min = 350
-    memory_max = 600
+    memory_min = 250
+    memory_max = 300
   }
   pod_lifecycle = {
     min_readiness_time = 30
