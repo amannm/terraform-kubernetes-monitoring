@@ -1,9 +1,4 @@
 locals {
-  preemptible_node_label = var.preemptible_node_label_name != null && var.preemptible_node_label_value != null ? {
-    (var.preemptible_node_label_name) = var.preemptible_node_label_value
-  } : {}
-}
-locals {
   etcd_kvstore = {
     store = "etcd"
     etcd = {
@@ -297,7 +292,7 @@ resource "kubernetes_cron_job" "config_update_job" {
           }
           spec {
             dynamic "affinity" {
-              for_each = { for k, v in local.preemptible_node_label : k => v }
+              for_each = var.stateless_node_labels
               content {
                 node_affinity {
                   preferred_during_scheduling_ignored_during_execution {
@@ -306,7 +301,7 @@ resource "kubernetes_cron_job" "config_update_job" {
                       match_expressions {
                         key      = affinity.key
                         operator = "In"
-                        values   = [affinity.value]
+                        values   = affinity.value
                       }
                     }
                   }

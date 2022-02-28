@@ -8,11 +8,8 @@ variable "service_name" {
 variable "service_port" {
   type = number
 }
-variable "preemptible_node_label_name" {
-  type = string
-}
-variable "preemptible_node_label_value" {
-  type = string
+variable "stateless_node_labels" {
+  type = map(set(string))
 }
 variable "container_image" {
   type    = string

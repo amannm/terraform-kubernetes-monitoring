@@ -1,41 +1,49 @@
 variable "namespace_name" {
   type = string
 }
-variable "system_name" {
+variable "service_name" {
   type = string
 }
-variable "preemptible_node_label_name" {
-  type = string
-}
-variable "preemptible_node_label_value" {
-  type = string
-}
-variable "storage_volume_size" {
-  type = number
-}
-variable "container_image" {
-  type = string
-}
-variable "service_http_port" {
-  type = number
-}
-variable "service_grpc_port" {
-  type = number
-}
-variable "etcd_host" {
-  type = string
-}
-variable "config_map_name" {
-  type = string
-}
-variable "config_filename" {
-  type = string
-}
-variable "config_checksum" {
+variable "service_account_name" {
   type = string
 }
 variable "replicas" {
   type = number
+}
+variable "stateless_node_labels" {
+  type = map(set(string))
+}
+variable "container_image" {
+  type = string
+}
+variable "config_volumes" {
+  type = map(object({
+    mount_path      = string
+    config_map_name = string
+    config_checksum = string
+  }))
+  default = {}
+}
+variable "ephemeral_volumes" {
+  type = map(object({
+    mount_path = string
+    size       = number
+  }))
+  default = {}
+}
+variable "command" {
+  type    = list(string)
+  default = null
+}
+variable "args" {
+  type    = list(string)
+  default = null
+}
+variable "ports" {
+  type = map(object({
+    port        = optional(number)
+    target_port = number
+  }))
 }
 variable "pod_resources" {
   type = object({
@@ -46,21 +54,36 @@ variable "pod_resources" {
 }
 variable "pod_lifecycle" {
   type = object({
-    min_readiness_time = number
-    max_readiness_time = number
-    max_cleanup_time   = number
-    shutdown_hook_path = optional(string)
+    min_readiness_time    = number
+    max_readiness_time    = number
+    max_cleanup_time      = number
+    shutdown_hook_path    = optional(string)
+    shutdown_exec_command = optional(list(string))
   })
 }
-variable "service_account_name" {
-  type = string
+variable "pod_probes" {
+  type = object({
+    port                   = number
+    readiness_path         = string
+    liveness_path          = string
+    readiness_polling_rate = number
+    liveness_polling_rate  = number
+  })
 }
-variable "storage_mount_path" {
-  type = string
+variable "pod_security_context" {
+  type = object({
+    uid                       = number
+    added_capabilities        = optional(list(string))
+    read_only_root_filesystem = optional(bool)
+    supplemental_groups       = optional(list(string))
+  })
+  default = null
 }
-variable "config_mount_path" {
-  type = string
+variable "pod_name_env_var" {
+  type    = string
+  default = null
 }
-variable "component_name" {
-  type = string
+variable "wait_for_readiness" {
+  type    = bool
+  default = true
 }

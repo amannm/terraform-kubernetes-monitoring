@@ -4,11 +4,8 @@ variable "namespace_name" {
 variable "service_name" {
   type = string
 }
-variable "preemptible_node_label_name" {
-  type = string
-}
-variable "preemptible_node_label_value" {
-  type = string
+variable "stateless_node_labels" {
+  type = map(set(string))
 }
 variable "storage_volume_size" {
   type = number

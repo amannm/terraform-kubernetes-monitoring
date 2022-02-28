@@ -4,77 +4,27 @@ terraform {
   ]
 }
 locals {
-  preemptible_node_label = var.preemptible_node_label_name != null && var.preemptible_node_label_value != null ? {
-    (var.preemptible_node_label_name) = var.preemptible_node_label_value
-  } : {}
-}
-locals {
-  service_name        = "${var.system_name}-${var.component_name}"
-  storage_volume_name = "storage"
-  args = [
-    "-config.file=${local.volumes.config.mount_path}/${var.config_filename}",
-    "-target=${var.component_name}",
-  ]
-  cpu_min    = var.pod_resources.cpu_min
-  memory_min = var.pod_resources.memory_min
-  memory_max = var.pod_resources.memory_max
-  ports = {
-    http = {
-      port        = var.service_http_port
-      target_port = var.service_http_port
-    }
-    grpc = {
-      port        = var.service_grpc_port
-      target_port = var.service_grpc_port
-    }
-  }
-  security = {
-    uid                       = 10001
-    added_capabilities        = []
-    read_only_root_filesystem = true
-  }
-  lifecycle = {
-    min_readiness_time = var.pod_lifecycle.min_readiness_time
-    max_readiness_time = var.pod_lifecycle.max_readiness_time
-    max_cleanup_time   = var.pod_lifecycle.max_cleanup_time
-    shutdown_hook_path = var.pod_lifecycle.shutdown_hook_path
-  }
-  probes = {
-    port                   = var.service_http_port
-    readiness_path         = "/ready"
-    liveness_path          = "/ready"
-    readiness_polling_rate = 5
-    liveness_polling_rate  = 5
-  }
-  volumes = {
-    "config" = {
-      mount_path      = var.config_mount_path
-      config_map_name = var.config_map_name
-    }
-    (local.storage_volume_name) = {
-      mount_path = var.storage_mount_path
-      size_limit = var.storage_volume_size
-    }
-  }
+
 }
 
 module "service" {
-  source         = "../service"
-  namespace_name = var.namespace_name
-  service_name   = local.service_name
-  ports          = local.ports
+  source             = "../service"
+  namespace_name     = var.namespace_name
+  service_name       = var.service_name
+  ports              = { for k, v in var.ports : k => v if v.port != null }
+  wait_for_readiness = var.wait_for_readiness
 }
 
 resource "kubernetes_pod_disruption_budget" "pdb" {
   metadata {
-    name      = local.service_name
+    name      = var.service_name
     namespace = var.namespace_name
   }
   spec {
     min_available = 1
     selector {
       match_labels = {
-        component = local.service_name
+        component = var.service_name
       }
     }
   }
@@ -92,120 +42,149 @@ resource "kubernetes_deployment" "deployment" {
     template {
       spec {
         service_account_name             = var.service_account_name
-        termination_grace_period_seconds = local.lifecycle.max_cleanup_time
-        security_context {
-          fs_group = local.security.uid
+        termination_grace_period_seconds = var.pod_lifecycle.max_cleanup_time
+        dynamic "security_context" {
+          for_each = var.pod_security_context == null ? [] : [var.pod_security_context]
+          content {
+            fs_group            = var.pod_security_context.uid
+            supplemental_groups = var.pod_security_context.supplemental_groups
+          }
         }
         container {
-          name              = local.service_name
+          name              = var.service_name
           image             = var.container_image
           image_pull_policy = "IfNotPresent"
-          args              = local.args
-          security_context {
-            privileged                 = local.security.uid == 0
-            allow_privilege_escalation = local.security.uid == 0
-            run_as_non_root            = local.security.uid != 0
-            run_as_user                = local.security.uid
-            run_as_group               = local.security.uid
-            read_only_root_filesystem  = local.security.read_only_root_filesystem
-            capabilities {
-              add  = local.security.added_capabilities
-              drop = local.security.uid != 0 ? ["ALL"] : []
+          command           = var.command
+          args              = var.args
+          dynamic "security_context" {
+            for_each = var.pod_security_context == null ? [] : [var.pod_security_context]
+            content {
+              privileged                 = var.pod_security_context.uid == 0
+              allow_privilege_escalation = var.pod_security_context.uid == 0
+              run_as_non_root            = var.pod_security_context.uid != 0
+              run_as_user                = var.pod_security_context.uid
+              run_as_group               = var.pod_security_context.uid
+              read_only_root_filesystem  = var.pod_security_context.read_only_root_filesystem
+              capabilities {
+                add  = var.pod_security_context.added_capabilities
+                drop = var.pod_security_context.uid != 0 ? ["ALL"] : []
+              }
             }
           }
           dynamic "lifecycle" {
-            for_each = { for k, v in local.lifecycle : k => v if k == "shutdown_hook_path" && v != null }
+            for_each = { for k, v in var.pod_lifecycle : k => v if k == "shutdown_hook_path" && v != null }
             content {
               pre_stop {
                 http_get {
                   path = lifecycle.value
-                  port = local.ports.http.target_port
+                  port = var.ports["http"].target_port
+                }
+              }
+            }
+          }
+          dynamic "lifecycle" {
+            for_each = { for k, v in var.pod_lifecycle : k => v if k == "shutdown_exec_command" && v != null }
+            content {
+              pre_stop {
+                exec {
+                  command = lifecycle.value
                 }
               }
             }
           }
           resources {
             requests = {
-              cpu    = "${local.cpu_min}m"
-              memory = "${local.memory_min}Mi"
+              cpu    = "${var.pod_resources.cpu_min}m"
+              memory = "${var.pod_resources.memory_min}Mi"
             }
             limits = {
-              memory = "${local.memory_max}Mi"
+              memory = "${var.pod_resources.memory_max}Mi"
             }
           }
           readiness_probe {
             http_get {
-              path = local.probes.readiness_path
-              port = local.probes.port
+              path = var.pod_probes.readiness_path
+              port = var.pod_probes.port
             }
-            initial_delay_seconds = local.lifecycle.min_readiness_time
-            period_seconds        = local.probes.readiness_polling_rate
+            initial_delay_seconds = var.pod_lifecycle.min_readiness_time
+            period_seconds        = var.pod_probes.readiness_polling_rate
             success_threshold     = 1
-            failure_threshold     = ceil(local.lifecycle.max_readiness_time / local.probes.readiness_polling_rate)
+            failure_threshold     = ceil(var.pod_lifecycle.max_readiness_time / var.pod_probes.readiness_polling_rate)
             timeout_seconds       = 5
           }
           liveness_probe {
             http_get {
-              path = local.probes.liveness_path
-              port = local.probes.port
+              path = var.pod_probes.liveness_path
+              port = var.pod_probes.port
             }
-            initial_delay_seconds = local.lifecycle.max_readiness_time
-            period_seconds        = local.probes.liveness_polling_rate
+            initial_delay_seconds = var.pod_lifecycle.max_readiness_time
+            period_seconds        = var.pod_probes.liveness_polling_rate
             success_threshold     = 1
             failure_threshold     = 1
             timeout_seconds       = 5
           }
           dynamic "port" {
-            for_each = local.ports
+            for_each = var.ports
             content {
               name           = port.key
               protocol       = "TCP"
-              container_port = port.value["target_port"]
+              container_port = port.value.target_port
             }
           }
           dynamic "volume_mount" {
-            for_each = local.volumes
+            for_each = var.config_volumes
             content {
               name       = volume_mount.key
-              mount_path = volume_mount.value["mount_path"]
-              read_only  = lookup(volume_mount.value, "host_path", "") != ""
+              mount_path = volume_mount.value.mount_path
+            }
+          }
+          dynamic "volume_mount" {
+            for_each = var.ephemeral_volumes
+            content {
+              name       = volume_mount.key
+              mount_path = volume_mount.value.mount_path
+            }
+          }
+          dynamic "env" {
+            for_each = [for v in [var.pod_name_env_var] : v if v != null]
+            content {
+              name = env.value
+              value_from {
+                field_ref {
+                  field_path = "metadata.name"
+                }
+              }
             }
           }
         }
         dynamic "volume" {
-          for_each = local.volumes
+          for_each = var.config_volumes
           content {
             name = volume.key
-            dynamic "empty_dir" {
-              for_each = { for k, v in volume.value : k => v if k == "size_limit" }
-              content {
-                size_limit = "${empty_dir.value}G"
-              }
+            config_map {
+              name = volume.value.config_map_name
             }
-            dynamic "config_map" {
-              for_each = { for k, v in volume.value : k => v if k == "config_map_name" }
-              content {
-                name = config_map.value
-              }
-            }
-            dynamic "persistent_volume_claim" {
-              for_each = { for k, v in volume.value : k => v if k == "persistent_volume_claim_name" }
-              content {
-                name = persistent_volume_claim.value
-              }
+          }
+        }
+        dynamic "volume" {
+          for_each = var.ephemeral_volumes
+          content {
+            name = volume.key
+            empty_dir {
+              size_limit = "${volume.value.size}G"
             }
           }
         }
         affinity {
           dynamic "node_affinity" {
-            for_each = { for k, v in local.preemptible_node_label : k => v }
+            for_each = var.stateless_node_labels
             content {
               required_during_scheduling_ignored_during_execution {
                 node_selector_term {
                   match_expressions {
                     key      = node_affinity.key
                     operator = "In"
-                    values   = [node_affinity.value]
+                    values   = node_affinity.value
                   }
                 }
               }
@@ -216,7 +195,7 @@ resource "kubernetes_deployment" "deployment" {
               topology_key = "kubernetes.io/hostname"
               label_selector {
                 match_labels = {
-                  component = local.service_name
+                  component = var.service_name
                 }
               }
             }
@@ -226,7 +205,7 @@ resource "kubernetes_deployment" "deployment" {
                 topology_key = "topology.kubernetes.io/zone"
                 label_selector {
                   match_labels = {
-                    component = local.service_name
+                    component = var.service_name
                   }
                 }
               }
@@ -236,25 +215,25 @@ resource "kubernetes_deployment" "deployment" {
       }
       metadata {
         labels = {
-          component = local.service_name
+          component = var.service_name
         }
-        annotations = {
-          "cluster-autoscaler.kubernetes.io/safe-to-evict" = true
-          "checksum/config"                                = var.config_checksum
-        }
+        annotations = merge(
+          { "cluster-autoscaler.kubernetes.io/safe-to-evict" = true },
+          { for k, v in var.config_volumes : "checksum/${k}" => v.config_checksum }
+        )
       }
     }
     selector {
       match_labels = {
-        component = local.service_name
+        component = var.service_name
       }
     }
   }
   metadata {
-    name      = local.service_name
+    name      = var.service_name
     namespace = var.namespace_name
     labels = {
-      component = local.service_name
+      component = var.service_name
     }
   }
 }

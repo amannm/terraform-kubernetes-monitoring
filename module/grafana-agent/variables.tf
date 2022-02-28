@@ -4,11 +4,8 @@ variable "namespace_name" {
 variable "resource_name" {
   type = string
 }
-variable "preemptible_node_label_name" {
-  type = string
-}
-variable "preemptible_node_label_value" {
-  type = string
+variable "stateless_node_labels" {
+  type = map(set(string))
 }
 variable "agent_container_image" {
   type = string
