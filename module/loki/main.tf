@@ -39,6 +39,10 @@ locals {
       size       = 1
     }
   }
+  security_context = {
+    uid                       = 10001
+    read_only_root_filesystem = true
+  }
   components = ["ingester", "distributor", "querier", "query-frontend"]
   component_args = {
     for c in local.components : c => [
@@ -85,6 +89,7 @@ module "ingester" {
   pod_probes            = local.pod_probes
   config_volumes        = local.config_volumes
   persistent_volumes    = local.storage_volumes
+  pod_security_context  = local.security_context
   stateless_node_labels = var.stateless_node_labels
 }
 
@@ -106,6 +111,7 @@ module "querier" {
   pod_probes            = local.pod_probes
   config_volumes        = local.config_volumes
   ephemeral_volumes     = local.storage_volumes
+  pod_security_context  = local.security_context
   stateless_node_labels = var.stateless_node_labels
 }
 
@@ -127,6 +133,7 @@ module "distributor" {
   pod_probes            = local.pod_probes
   config_volumes        = local.config_volumes
   ephemeral_volumes     = local.storage_volumes
+  pod_security_context  = local.security_context
   stateless_node_labels = var.stateless_node_labels
 }
 
@@ -148,5 +155,6 @@ module "query_frontend" {
   pod_probes            = local.pod_probes
   config_volumes        = local.config_volumes
   ephemeral_volumes     = local.storage_volumes
+  pod_security_context  = local.security_context
   stateless_node_labels = var.stateless_node_labels
 }
