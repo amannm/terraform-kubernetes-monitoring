@@ -73,11 +73,18 @@ locals {
 
 }
 
+resource "kubernetes_service_account" "service_account" {
+  metadata {
+    name      = var.service_name
+    namespace = var.namespace_name
+  }
+}
+
 module "etcd" {
   source               = "../common/stateful"
   namespace_name       = var.namespace_name
   service_name         = var.service_name
-  service_account_name = var.service_name
+  service_account_name = kubernetes_service_account.service_account.metadata[0].name
   replicas             = 1
   container_image      = var.container_image
   command              = ["/bin/sh", "-ec", local.startup_script]
