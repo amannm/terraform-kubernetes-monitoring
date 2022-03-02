@@ -268,7 +268,7 @@ resource "kubernetes_config_map" "config_map" {
     namespace = var.namespace_name
   }
   data = {
-    for v in local.jobs : "${v.job_name}.yaml" => yamlencode({
+    for v in local.jobs : "${replace(v.job_name, "/[^-._a-zA-Z0-9]+/", "_")}.yaml" => yamlencode({
       scrape_configs = [v]
       remote_write = [
         {
