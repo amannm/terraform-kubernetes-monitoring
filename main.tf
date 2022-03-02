@@ -5,11 +5,6 @@ terraform {
     }
   }
 }
-#locals {
-#  partition_by_labels = {
-#    component = distinct(flatten([for k, v in module.cortex.partition_by_labels : v if k == "component"]))
-#  }
-#}
 resource "kubernetes_namespace" "namespace" {
   metadata {
     name = var.namespace_name
@@ -52,21 +47,23 @@ module "grafana_agent" {
   agentctl_container_image = "grafana/agentctl:latest"
   stateless_node_labels    = var.stateless_node_labels
   etcd_host                = module.etcd.client_endpoint_host
-  #  metrics_remote_write_url = module.cortex.remote_write_url
-  #  partition_by_labels      = local.partition_by_labels
+  metrics_remote_write_url = module.cortex.remote_write_url
+  partition_by_labels = {
+    component = distinct(flatten([for k, v in module.cortex.partition_by_labels : v if k == "component"]))
+  }
   logs_remote_write_url = module.loki.remote_write_url
 }
 
-#module "cortex" {
-#  source                = "./module/cortex"
-#  namespace_name        = kubernetes_namespace.namespace.metadata[0].name
-#  service_name          = "cortex"
-#  service_port          = var.cortex_port
-#  container_image       = "quay.io/cortexproject/cortex:v1.11.0"
-#  storage_volume_size   = 1
-#  etcd_host             = module.shared_etcd.client_endpoint_host
-#  stateless_node_labels = var.stateless_node_labels
-#}
+module "cortex" {
+  source                = "./module/cortex"
+  namespace_name        = kubernetes_namespace.namespace.metadata[0].name
+  service_name          = "cortex"
+  service_port          = var.cortex_port
+  container_image       = "quay.io/cortexproject/cortex:v1.11.0"
+  storage_volume_size   = 1
+  etcd_host             = module.etcd.client_endpoint_host
+  stateless_node_labels = var.stateless_node_labels
+}
 
 module "loki" {
   source                = "./module/loki"
