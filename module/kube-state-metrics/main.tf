@@ -30,13 +30,6 @@ locals {
   }
 }
 
-resource "kubernetes_service_account" "service_account" {
-  metadata {
-    name      = var.service_name
-    namespace = var.namespace_name
-  }
-}
-
 resource "kubernetes_cluster_role" "cluster_role" {
   metadata {
     name = var.service_name
@@ -51,20 +44,11 @@ resource "kubernetes_cluster_role" "cluster_role" {
   }
 }
 
-resource "kubernetes_cluster_role_binding" "cluster_role_binding" {
-  metadata {
-    name = var.service_name
-  }
-  subject {
-    kind      = "ServiceAccount"
-    name      = kubernetes_service_account.service_account.metadata[0].name
-    namespace = var.namespace_name
-  }
-  role_ref {
-    kind      = "ClusterRole"
-    name      = kubernetes_cluster_role.cluster_role.metadata[0].name
-    api_group = "rbac.authorization.k8s.io"
-  }
+module "service_account" {
+  source            = "../common/cluster-service-account"
+  namespace_name    = var.namespace_name
+  service_name      = var.service_name
+  cluster_role_name = kubernetes_cluster_role.cluster_role.metadata[0].name
 }
 
 module "kube-state-metrics" {
@@ -81,7 +65,7 @@ module "kube-state-metrics" {
     memory_max = 30
   }
   namespace_name       = var.namespace_name
-  service_account_name = kubernetes_service_account.service_account.metadata[0].name
+  service_account_name = module.service_account.name
   replicas             = 1
   container_image      = var.container_image
   ports = {
