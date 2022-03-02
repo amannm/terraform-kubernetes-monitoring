@@ -25,15 +25,15 @@ module "grafana" {
   stateless_node_labels = var.stateless_node_labels
 }
 
-module "etcd" {
-  source                = "./module/etcd"
-  namespace_name        = var.namespace_name
-  service_name          = "etcd"
-  container_image       = "quay.io/coreos/etcd:v3.5.2"
-  cluster_size          = 1
-  storage_volume_size   = 1
-  stateless_node_labels = var.stateless_node_labels
-}
+#module "etcd" {
+#  source                = "./module/etcd"
+#  namespace_name        = var.namespace_name
+#  service_name          = "etcd"
+#  container_image       = "quay.io/coreos/etcd:v3.5.2"
+#  cluster_size          = 1
+#  storage_volume_size   = 1
+#  stateless_node_labels = var.stateless_node_labels
+#}
 
 module "kube_state_metrics" {
   source                = "./module/kube-state-metrics"
@@ -44,18 +44,18 @@ module "kube_state_metrics" {
   stateless_node_labels = var.stateless_node_labels
 }
 #
-module "grafana_agent" {
-  source                   = "./module/grafana-agent"
-  namespace_name           = kubernetes_namespace.namespace.metadata[0].name
-  resource_name            = "grafana-agent"
-  agent_container_image    = "grafana/agent:latest"
-  agentctl_container_image = "grafana/agentctl:latest"
-  stateless_node_labels    = var.stateless_node_labels
-  etcd_host                = module.etcd.client_endpoint_host
-  #  metrics_remote_write_url = module.cortex.remote_write_url
-  #  partition_by_labels      = local.partition_by_labels
-  # logs_remote_write_url = module.loki.remote_write_url
-}
+#module "grafana_agent" {
+#  source                   = "./module/grafana-agent"
+#  namespace_name           = kubernetes_namespace.namespace.metadata[0].name
+#  resource_name            = "grafana-agent"
+#  agent_container_image    = "grafana/agent:latest"
+#  agentctl_container_image = "grafana/agentctl:latest"
+#  stateless_node_labels    = var.stateless_node_labels
+#  etcd_host                = module.etcd.client_endpoint_host
+#  metrics_remote_write_url = module.cortex.remote_write_url
+#  partition_by_labels      = local.partition_by_labels
+# logs_remote_write_url = module.loki.remote_write_url
+#}
 
 #module "cortex" {
 #  source                = "./module/cortex"
