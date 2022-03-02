@@ -44,18 +44,17 @@ resource "kubernetes_config_map" "config_map" {
   }
 }
 
-resource "kubernetes_service_account" "service_account" {
-  metadata {
-    name      = var.service_name
-    namespace = var.namespace_name
-  }
+module "service_account" {
+  source         = "../common/service-account"
+  namespace_name = var.namespace_name
+  service_name   = var.service_name
 }
 
 module "grafana" {
   source               = "../common/stateful"
   namespace_name       = var.namespace_name
   service_name         = var.service_name
-  service_account_name = kubernetes_service_account.service_account.metadata[0].name
+  service_account_name = module.service_account.name
   replicas             = 1
   container_image      = var.container_image
   pod_resources = {
