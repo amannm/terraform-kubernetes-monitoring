@@ -81,8 +81,8 @@ module "ingester" {
   args                 = local.component_args["ingester"]
   pod_resources = {
     cpu_min    = 75
-    memory_min = 50
-    memory_max = 150
+    memory_min = 70
+    memory_max = 200
   }
   ports                 = local.ports
   pod_lifecycle         = local.pod_lifecycle
