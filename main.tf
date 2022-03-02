@@ -63,7 +63,7 @@ module "cortex" {
   service_name          = "cortex"
   service_port          = var.cortex_port
   container_image       = "quay.io/cortexproject/cortex:v1.11.0"
-  storage_volume_size   = 2
+  storage_volume_size   = 1
   etcd_host             = module.shared_etcd.client_endpoint_host
   stateless_node_labels = var.stateless_node_labels
 }
@@ -74,7 +74,7 @@ module "loki" {
   service_name          = "loki"
   service_port          = var.loki_port
   container_image       = "grafana/loki:2.4.2"
-  storage_volume_size   = 2
+  storage_volume_size   = 1
   etcd_host             = module.shared_etcd.client_endpoint_host
   stateless_node_labels = var.stateless_node_labels
 }

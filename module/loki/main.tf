@@ -1,5 +1,5 @@
 locals {
-  query_frontend_replicas = 2
+  query_frontend_replicas = 1
   remote_write_url        = "http://${var.service_name}-distributor.${var.namespace_name}.svc.cluster.local:${var.service_port}/loki/api/v1/push"
   partition_by_labels = {
     component = values(local.service_names),

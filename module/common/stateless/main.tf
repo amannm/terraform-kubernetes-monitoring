@@ -3,10 +3,6 @@ terraform {
     module_variable_optional_attrs
   ]
 }
-locals {
-
-}
-
 module "service" {
   source             = "../service"
   namespace_name     = var.namespace_name
@@ -14,7 +10,6 @@ module "service" {
   ports              = { for k, v in var.ports : k => v if v.port != null }
   wait_for_readiness = var.wait_for_readiness
 }
-
 resource "kubernetes_pod_disruption_budget" "pdb" {
   metadata {
     name      = var.service_name
@@ -29,10 +24,21 @@ resource "kubernetes_pod_disruption_budget" "pdb" {
     }
   }
 }
-
 resource "kubernetes_deployment" "deployment" {
+  metadata {
+    name      = var.service_name
+    namespace = var.namespace_name
+    labels = {
+      component = var.service_name
+    }
+  }
   spec {
     replicas = var.replicas
+    selector {
+      match_labels = {
+        component = var.service_name
+      }
+    }
     strategy {
       rolling_update {
         max_unavailable = 0
@@ -40,6 +46,15 @@ resource "kubernetes_deployment" "deployment" {
       }
     }
     template {
+      metadata {
+        labels = {
+          component = var.service_name
+        }
+        annotations = merge(
+          { "cluster-autoscaler.kubernetes.io/safe-to-evict" = true },
+          { for k, v in var.config_volumes : "checksum/${k}" => v.config_checksum }
+        )
+      }
       spec {
         service_account_name             = var.service_account_name
         termination_grace_period_seconds = var.pod_lifecycle.max_cleanup_time
@@ -213,27 +228,6 @@ resource "kubernetes_deployment" "deployment" {
           }
         }
       }
-      metadata {
-        labels = {
-          component = var.service_name
-        }
-        annotations = merge(
-          { "cluster-autoscaler.kubernetes.io/safe-to-evict" = true },
-          { for k, v in var.config_volumes : "checksum/${k}" => v.config_checksum }
-        )
-      }
-    }
-    selector {
-      match_labels = {
-        component = var.service_name
-      }
-    }
-  }
-  metadata {
-    name      = var.service_name
-    namespace = var.namespace_name
-    labels = {
-      component = var.service_name
     }
   }
 }
