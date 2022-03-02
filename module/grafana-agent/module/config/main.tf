@@ -33,8 +33,8 @@ module "metrics" {
   agent_host               = var.metrics_config.agent_host
   remote_write_url         = var.metrics_config.remote_write_url
   etcd_host                = var.metrics_config.etcd_host
-  refresh_rate             = 30
-  partition_by_labels      = var.partition_by_labels
+  refresh_rate             = 5
+  partition_by_labels      = var.metrics_config.partition_by_labels
 }
 
 module "logs" {

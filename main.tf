@@ -25,7 +25,7 @@ module "grafana" {
   stateless_node_labels = var.stateless_node_labels
 }
 
-module "shared_etcd" {
+module "etcd" {
   source                = "./module/etcd"
   namespace_name        = var.namespace_name
   service_name          = "etcd"
@@ -44,18 +44,18 @@ module "kube_state_metrics" {
   stateless_node_labels = var.stateless_node_labels
 }
 #
-#module "grafana_agent" {
-#  source                   = "./module/grafana-agent"
-#  namespace_name           = kubernetes_namespace.namespace.metadata[0].name
-#  resource_name            = "grafana-agent"
-#  agent_container_image    = "grafana/agent:latest"
-#  agentctl_container_image = "grafana/agentctl:latest"
-#  etcd_host                = module.shared_etcd.client_endpoint_host
-#  metrics_remote_write_url = module.cortex.remote_write_url
-#  logs_remote_write_url    = module.loki.remote_write_url
-#  partition_by_labels      = local.partition_by_labels
-#  stateless_node_labels    = var.stateless_node_labels
-#}
+module "grafana_agent" {
+  source                   = "./module/grafana-agent"
+  namespace_name           = kubernetes_namespace.namespace.metadata[0].name
+  resource_name            = "grafana-agent"
+  agent_container_image    = "grafana/agent:latest"
+  agentctl_container_image = "grafana/agentctl:latest"
+  stateless_node_labels    = var.stateless_node_labels
+  etcd_host                = module.etcd.client_endpoint_host
+  #  metrics_remote_write_url = module.cortex.remote_write_url
+  #  partition_by_labels      = local.partition_by_labels
+  logs_remote_write_url = module.loki.remote_write_url
+}
 
 #module "cortex" {
 #  source                = "./module/cortex"
@@ -67,14 +67,14 @@ module "kube_state_metrics" {
 #  etcd_host             = module.shared_etcd.client_endpoint_host
 #  stateless_node_labels = var.stateless_node_labels
 #}
-#
-#module "loki" {
-#  source                = "./module/loki"
-#  namespace_name        = kubernetes_namespace.namespace.metadata[0].name
-#  service_name          = "loki"
-#  service_port          = var.loki_port
-#  container_image       = "grafana/loki:2.4.2"
-#  storage_volume_size   = 1
-#  etcd_host             = module.shared_etcd.client_endpoint_host
-#  stateless_node_labels = var.stateless_node_labels
-#}
+
+module "loki" {
+  source                = "./module/loki"
+  namespace_name        = kubernetes_namespace.namespace.metadata[0].name
+  service_name          = "loki"
+  service_port          = var.loki_port
+  container_image       = "grafana/loki:2.4.2"
+  stateless_node_labels = var.stateless_node_labels
+  etcd_host             = module.etcd.client_endpoint_host
+  storage_volume_size   = 1
+}

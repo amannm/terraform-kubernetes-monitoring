@@ -117,12 +117,12 @@ module "agent_config" {
     agent_host               = "${module.service.headless_service_hostname}:${var.agent_container_port}"
     remote_write_url         = var.metrics_remote_write_url
     etcd_host                = var.etcd_host
+    partition_by_labels      = var.partition_by_labels
   }
   logs_config = var.logs_remote_write_url == null ? null : {
     positions_volume_mount_path = local.volumes.positions.mount_path
     remote_write_url            = var.logs_remote_write_url
   }
-  partition_by_labels = var.partition_by_labels
 }
 
 module "service" {

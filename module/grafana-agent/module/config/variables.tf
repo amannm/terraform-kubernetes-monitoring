@@ -27,6 +27,7 @@ variable "metrics_config" {
     agent_host               = string
     etcd_host                = string
     agentctl_container_image = string
+    partition_by_labels      = map(set(string))
   })
   default = null
 }
@@ -36,7 +37,4 @@ variable "logs_config" {
     positions_volume_mount_path = string
   })
   default = null
-}
-variable "partition_by_labels" {
-  type = map(set(string))
 }

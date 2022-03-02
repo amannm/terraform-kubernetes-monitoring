@@ -29,5 +29,6 @@ variable "logs_remote_write_url" {
   default = null
 }
 variable "partition_by_labels" {
-  type = map(set(string))
+  type    = map(set(string))
+  default = {}
 }
