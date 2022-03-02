@@ -14,8 +14,7 @@ variable "container_image" {
   type = string
 }
 variable "service_port" {
-  type    = number
-  default = 9090
+  type = number
 }
 variable "etcd_host" {
   type = string

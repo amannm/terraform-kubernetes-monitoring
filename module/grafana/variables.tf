@@ -2,8 +2,7 @@ variable "namespace_name" {
   type = string
 }
 variable "service_name" {
-  type    = string
-  default = "grafana"
+  type = string
 }
 variable "service_port" {
   type = number
@@ -12,14 +11,11 @@ variable "stateless_node_labels" {
   type = map(set(string))
 }
 variable "container_image" {
-  type    = string
-  default = "grafana/grafana:8.3.4"
+  type = string
 }
 variable "container_port" {
-  type    = number
-  default = 3000
+  type = number
 }
 variable "storage_volume_size" {
-  type    = number
-  default = 2
+  type = number
 }

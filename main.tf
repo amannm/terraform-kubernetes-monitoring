@@ -18,16 +18,19 @@ module "grafana" {
   service_port          = var.grafana_port
   container_image       = "grafana/grafana:latest"
   stateless_node_labels = var.stateless_node_labels
+  container_port        = var.grafana_port
+  storage_volume_size   = 1
 }
 
 module "etcd" {
   source                = "./module/etcd"
   namespace_name        = kubernetes_namespace.namespace.metadata[0].name
   service_name          = "etcd"
+  service_port          = var.etcd_port
   container_image       = "quay.io/coreos/etcd:v3.5.2"
-  cluster_size          = 1
-  storage_volume_size   = 1
   stateless_node_labels = var.stateless_node_labels
+  storage_volume_size   = 1
+  cluster_size          = 1
 }
 
 module "kube_state_metrics" {
@@ -42,7 +45,8 @@ module "kube_state_metrics" {
 module "grafana_agent" {
   source                   = "./module/grafana-agent"
   namespace_name           = kubernetes_namespace.namespace.metadata[0].name
-  resource_name            = "grafana-agent"
+  service_name             = "grafana-agent"
+  service_port             = var.grafana_agent_port
   agent_container_image    = "grafana/agent:latest"
   agentctl_container_image = "grafana/agentctl:latest"
   stateless_node_labels    = var.stateless_node_labels
@@ -60,9 +64,9 @@ module "cortex" {
   service_name          = "cortex"
   service_port          = var.cortex_port
   container_image       = "quay.io/cortexproject/cortex:v1.11.0"
+  stateless_node_labels = var.stateless_node_labels
   storage_volume_size   = 1
   etcd_host             = module.etcd.client_endpoint_host
-  stateless_node_labels = var.stateless_node_labels
 }
 
 module "loki" {
@@ -72,6 +76,6 @@ module "loki" {
   service_port          = var.loki_port
   container_image       = "grafana/loki:2.4.2"
   stateless_node_labels = var.stateless_node_labels
-  etcd_host             = module.etcd.client_endpoint_host
   storage_volume_size   = 1
+  etcd_host             = module.etcd.client_endpoint_host
 }

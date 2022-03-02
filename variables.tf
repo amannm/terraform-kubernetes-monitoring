@@ -10,6 +10,14 @@ variable "grafana_port" {
   type    = number
   default = 3000
 }
+variable "etcd_port" {
+  type    = number
+  default = 2379
+}
+variable "grafana_agent_port" {
+  type    = number
+  default = 80
+}
 variable "cortex_port" {
   type    = number
   default = 9090

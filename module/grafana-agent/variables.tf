@@ -1,7 +1,7 @@
 variable "namespace_name" {
   type = string
 }
-variable "resource_name" {
+variable "service_name" {
   type = string
 }
 variable "stateless_node_labels" {
@@ -10,9 +10,8 @@ variable "stateless_node_labels" {
 variable "agent_container_image" {
   type = string
 }
-variable "agent_container_port" {
-  type    = number
-  default = 80
+variable "service_port" {
+  type = number
 }
 variable "metrics_remote_write_url" {
   type    = string

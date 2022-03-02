@@ -1,12 +1,11 @@
 locals {
   pod_name_env_var        = "POD_NAME"
   snapshot_count          = 1000
-  client_port             = 2379
   cluster_domain          = "cluster.local"
-  peer_port               = 2380
+  peer_port               = var.service_port + 1
   data_volume_name        = "data"
   data_volume_mount_path  = "/var/run/etcd"
-  service_client_endpoint = "${module.etcd.hostname}:${local.client_port}"
+  service_client_endpoint = "${module.etcd.hostname}:${var.service_port}"
   domain_suffix           = "${var.service_name}-headless"
 
   script_globals = <<-EOT
@@ -16,7 +15,7 @@ locals {
   IP=$(hostname -i)
   ALL_CLIENT_ENDPOINTS=""
   for i in $(seq 0 $(($${SET_ID} - 1))); do
-      ALL_CLIENT_ENDPOINTS="$${ALL_CLIENT_ENDPOINTS}$${ALL_CLIENT_ENDPOINTS:+,}http://$${SET_NAME}-$${i}.${local.domain_suffix}:${local.client_port}"
+      ALL_CLIENT_ENDPOINTS="$${ALL_CLIENT_ENDPOINTS}$${ALL_CLIENT_ENDPOINTS:+,}http://$${SET_NAME}-$${i}.${local.domain_suffix}:${var.service_port}"
   done
   echo "SET_ID: $SET_ID"
   echo "SET_NAME: $SET_NAME"
@@ -35,8 +34,8 @@ locals {
           if [ -e ${local.data_volume_mount_path}/default.etcd ]; then
               echo "existing local data found -- re-joining existing cluster using existing membership"
               etcdctl member update --endpoints="$ALL_CLIENT_ENDPOINTS" $MEMBER_ID --peer-urls=http://$${HOSTNAME}:${local.peer_port}
-              exec etcd --name $${${local.pod_name_env_var}} --data-dir ${local.data_volume_mount_path}/default.etcd --listen-peer-urls http://0.0.0.0:${local.peer_port} --listen-client-urls http://0.0.0.0:${local.client_port} \
-                  --advertise-client-urls http://$${HOSTNAME}:${local.client_port},http://${local.service_client_endpoint} \
+              exec etcd --name $${${local.pod_name_env_var}} --data-dir ${local.data_volume_mount_path}/default.etcd --listen-peer-urls http://0.0.0.0:${local.peer_port} --listen-client-urls http://0.0.0.0:${var.service_port} \
+                  --advertise-client-urls http://$${HOSTNAME}:${var.service_port},http://${local.service_client_endpoint} \
                   --snapshot-count=${local.snapshot_count}
           else
               echo "existing local data not found -- removing existing membership"
@@ -46,15 +45,15 @@ locals {
       echo "creating new membership"
       etcdctl member add --endpoints="$ALL_CLIENT_ENDPOINTS" $${${local.pod_name_env_var}} --peer-urls=http://$${HOSTNAME}:${local.peer_port} | grep "^ETCD_" > ${local.data_volume_mount_path}/new_member_envs
       . ${local.data_volume_mount_path}/new_member_envs
-      exec etcd --name $${${local.pod_name_env_var}} --data-dir ${local.data_volume_mount_path}/default.etcd --listen-peer-urls http://0.0.0.0:${local.peer_port} --listen-client-urls http://0.0.0.0:${local.client_port} \
-          --advertise-client-urls http://$${HOSTNAME}:${local.client_port},http://${local.service_client_endpoint} \
+      exec etcd --name $${${local.pod_name_env_var}} --data-dir ${local.data_volume_mount_path}/default.etcd --listen-peer-urls http://0.0.0.0:${local.peer_port} --listen-client-urls http://0.0.0.0:${var.service_port} \
+          --advertise-client-urls http://$${HOSTNAME}:${var.service_port},http://${local.service_client_endpoint} \
           --initial-advertise-peer-urls http://$${HOSTNAME}:${local.peer_port} \
           --initial-cluster $${ETCD_INITIAL_CLUSTER} --initial-cluster-state $${ETCD_INITIAL_CLUSTER_STATE} \
           --snapshot-count=${local.snapshot_count}
   else
       echo "existing cluster not found -- founding new cluster"
-      exec etcd --name $${${local.pod_name_env_var}} --data-dir ${local.data_volume_mount_path}/default.etcd --listen-peer-urls http://0.0.0.0:${local.peer_port} --listen-client-urls http://0.0.0.0:${local.client_port} \
-          --advertise-client-urls http://$${HOSTNAME}:${local.client_port},http://${local.service_client_endpoint} \
+      exec etcd --name $${${local.pod_name_env_var}} --data-dir ${local.data_volume_mount_path}/default.etcd --listen-peer-urls http://0.0.0.0:${local.peer_port} --listen-client-urls http://0.0.0.0:${var.service_port} \
+          --advertise-client-urls http://$${HOSTNAME}:${var.service_port},http://${local.service_client_endpoint} \
           --initial-advertise-peer-urls http://$${HOSTNAME}:${local.peer_port} \
           --initial-cluster "$${${local.pod_name_env_var}}=http://$${HOSTNAME}:${local.peer_port}" --initial-cluster-state new --initial-cluster-token ${var.service_name}-cluster \
           --snapshot-count=${local.snapshot_count}
@@ -99,7 +98,7 @@ module "etcd" {
     shutdown_exec_command = ["/bin/sh", "-ec", local.pre_stop_script]
   }
   pod_probes = {
-    port                   = local.client_port
+    port                   = var.service_port
     readiness_path         = "/health"
     liveness_path          = "/health"
     readiness_polling_rate = 5
@@ -114,8 +113,8 @@ module "etcd" {
   stateless_node_labels = var.stateless_node_labels
   ports = {
     client = {
-      port        = local.client_port
-      target_port = local.client_port
+      port        = var.service_port
+      target_port = var.service_port
     }
     peer = {
       port        = local.peer_port
