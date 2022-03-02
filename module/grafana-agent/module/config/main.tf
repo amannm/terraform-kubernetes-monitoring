@@ -27,7 +27,8 @@ module "metrics" {
   count                    = var.metrics_config == null ? 0 : 1
   source                   = "./module/metrics"
   namespace_name           = var.namespace_name
-  resource_name            = "${var.service_name}-metrics"
+  app_name                 = var.service_name
+  component_name           = "metrics"
   stateless_node_labels    = var.stateless_node_labels
   agentctl_container_image = var.metrics_config.agentctl_container_image
   agent_host               = var.metrics_config.agent_host

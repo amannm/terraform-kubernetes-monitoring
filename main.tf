@@ -57,7 +57,7 @@ module "grafana_agent" {
   etcd_host                = module.etcd.client_endpoint_host
   metrics_remote_write_url = module.cortex.remote_write_url
   partition_by_labels = {
-    component = distinct(flatten([for k, v in module.cortex.partition_by_labels : v if k == "component"]))
+    "app.kubernetes.io/name" = ["grafana", "etcd", "kube-state-metrics", "grafana-agent", "cortex", "loki"]
   }
   logs_remote_write_url = module.loki.remote_write_url
 }

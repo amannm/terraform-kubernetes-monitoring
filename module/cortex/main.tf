@@ -2,9 +2,6 @@ locals {
   query_frontend_replicas = 1
   prometheus_api_path     = "/prometheus"
   remote_write_url        = "http://${var.service_name}-distributor.${var.namespace_name}.svc.${var.cluster_domain}:${var.service_port}/api/v1/push"
-  partition_by_labels = {
-    component = values(local.service_names),
-  }
   pod_lifecycle = {
     min_readiness_time = 30
     max_readiness_time = 90
@@ -51,7 +48,6 @@ locals {
       "-target=${c}",
     ]
   }
-  service_names = { for c in local.components : c => "${var.service_name}-${c}" }
 }
 
 
@@ -78,7 +74,8 @@ module "ingester" {
   source               = "../common/stateful"
   cluster_domain       = var.cluster_domain
   namespace_name       = var.namespace_name
-  service_name         = local.service_names["ingester"]
+  app_name             = var.service_name
+  component_name       = "ingester"
   service_account_name = module.service_account.name
   replicas             = 1
   container_image      = var.container_image
@@ -100,7 +97,8 @@ module "ingester" {
 module "compactor" {
   source         = "../common/stateless"
   cluster_domain = var.cluster_domain
-  service_name   = local.service_names["compactor"]
+  app_name       = var.service_name
+  component_name = "compactor"
   args           = local.component_args["compactor"]
   pod_resources = {
     cpu_min    = 50
@@ -123,7 +121,8 @@ module "compactor" {
 module "store-gateway" {
   source         = "../common/stateless"
   cluster_domain = var.cluster_domain
-  service_name   = local.service_names["store-gateway"]
+  app_name       = var.service_name
+  component_name = "store-gateway"
   args           = local.component_args["store-gateway"]
   pod_resources = {
     cpu_min    = 50
@@ -146,7 +145,8 @@ module "store-gateway" {
 module "querier" {
   source         = "../common/stateless"
   cluster_domain = var.cluster_domain
-  service_name   = local.service_names["querier"]
+  app_name       = var.service_name
+  component_name = "querier"
   args           = local.component_args["querier"]
   pod_resources = {
     cpu_min    = 50
@@ -169,7 +169,8 @@ module "querier" {
 module "distributor" {
   source         = "../common/stateless"
   cluster_domain = var.cluster_domain
-  service_name   = local.service_names["distributor"]
+  app_name       = var.service_name
+  component_name = "distributor"
   args           = local.component_args["distributor"]
   pod_resources = {
     cpu_min    = 50
@@ -192,7 +193,8 @@ module "distributor" {
 module "query_frontend" {
   source         = "../common/stateless"
   cluster_domain = var.cluster_domain
-  service_name   = local.service_names["query-frontend"]
+  app_name       = var.service_name
+  component_name = "query-frontend"
   args           = local.component_args["query-frontend"]
   pod_resources = {
     cpu_min    = 50

@@ -129,7 +129,7 @@ module "service" {
   source             = "../common/service"
   cluster_domain     = var.cluster_domain
   namespace_name     = var.namespace_name
-  service_name       = var.service_name
+  app_name           = var.service_name
   ports              = local.ports
   headless_only      = true
   wait_for_readiness = true
@@ -139,12 +139,15 @@ resource "kubernetes_daemonset" "daemonset" {
   metadata {
     name      = var.service_name
     namespace = var.namespace_name
+    labels = {
+      "app.kubernetes.io/name" = var.service_name
+    }
   }
   spec {
     min_ready_seconds = local.lifecycle.min_readiness_time
     selector {
       match_labels = {
-        component = var.service_name
+        "app.kubernetes.io/name" = var.service_name
       }
     }
     strategy {
@@ -157,7 +160,7 @@ resource "kubernetes_daemonset" "daemonset" {
       metadata {
         name = var.service_name
         labels = {
-          component = var.service_name
+          "app.kubernetes.io/name" = var.service_name
         }
       }
       spec {

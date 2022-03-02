@@ -1,7 +1,10 @@
 variable "namespace_name" {
   type = string
 }
-variable "resource_name" {
+variable "app_name" {
+  type = string
+}
+variable "component_name" {
   type = string
 }
 variable "stateless_node_labels" {

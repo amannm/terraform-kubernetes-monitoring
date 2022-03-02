@@ -81,7 +81,7 @@ module "etcd" {
   source               = "../common/stateful"
   cluster_domain       = var.cluster_domain
   namespace_name       = var.namespace_name
-  service_name         = var.service_name
+  app_name             = var.service_name
   service_account_name = module.service_account.name
   replicas             = 1
   container_image      = var.container_image

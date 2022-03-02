@@ -4,8 +4,12 @@ variable "namespace_name" {
 variable "cluster_domain" {
   type = string
 }
-variable "service_name" {
+variable "app_name" {
   type = string
+}
+variable "component_name" {
+  type    = string
+  default = null
 }
 variable "non_headless_only" {
   type    = bool

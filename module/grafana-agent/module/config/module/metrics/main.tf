@@ -255,9 +255,16 @@ locals {
   config_volume_name       = "config"
   config_volume_mount_path = "/etc/configs"
 }
+locals {
+  service_name = "${var.app_name}-${var.component_name}"
+  labels = {
+    "app.kubernetes.io/name"      = var.app_name
+    "app.kubernetes.io/component" = var.component_name
+  }
+}
 resource "kubernetes_config_map" "config_map" {
   metadata {
-    name      = var.resource_name
+    name      = local.service_name
     namespace = var.namespace_name
   }
   data = {
@@ -274,7 +281,8 @@ resource "kubernetes_config_map" "config_map" {
 resource "kubernetes_cron_job" "config_update_job" {
   metadata {
     namespace = var.namespace_name
-    name      = var.resource_name
+    name      = local.service_name
+    labels    = local.labels
   }
   spec {
     schedule                      = "*/${var.refresh_rate} * * * *"
@@ -282,13 +290,15 @@ resource "kubernetes_cron_job" "config_update_job" {
     failed_jobs_history_limit     = 3
     job_template {
       metadata {
-        name = var.resource_name
+        name   = local.service_name
+        labels = local.labels
       }
       spec {
         ttl_seconds_after_finished = 30
         template {
           metadata {
-            name = var.resource_name
+            name   = local.service_name
+            labels = local.labels
           }
           spec {
             dynamic "affinity" {
@@ -317,7 +327,7 @@ resource "kubernetes_cron_job" "config_update_job" {
               }
             }
             container {
-              name              = var.resource_name
+              name              = local.service_name
               image             = var.agentctl_container_image
               image_pull_policy = "IfNotPresent"
               command           = ["/bin/agentctl"]

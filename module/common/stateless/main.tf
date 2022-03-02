@@ -3,42 +3,44 @@ terraform {
     module_variable_optional_attrs
   ]
 }
+locals {
+  service_name = var.component_name == null ? var.app_name : "${var.app_name}-${var.component_name}"
+  labels = {
+    "app.kubernetes.io/name"      = var.app_name
+    "app.kubernetes.io/component" = var.component_name
+  }
+}
 module "service" {
   source             = "../service"
   cluster_domain     = var.cluster_domain
   namespace_name     = var.namespace_name
-  service_name       = var.service_name
+  app_name           = var.app_name
+  component_name     = var.component_name
   ports              = { for k, v in var.ports : k => v if v.port != null }
   wait_for_readiness = var.wait_for_readiness
 }
 resource "kubernetes_pod_disruption_budget" "pdb" {
   metadata {
-    name      = var.service_name
+    name      = local.service_name
     namespace = var.namespace_name
   }
   spec {
     min_available = 1
     selector {
-      match_labels = {
-        component = var.service_name
-      }
+      match_labels = local.labels
     }
   }
 }
 resource "kubernetes_deployment" "deployment" {
   metadata {
-    name      = var.service_name
+    name      = local.service_name
     namespace = var.namespace_name
-    labels = {
-      component = var.service_name
-    }
+    labels    = local.labels
   }
   spec {
     replicas = var.replicas
     selector {
-      match_labels = {
-        component = var.service_name
-      }
+      match_labels = local.labels
     }
     strategy {
       rolling_update {
@@ -48,9 +50,7 @@ resource "kubernetes_deployment" "deployment" {
     }
     template {
       metadata {
-        labels = {
-          component = var.service_name
-        }
+        labels = local.labels
         annotations = merge(
           { "cluster-autoscaler.kubernetes.io/safe-to-evict" = true },
           { for k, v in var.config_volumes : "checksum/${k}" => v.config_checksum }
@@ -67,7 +67,7 @@ resource "kubernetes_deployment" "deployment" {
           }
         }
         container {
-          name              = var.service_name
+          name              = local.service_name
           image             = var.container_image
           image_pull_policy = "IfNotPresent"
           command           = var.command
@@ -210,9 +210,7 @@ resource "kubernetes_deployment" "deployment" {
             required_during_scheduling_ignored_during_execution {
               topology_key = "kubernetes.io/hostname"
               label_selector {
-                match_labels = {
-                  component = var.service_name
-                }
+                match_labels = local.labels
               }
             }
             preferred_during_scheduling_ignored_during_execution {
@@ -220,9 +218,7 @@ resource "kubernetes_deployment" "deployment" {
               pod_affinity_term {
                 topology_key = "topology.kubernetes.io/zone"
                 label_selector {
-                  match_labels = {
-                    component = var.service_name
-                  }
+                  match_labels = local.labels
                 }
               }
             }
