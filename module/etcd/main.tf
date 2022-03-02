@@ -1,7 +1,6 @@
 locals {
   pod_name_env_var        = "POD_NAME"
   snapshot_count          = 1000
-  cluster_domain          = "cluster.local"
   peer_port               = var.service_port + 1
   data_volume_name        = "data"
   data_volume_mount_path  = "/var/run/etcd"
@@ -80,6 +79,7 @@ module "service_account" {
 
 module "etcd" {
   source               = "../common/stateful"
+  cluster_domain       = var.cluster_domain
   namespace_name       = var.namespace_name
   service_name         = var.service_name
   service_account_name = module.service_account.name

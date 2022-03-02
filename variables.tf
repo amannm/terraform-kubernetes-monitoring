@@ -2,6 +2,10 @@ variable "namespace_name" {
   type    = string
   default = "monitoring"
 }
+variable "cluster_domain" {
+  type    = string
+  default = "cluster.local"
+}
 variable "kube_state_metrics_port" {
   type    = number
   default = 8080

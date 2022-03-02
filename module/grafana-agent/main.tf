@@ -127,6 +127,7 @@ module "agent_config" {
 
 module "service" {
   source             = "../common/service"
+  cluster_domain     = var.cluster_domain
   namespace_name     = var.namespace_name
   service_name       = var.service_name
   ports              = local.ports

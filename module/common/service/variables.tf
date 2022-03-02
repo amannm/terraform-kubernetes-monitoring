@@ -2,8 +2,7 @@ variable "namespace_name" {
   type = string
 }
 variable "cluster_domain" {
-  type    = string
-  default = "cluster.local"
+  type = string
 }
 variable "service_name" {
   type = string

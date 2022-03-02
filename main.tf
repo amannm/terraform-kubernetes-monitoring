@@ -13,6 +13,7 @@ resource "kubernetes_namespace" "namespace" {
 
 module "grafana" {
   source                = "./module/grafana"
+  cluster_domain        = var.cluster_domain
   namespace_name        = kubernetes_namespace.namespace.metadata[0].name
   service_name          = "grafana"
   service_port          = var.grafana_port
@@ -24,6 +25,7 @@ module "grafana" {
 
 module "etcd" {
   source                = "./module/etcd"
+  cluster_domain        = var.cluster_domain
   namespace_name        = kubernetes_namespace.namespace.metadata[0].name
   service_name          = "etcd"
   service_port          = var.etcd_port
@@ -35,6 +37,7 @@ module "etcd" {
 
 module "kube_state_metrics" {
   source                = "./module/kube-state-metrics"
+  cluster_domain        = var.cluster_domain
   namespace_name        = kubernetes_namespace.namespace.metadata[0].name
   service_name          = "kube-state-metrics"
   service_port          = var.kube_state_metrics_port
@@ -44,6 +47,7 @@ module "kube_state_metrics" {
 
 module "grafana_agent" {
   source                   = "./module/grafana-agent"
+  cluster_domain           = var.cluster_domain
   namespace_name           = kubernetes_namespace.namespace.metadata[0].name
   service_name             = "grafana-agent"
   service_port             = var.grafana_agent_port
@@ -60,6 +64,7 @@ module "grafana_agent" {
 
 module "cortex" {
   source                = "./module/cortex"
+  cluster_domain        = var.cluster_domain
   namespace_name        = kubernetes_namespace.namespace.metadata[0].name
   service_name          = "cortex"
   service_port          = var.cortex_port
@@ -71,6 +76,7 @@ module "cortex" {
 
 module "loki" {
   source                = "./module/loki"
+  cluster_domain        = var.cluster_domain
   namespace_name        = kubernetes_namespace.namespace.metadata[0].name
   service_name          = "loki"
   service_port          = var.loki_port

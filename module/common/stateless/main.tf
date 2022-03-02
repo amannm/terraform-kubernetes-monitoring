@@ -5,6 +5,7 @@ terraform {
 }
 module "service" {
   source             = "../service"
+  cluster_domain     = var.cluster_domain
   namespace_name     = var.namespace_name
   service_name       = var.service_name
   ports              = { for k, v in var.ports : k => v if v.port != null }

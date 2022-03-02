@@ -52,8 +52,9 @@ module "service_account" {
 }
 
 module "kube-state-metrics" {
-  source       = "../common/stateless"
-  service_name = var.service_name
+  source         = "../common/stateless"
+  cluster_domain = var.cluster_domain
+  service_name   = var.service_name
   args = [
     "--port=${var.container_port}",
     "--resources=${join(",", keys(local.enabled_resources))}",
