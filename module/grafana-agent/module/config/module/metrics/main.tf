@@ -141,7 +141,7 @@ locals {
             for label_name, label_value_list in var.partition_by_labels :
             {
               action        = "drop"
-              source_labels = ["__meta_kubernetes_pod_label_${label_name}"]
+              source_labels = ["__meta_kubernetes_pod_label_${replace(label_name, "/[^a-zA-Z0-9_]/", "_")}"]
               regex         = join("|", label_value_list)
             }
           ],
@@ -190,7 +190,7 @@ locals {
     flatten([
       for label_name, label_value_list in var.partition_by_labels : [
         for label_value in label_value_list : {
-          job_name              = "kubernetes-pods-${label_name}-${label_value}"
+          job_name              = "kubernetes-pods-${replace(label_name, "/[^a-zA-Z0-9_]/", "_")}-${label_value}"
           scheme                = "http"
           metrics_path          = "/metrics"
           kubernetes_sd_configs = local.kubernetes_sd_config["pod"]
@@ -198,7 +198,7 @@ locals {
             [
               {
                 action        = "keep"
-                source_labels = ["__meta_kubernetes_pod_label_${label_name}"]
+                source_labels = ["__meta_kubernetes_pod_label_${replace(label_name, "/[^a-zA-Z0-9_]/", "_")}"]
                 regex         = label_value
               },
               {
@@ -268,7 +268,7 @@ resource "kubernetes_config_map" "config_map" {
     namespace = var.namespace_name
   }
   data = {
-    for v in local.jobs : "${replace(v.job_name, "/[^-._a-zA-Z0-9]+/", "_")}.yaml" => yamlencode({
+    for v in local.jobs : "${replace(v.job_name, "/[^a-zA-Z0-9_]/", "_")}.yaml" => yamlencode({
       scrape_configs = [v]
       remote_write = [
         {
