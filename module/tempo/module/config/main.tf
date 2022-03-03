@@ -23,8 +23,7 @@ locals {
       }
     }
     querier = {
-      active_query_tracker_dir = "${var.storage_path}/active-query-tracker"
-      query_timeout            = "10s"
+      query_timeout = "10s"
       frontend_worker = {
         frontend_address = "${var.query_frontend_hostname}:${var.grpc_port}"
       }
@@ -40,10 +39,6 @@ locals {
       log_received_traces : true
     }
     ingester = {
-      max_chunk_age        = "5m"
-      max_chunk_idle_time  = "30m"
-      flush_period         = "1m"
-      max_transfer_retries = 0
       lifecycler = {
         ring = {
           kvstore            = local.etcd_kvstore
