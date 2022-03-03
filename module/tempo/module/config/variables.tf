@@ -14,24 +14,14 @@ variable "grpc_port" {
   type = number
 }
 variable "config_filename" {
-  type    = string
-  default = "config.yaml"
+  type = string
 }
 variable "config_path" {
-  type    = string
-  default = "/etc/cortex/config"
+  type = string
 }
 variable "storage_path" {
-  type    = string
-  default = "/var/cortex"
+  type = string
 }
 variable "query_frontend_hostname" {
   type = string
-}
-variable "prometheus_api_path" {
-  type    = string
-  default = "/prometheus"
-}
-variable "max_query_frontend_replicas" {
-  type = number
 }

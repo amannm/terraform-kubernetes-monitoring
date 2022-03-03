@@ -85,3 +85,15 @@ module "loki" {
   storage_volume_size   = 1
   etcd_host             = module.etcd.client_endpoint_host
 }
+
+module "tempo" {
+  source                = "./module/tempo"
+  cluster_domain        = var.cluster_domain
+  namespace_name        = kubernetes_namespace.namespace.metadata[0].name
+  service_name          = "tempo"
+  service_port          = var.cortex_port
+  container_image       = "grafana/tempo:1.3.2"
+  stateless_node_labels = var.stateless_node_labels
+  storage_volume_size   = 1
+  etcd_host             = module.etcd.client_endpoint_host
+}

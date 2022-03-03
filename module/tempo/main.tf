@@ -1,14 +1,13 @@
 locals {
   query_frontend_replicas = 1
-  prometheus_api_path     = "/prometheus"
-  remote_write_url        = "http://${var.service_name}-distributor.${var.namespace_name}.svc.${var.cluster_domain}:${var.service_port}/api/v1/push"
+  remote_write_endpoint   = "http://${var.service_name}-distributor.${var.namespace_name}.svc.${var.cluster_domain}:${var.service_port}/api/v1/push"
   pod_lifecycle = {
     min_readiness_time = 30
     max_readiness_time = 90
     max_cleanup_time   = 30
   }
   pod_probes = {
-    port                   = module.cortex_config.service_http_port
+    port                   = module.config.service_http_port
     readiness_path         = "/ready"
     liveness_path          = "/ready"
     readiness_polling_rate = 5
@@ -16,24 +15,24 @@ locals {
   }
   ports = {
     http = {
-      port        = module.cortex_config.service_http_port
-      target_port = module.cortex_config.service_http_port
+      port        = module.config.service_http_port
+      target_port = module.config.service_http_port
     }
     grpc = {
-      port        = module.cortex_config.service_grpc_port
-      target_port = module.cortex_config.service_grpc_port
+      port        = module.config.service_grpc_port
+      target_port = module.config.service_grpc_port
     }
   }
   config_volumes = {
     config = {
-      mount_path      = module.cortex_config.config_mount_path
-      config_map_name = module.cortex_config.config_map_name
-      config_checksum = module.cortex_config.config_checksum
+      mount_path      = module.config.config_mount_path
+      config_map_name = module.config.config_map_name
+      config_checksum = module.config.config_checksum
     }
   }
   storage_volumes = {
     storage = {
-      mount_path = module.cortex_config.storage_mount_path
+      mount_path = module.config.storage_mount_path
       size       = 1
     }
   }
@@ -41,26 +40,27 @@ locals {
     uid                       = 10001
     read_only_root_filesystem = true
   }
-  components = ["ingester", "distributor", "querier", "query-frontend", "compactor", "store-gateway"]
+  components = ["ingester", "distributor", "querier", "query-frontend", "compactor"]
   component_args = {
     for c in local.components : c => [
-      "-config.file=${module.cortex_config.config_mount_path}/${module.cortex_config.config_filename}",
+      "-config.file=${module.config.config_mount_path}/${module.config.config_filename}",
       "-target=${c}",
     ]
   }
 }
 
 
-module "cortex_config" {
-  source                      = "./module/config"
-  namespace_name              = var.namespace_name
-  service_name                = var.service_name
-  etcd_host                   = var.etcd_host
-  http_port                   = var.service_port
-  grpc_port                   = 9095
-  query_frontend_hostname     = "${var.service_name}-query-frontend-headless.${var.namespace_name}.svc.${var.cluster_domain}"
-  max_query_frontend_replicas = local.query_frontend_replicas
-  prometheus_api_path         = local.prometheus_api_path
+module "config" {
+  source                  = "./module/config"
+  namespace_name          = var.namespace_name
+  service_name            = var.service_name
+  etcd_host               = var.etcd_host
+  http_port               = var.service_port
+  grpc_port               = 9095
+  query_frontend_hostname = "${var.service_name}-query-frontend-headless.${var.namespace_name}.svc.${var.cluster_domain}"
+  config_filename         = "config.yaml"
+  config_path             = "/etc/tempo/config"
+  storage_path            = "/var/tempo"
 }
 
 module "service_account" {
@@ -103,30 +103,6 @@ module "compactor" {
     cpu_min    = 50
     memory_min = 26
     memory_max = 50
-  }
-  namespace_name        = var.namespace_name
-  service_account_name  = module.service_account.name
-  replicas              = 1
-  container_image       = var.container_image
-  ports                 = local.ports
-  pod_lifecycle         = local.pod_lifecycle
-  pod_probes            = local.pod_probes
-  config_volumes        = local.config_volumes
-  ephemeral_volumes     = local.storage_volumes
-  pod_security_context  = local.security_context
-  stateless_node_labels = var.stateless_node_labels
-}
-
-module "store-gateway" {
-  source         = "../common/stateless"
-  cluster_domain = var.cluster_domain
-  app_name       = var.service_name
-  component_name = "store-gateway"
-  args           = local.component_args["store-gateway"]
-  pod_resources = {
-    cpu_min    = 50
-    memory_min = 17
-    memory_max = 30
   }
   namespace_name        = var.namespace_name
   service_account_name  = module.service_account.name
