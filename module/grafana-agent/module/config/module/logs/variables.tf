@@ -4,3 +4,6 @@ variable "positions_volume_mount_path" {
 variable "remote_write_url" {
   type = string
 }
+variable "instance_name" {
+  type = string
+}

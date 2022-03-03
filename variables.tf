@@ -22,6 +22,10 @@ variable "grafana_agent_port" {
   type    = number
   default = 80
 }
+variable "jaeger_grpc_receiver_port" {
+  type    = number
+  default = 14250
+}
 variable "cortex_port" {
   type    = number
   default = 9090

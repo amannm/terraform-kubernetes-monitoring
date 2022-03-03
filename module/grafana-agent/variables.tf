@@ -16,7 +16,18 @@ variable "agent_container_image" {
 variable "service_port" {
   type = number
 }
+variable "receiver_port" {
+  type = number
+}
 variable "metrics_remote_write_url" {
+  type    = string
+  default = null
+}
+variable "logs_remote_write_url" {
+  type    = string
+  default = null
+}
+variable "traces_remote_write_url" {
   type    = string
   default = null
 }
@@ -25,10 +36,6 @@ variable "agentctl_container_image" {
 }
 variable "etcd_host" {
   type = string
-}
-variable "logs_remote_write_url" {
-  type    = string
-  default = null
 }
 variable "partition_by_labels" {
   type    = map(set(string))

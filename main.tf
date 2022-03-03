@@ -51,6 +51,7 @@ module "grafana_agent" {
   namespace_name           = kubernetes_namespace.namespace.metadata[0].name
   service_name             = "grafana-agent"
   service_port             = var.grafana_agent_port
+  receiver_port            = var.jaeger_grpc_receiver_port
   agent_container_image    = "grafana/agent:latest"
   agentctl_container_image = "grafana/agentctl:latest"
   stateless_node_labels    = var.stateless_node_labels
@@ -59,7 +60,8 @@ module "grafana_agent" {
   partition_by_labels = {
     "app.kubernetes.io/name" = ["grafana", "etcd", "kube-state-metrics", "grafana-agent", "cortex", "loki"]
   }
-  logs_remote_write_url = module.loki.remote_write_url
+  logs_remote_write_url   = module.loki.remote_write_url
+  traces_remote_write_url = module.tempo.remote_write_endpoint
 }
 
 module "cortex" {

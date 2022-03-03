@@ -1,4 +1,5 @@
 locals {
+  tracing_endpoint = "${module.service.non_headless_service_hostname}:${var.receiver_port}"
 
   config_filename = "agent.yaml"
   command         = ["/bin/agent"]
@@ -31,6 +32,10 @@ locals {
     http = {
       port        = var.service_port
       target_port = var.service_port
+    }
+    traces = {
+      port        = var.receiver_port
+      target_port = var.receiver_port
     }
   }
 
@@ -123,6 +128,10 @@ module "agent_config" {
     positions_volume_mount_path = local.volumes.positions.mount_path
     remote_write_url            = var.logs_remote_write_url
   }
+  traces_config = {
+    receiver_port    = var.receiver_port
+    remote_write_url = var.traces_remote_write_url
+  }
 }
 
 module "service" {
@@ -131,7 +140,6 @@ module "service" {
   namespace_name     = var.namespace_name
   app_name           = var.service_name
   ports              = local.ports
-  headless_only      = true
   wait_for_readiness = true
 }
 

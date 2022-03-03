@@ -38,3 +38,10 @@ variable "logs_config" {
   })
   default = null
 }
+variable "traces_config" {
+  type = object({
+    receiver_port    = number
+    remote_write_url = string
+  })
+  default = null
+}
