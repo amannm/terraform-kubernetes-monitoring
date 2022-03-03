@@ -3,9 +3,11 @@ locals {
     configs = [
       {
         name = "default"
-        remote_write = {
-          endpoint = var.remote_write_url
-        }
+        remote_write = [
+          {
+            endpoint = var.remote_write_url
+          }
+        ]
         receivers = {
           jaeger = {
             protocols = {
@@ -44,11 +46,11 @@ locals {
           }
         ]
         automatic_logging = {
-          backend       = "logs_instance"
-          logs_instance = var.logs_instance_name
-          spans         = true
-          roots         = true
-          processes     = true
+          backend            = "logs_instance"
+          logs_instance_name = var.logs_instance_name
+          spans              = true
+          roots              = true
+          processes          = true
         }
       }
     ]
