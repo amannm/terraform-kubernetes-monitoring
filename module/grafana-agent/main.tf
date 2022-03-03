@@ -1,5 +1,5 @@
 locals {
-  tracing_endpoint = "${module.service.non_headless_service_hostname}:${var.receiver_port}"
+  traces_receiver_url = "http://${module.service.non_headless_service_hostname}:${var.receiver_port}"
 
   config_filename = "agent.yaml"
   command         = ["/bin/agent"]

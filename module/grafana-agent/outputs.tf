@@ -1,3 +1,3 @@
-output "traces_endpoint" {
-  value = module.service.non_headless_service_hostname
+output "traces_receiver_url" {
+  value = local.traces_receiver_url
 }

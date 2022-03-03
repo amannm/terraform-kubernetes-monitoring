@@ -11,7 +11,7 @@ locals {
         receivers = {
           jaeger = {
             protocols = {
-              grpc = {
+              thrift_http = {
                 endpoint : "0.0.0.0:${var.receiver_port}"
               }
             }

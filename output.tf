@@ -1,3 +1,3 @@
-output "traces_endpoint" {
-  value = module.grafana_agent.traces_endpoint
+output "traces_receiver_url" {
+  value = module.grafana_agent.traces_receiver_url
 }

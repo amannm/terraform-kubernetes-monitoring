@@ -51,7 +51,7 @@ module "grafana_agent" {
   namespace_name           = kubernetes_namespace.namespace.metadata[0].name
   service_name             = "grafana-agent"
   service_port             = var.grafana_agent_port
-  receiver_port            = var.jaeger_grpc_receiver_port
+  receiver_port            = var.jaeger_receiver_port
   agent_container_image    = "grafana/agent:latest"
   agentctl_container_image = "grafana/agentctl:latest"
   stateless_node_labels    = var.stateless_node_labels
