@@ -26,9 +26,11 @@ locals {
               ca_file              = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
               insecure_skip_verify = true
             }
-            kubernetes_sd_configs = {
-              role = "pod"
-            }
+            kubernetes_sd_configs = [
+              {
+                role = "pod"
+              }
+            ]
             relabel_configs = [
               {
                 source_labels = ["__meta_kubernetes_namespace"]
