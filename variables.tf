@@ -1,5 +1,6 @@
 variable "namespace_name" {
-  type = string
+  type    = string
+  default = "observability"
 }
 variable "cluster_domain" {
   type    = string
@@ -45,18 +46,19 @@ variable "stateless_node_labels" {
 // TODO: add aws and azure support
 variable "cortex_storage_config" {
   type = object({
-    local = optional(object({
+    local = object({
       volume_size = number
-    }))
-    gcp = optional(object({
+    })
+    gcp = object({
       bucket_name                 = string
       service_account_annotations = map(string)
-    }))
+    })
   })
   default = {
     local = {
       volume_size = 1
     }
+    gcp = null
   }
   validation {
     condition     = length([for k, v in var.cortex_storage_config : k if v != null]) == 1
@@ -67,18 +69,19 @@ variable "cortex_storage_config" {
 // TODO: add aws and azure support
 variable "loki_storage_config" {
   type = object({
-    local = optional(object({
+    local = object({
       volume_size = number
-    }))
-    gcp = optional(object({
+    })
+    gcp = object({
       bucket_name                 = string
       service_account_annotations = map(string)
-    }))
+    })
   })
   default = {
     local = {
       volume_size = 1
     }
+    gcp = null
   }
   validation {
     condition     = length([for k, v in var.loki_storage_config : k if v != null]) == 1
@@ -89,22 +92,23 @@ variable "loki_storage_config" {
 // TODO: add aws and azure support
 variable "tempo_storage_config" {
   type = object({
-    local = optional(object({
+    local = object({
       volume_size = number
-    }))
-    gcp = optional(object({
+    })
+    gcp = object({
       bucket_name                 = string
       service_account_annotations = map(string)
-    }))
+    })
   })
   default = {
     local = {
       volume_size = 1
     }
+    gcp = null
   }
   validation {
     condition     = length([for k, v in var.tempo_storage_config : k if v != null]) == 1
-    error_message = "Exactly 1 storage type must be defined."
+    error_message = "Only 1 storage type can be defined at a time."
   }
 }
 

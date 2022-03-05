@@ -1,8 +1,3 @@
-terraform {
-  experiments = [
-    module_variable_optional_attrs
-  ]
-}
 locals {
   store_type = var.storage_config["local"] != null ? "filesystem" : var.storage_config["gcp"] != null ? "gcs" : null
 
@@ -133,11 +128,11 @@ locals {
           enabled = true
         }
       }
-      }, contains(keys(var.storage_config), "gcp") ? {
+      }, var.storage_config["gcp"] != null ? {
       gcs = {
         bucket_name = var.storage_config.gcp.bucket_name
       }
-      } : contains(keys(var.storage_config), "local") ? {
+      } : var.storage_config["local"] != null ? {
       filesystem = {
         dir = "${var.storage_path}/blocks"
       }

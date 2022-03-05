@@ -37,16 +37,12 @@ variable "max_query_frontend_replicas" {
 }
 variable "storage_config" {
   type = object({
-    local = optional(object({
+    local = object({
       volume_size = number
-    }))
-    gcp = optional(object({
+    })
+    gcp = object({
       bucket_name                 = string
       service_account_annotations = map(string)
-    }))
+    })
   })
-  validation {
-    condition     = length([for k, v in var.storage_config : k if v != null]) == 1
-    error_message = "Exactly 1 storage type must be defined."
-  }
 }

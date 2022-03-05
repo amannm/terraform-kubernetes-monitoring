@@ -1,8 +1,3 @@
-terraform {
-  experiments = [
-    module_variable_optional_attrs
-  ]
-}
 locals {
 
   store_type = var.storage_config["local"] != null ? "filesystem" : var.storage_config["gcp"] != null ? "gcs" : null
@@ -147,11 +142,11 @@ locals {
         cache_location         = "${var.storage_path}/cache"
         cache_ttl              = "24h"
       }
-      }, contains(keys(var.storage_config), "gcp") ? {
+      }, var.storage_config["gcp"] != null ? {
       gcs = {
         bucket_name = var.storage_config.gcp.bucket_name
       }
-      } : contains(keys(var.storage_config), "local") ? {
+      } : var.storage_config["local"] != null ? {
       filesystem = {
         directory = "${var.storage_path}/chunks"
       }

@@ -22,3 +22,12 @@ variable "container_port" {
 variable "storage_volume_size" {
   type = number
 }
+variable "prometheus_url" {
+  type = string
+}
+variable "loki_url" {
+  type = string
+}
+variable "tempo_url" {
+  type = string
+}

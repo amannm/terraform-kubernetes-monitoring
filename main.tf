@@ -4,9 +4,6 @@ terraform {
       source = "hashicorp/kubernetes"
     }
   }
-  experiments = [
-    module_variable_optional_attrs
-  ]
 }
 
 module "grafana" {
@@ -19,6 +16,9 @@ module "grafana" {
   stateless_node_labels = var.stateless_node_labels
   container_port        = var.grafana_port
   storage_volume_size   = 1
+  prometheus_url        = module.cortex.prometheus_url
+  loki_url              = module.loki.loki_url
+  tempo_url             = module.tempo.tempo_url
 }
 
 module "etcd" {

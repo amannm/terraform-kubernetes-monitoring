@@ -1,8 +1,3 @@
-terraform {
-  experiments = [
-    module_variable_optional_attrs
-  ]
-}
 locals {
   store_type = var.storage_config["local"] != null ? "local" : var.storage_config["gcp"] != null ? "gcs" : null
 
@@ -71,11 +66,11 @@ locals {
           encoding        = "snappy"
           search_encoding = "snappy"
         }
-        }, contains(keys(var.storage_config), "gcp") ? {
+        }, var.storage_config["gcp"] != null ? {
         gcs = {
           bucket_name = var.storage_config.gcp.bucket_name
         }
-        } : contains(keys(var.storage_config), "local") ? {
+        } : var.storage_config["local"] != null ? {
         local = {
           path = "${var.storage_path}/traces"
         }

@@ -1,11 +1,7 @@
-terraform {
-  experiments = [
-    module_variable_optional_attrs
-  ]
-}
 locals {
   query_frontend_replicas = 1
   remote_write_endpoint   = "http://${var.service_name}-distributor.${var.namespace_name}.svc.${var.cluster_domain}:${var.service_port}/api/v1/push"
+  tempo_url               = "http://${var.service_name}-query-frontend.${var.namespace_name}.svc.${var.cluster_domain}:${var.service_port}"
   pod_lifecycle = {
     min_readiness_time = 30
     max_readiness_time = 90

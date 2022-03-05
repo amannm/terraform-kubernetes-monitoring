@@ -1,47 +1,29 @@
 locals {
-  health_check_path         = "/api/health"
-  config_volume_mount_path  = "/etc/grafana"
-  storage_volume_mount_path = "/var/lib/grafana"
-  service_host              = "${module.grafana.hostname}:${var.service_port}"
-  config_file_content       = <<-EOT
-  [paths]
-  data = ${local.storage_volume_mount_path}
-  temp_data_lifetime = 24h
-  logs = ${local.storage_volume_mount_path}/log
-  plugins = ${local.storage_volume_mount_path}/plugins
-  provisioning = ${local.config_volume_mount_path}/provisioning
-
-  [server]
-  protocol = http
-  http_port = ${var.container_port}
-
-  [analytics]
-  reporting_enabled = false
-  check_for_updates = true
-
-  [snapshots]
-  external_enabled = false
-
-  [log]
-  mode = console
-  level = info
-
-  [metrics]
-  enabled = true
-
-  EOT
-
+  health_check_path             = "/api/health"
+  config_path                   = "/etc/grafana"
+  provisioning_config_directory = "${local.config_path}/provisioning"
+  datasources_config_directory  = "${local.provisioning_config_directory}/datasources"
+  storage_volume_mount_path     = "/var/lib/grafana"
+  service_host                  = "${module.grafana.hostname}:${var.service_port}"
 }
 
-// TODO: break out all config
-resource "kubernetes_config_map" "config_map" {
-  metadata {
-    name      = var.service_name
-    namespace = var.namespace_name
-  }
-  data = {
-    "grafana.ini" = local.config_file_content
-  }
+module "config" {
+  source                        = "./module/config"
+  config_filename               = "grafana.ini"
+  container_port                = var.container_port
+  namespace_name                = var.namespace_name
+  config_map_name               = var.service_name
+  provisioning_config_directory = local.provisioning_config_directory
+}
+
+module "datasources_config" {
+  source          = "./module/datasources-config"
+  config_filename = "datasources.yaml"
+  namespace_name  = var.namespace_name
+  config_map_name = var.service_name
+  prometheus_url  = var.prometheus_url
+  loki_url        = var.loki_url
+  tempo_url       = var.tempo_url
 }
 
 module "service_account" {
@@ -81,9 +63,14 @@ module "grafana" {
   }
   config_volumes = {
     config = {
-      mount_path      = local.config_volume_mount_path
-      config_map_name = kubernetes_config_map.config_map.metadata[0].name
-      config_checksum = sha256(local.config_file_content)
+      mount_path      = local.config_path
+      config_map_name = module.config.config_map_name
+      config_checksum = module.config.config_checksum
+    }
+    datasources = {
+      mount_path      = local.datasources_config_directory
+      config_map_name = module.datasources_config.config_map_name
+      config_checksum = module.datasources_config.config_checksum
     }
   }
   persistent_volumes = {
