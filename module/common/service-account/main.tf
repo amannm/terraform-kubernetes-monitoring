@@ -3,12 +3,9 @@ terraform {
     module_variable_optional_attrs
   ]
 }
-locals {
-  service_account_name = kubernetes_service_account.service_account.metadata[0].name
-}
 resource "kubernetes_service_account" "service_account" {
   metadata {
-    name        = var.service_name
+    name        = var.service_account_name
     namespace   = var.namespace_name
     annotations = var.annotations
   }
@@ -17,7 +14,7 @@ resource "kubernetes_service_account" "service_account" {
 resource "kubernetes_role_binding" "role_binding" {
   count = var.role_name == null ? 0 : 1
   metadata {
-    name      = var.service_name
+    name      = var.service_account_name
     namespace = var.namespace_name
   }
   subject {

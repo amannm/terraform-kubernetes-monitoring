@@ -72,9 +72,9 @@ locals {
 }
 
 module "service_account" {
-  source         = "../common/service-account"
-  namespace_name = var.namespace_name
-  service_name   = var.service_name
+  source               = "../common/service-account"
+  namespace_name       = var.namespace_name
+  service_account_name = var.service_name
 }
 
 module "etcd" {

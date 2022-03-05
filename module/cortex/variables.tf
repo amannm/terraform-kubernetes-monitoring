@@ -19,6 +19,9 @@ variable "container_image" {
 variable "service_port" {
   type = number
 }
+variable "service_account_name" {
+  type = string
+}
 variable "etcd_host" {
   type = string
 }

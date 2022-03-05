@@ -1,7 +1,7 @@
 variable "namespace_name" {
   type = string
 }
-variable "service_name" {
+variable "service_account_name" {
   type = string
 }
 variable "role_name" {

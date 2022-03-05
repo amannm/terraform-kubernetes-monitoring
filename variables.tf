@@ -30,6 +30,10 @@ variable "cortex_port" {
   type    = number
   default = 9090
 }
+variable "tempo_port" {
+  type    = number
+  default = 9090
+}
 variable "loki_port" {
   type    = number
   default = 3100
@@ -59,4 +63,17 @@ variable "storage_config" {
     condition     = length([for k, v in var.storage_config : k if v != null]) == 1
     error_message = "Exactly 1 storage type must be defined."
   }
+}
+
+variable "cortex_service_account_name" {
+  type    = string
+  default = "cortex"
+}
+variable "loki_service_account_name" {
+  type    = string
+  default = "loki"
+}
+variable "tempo_service_account_name" {
+  type    = string
+  default = "tempo"
 }
