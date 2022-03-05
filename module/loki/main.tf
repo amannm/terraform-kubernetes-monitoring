@@ -103,7 +103,7 @@ module "querier" {
   pod_resources = {
     cpu_min    = 50
     memory_min = 40
-    memory_max = 70
+    memory_max = 100
   }
   namespace_name        = var.namespace_name
   service_account_name  = module.service_account.name
