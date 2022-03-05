@@ -5,7 +5,7 @@ terraform {
 }
 locals {
 
-  store_type = contains(keys(var.storage_config.local), "local") ? "filesystem" : contains(keys(var.storage_config.local), "gcp") ? "gcs" : null
+  store_type = contains(keys(var.storage_config), "local") ? "filesystem" : contains(keys(var.storage_config), "gcp") ? "gcs" : null
 
   worker_parallelism = 10
   etcd_kvstore = {
@@ -147,11 +147,11 @@ locals {
         cache_location         = "${var.storage_path}/cache"
         cache_ttl              = "24h"
       }
-      }, contains(keys(var.storage_config.local), "gcp") ? {
+      }, contains(keys(var.storage_config), "gcp") ? {
       gcs = {
         bucket_name = var.storage_config.gcp.bucket_name
       }
-      } : contains(keys(var.storage_config.local), "local") ? {
+      } : contains(keys(var.storage_config), "local") ? {
       filesystem = {
         directory = "${var.storage_path}/chunks"
       }

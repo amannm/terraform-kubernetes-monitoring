@@ -4,7 +4,7 @@ terraform {
   ]
 }
 locals {
-  store_type = contains(keys(var.storage_config.local), "local") ? "filesystem" : contains(keys(var.storage_config.local), "gcp") ? "gcs" : null
+  store_type = contains(keys(var.storage_config), "local") ? "filesystem" : contains(keys(var.storage_config), "gcp") ? "gcs" : null
 
   worker_parallelism = 10
   etcd_kvstore = {
@@ -133,11 +133,11 @@ locals {
           enabled = true
         }
       }
-      }, contains(keys(var.storage_config.local), "gcp") ? {
+      }, contains(keys(var.storage_config), "gcp") ? {
       gcs = {
         bucket_name = var.storage_config.gcp.bucket_name
       }
-      } : contains(keys(var.storage_config.local), "local") ? {
+      } : contains(keys(var.storage_config), "local") ? {
       filesystem = {
         dir = "${var.storage_path}/blocks"
       }
