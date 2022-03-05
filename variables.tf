@@ -1,6 +1,5 @@
 variable "namespace_name" {
-  type    = string
-  default = "monitoring"
+  type = string
 }
 variable "cluster_domain" {
   type    = string

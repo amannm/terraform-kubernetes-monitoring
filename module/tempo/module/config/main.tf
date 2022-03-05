@@ -4,7 +4,7 @@ terraform {
   ]
 }
 locals {
-  store_type = var.storage_config["local"] != null ? "filesystem" : var.storage_config["gcp"] != null ? "gcs" : null
+  store_type = var.storage_config["local"] != null ? "local" : var.storage_config["gcp"] != null ? "gcs" : null
 
   etcd_kvstore = {
     store  = "etcd"
@@ -56,7 +56,7 @@ locals {
     }
     storage = {
       trace = merge({
-        backend        = "local"
+        backend        = local.store_type
         blocklist_poll = "5m"
         pool = {
           max_workers = 30
