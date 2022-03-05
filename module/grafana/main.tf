@@ -20,7 +20,7 @@ module "datasources_config" {
   source          = "./module/datasources-config"
   config_filename = "datasources.yaml"
   namespace_name  = var.namespace_name
-  config_map_name = var.service_name
+  config_map_name = "${var.service_name}-datasources"
   prometheus_url  = var.prometheus_url
   loki_url        = var.loki_url
   tempo_url       = var.tempo_url
