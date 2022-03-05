@@ -73,7 +73,7 @@ module "cortex" {
   stateless_node_labels = var.stateless_node_labels
   storage_volume_size   = 1
   etcd_host             = module.etcd.client_endpoint_host
-  storage_config        = var.storage_config
+  storage_config        = var.cortex_storage_config
 }
 
 module "loki" {
@@ -87,7 +87,7 @@ module "loki" {
   stateless_node_labels = var.stateless_node_labels
   storage_volume_size   = 1
   etcd_host             = module.etcd.client_endpoint_host
-  storage_config        = var.storage_config
+  storage_config        = var.loki_storage_config
 }
 
 module "tempo" {
@@ -101,5 +101,5 @@ module "tempo" {
   stateless_node_labels = var.stateless_node_labels
   storage_volume_size   = 1
   etcd_host             = module.etcd.client_endpoint_host
-  storage_config        = var.storage_config
+  storage_config        = var.tempo_storage_config
 }
