@@ -1,3 +1,8 @@
+terraform {
+  experiments = [
+    module_variable_optional_attrs
+  ]
+}
 locals {
   query_frontend_replicas = 1
   prometheus_api_path     = "/prometheus"
@@ -61,12 +66,14 @@ module "cortex_config" {
   query_frontend_hostname     = "${var.service_name}-query-frontend-headless.${var.namespace_name}.svc.${var.cluster_domain}"
   max_query_frontend_replicas = local.query_frontend_replicas
   prometheus_api_path         = local.prometheus_api_path
+  storage_config              = var.storage_config
 }
 
 module "service_account" {
   source         = "../common/service-account"
   namespace_name = var.namespace_name
   service_name   = var.service_name
+  annotations    = var.storage_config.gcp != null ? var.storage_config.gcp.service_account_annotations : null
 }
 
 module "ingester" {

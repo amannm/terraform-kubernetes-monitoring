@@ -38,3 +38,25 @@ variable "stateless_node_labels" {
   type    = map(set(string))
   default = {}
 }
+
+// TODO: add aws and azure support
+variable "storage_config" {
+  type = object({
+    local = optional(object({
+      volume_size = number
+    }))
+    gcp = optional(object({
+      bucket_name                 = string
+      service_account_annotations = map(string)
+    }))
+  })
+  default = {
+    local = {
+      volume_size = 1
+    }
+  }
+  validation {
+    condition     = length([for k, v in var.storage_config : k if v != null]) == 1
+    error_message = "Exactly 1 storage type must be defined."
+  }
+}

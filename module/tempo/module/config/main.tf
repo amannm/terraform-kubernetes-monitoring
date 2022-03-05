@@ -1,4 +1,11 @@
+terraform {
+  experiments = [
+    module_variable_optional_attrs
+  ]
+}
 locals {
+  store_type = contains(keys(var.storage_config.local), "local") ? "filesystem" : contains(keys(var.storage_config.local), "gcp") ? "gcs" : null
+
   etcd_kvstore = {
     store  = "etcd"
     prefix = "${var.service_name}/collectors/"
@@ -48,12 +55,9 @@ locals {
       }
     }
     storage = {
-      trace = {
+      trace = merge({
         backend        = "local"
         blocklist_poll = "5m"
-        local = {
-          path = "${var.storage_path}/traces"
-        }
         pool = {
           max_workers = 30
           queue_depth = 10000
@@ -67,7 +71,15 @@ locals {
           encoding        = "snappy"
           search_encoding = "snappy"
         }
-      }
+        }, contains(keys(var.storage_config.local), "gcp") ? {
+        gcs = {
+          bucket_name = var.storage_config.gcp.bucket_name
+        }
+        } : contains(keys(var.storage_config.local), "local") ? {
+        local = {
+          path = "${var.storage_path}/traces"
+        }
+      } : {})
     }
     compactor = {
       ring = {

@@ -1,10 +1,16 @@
+terraform {
+  experiments = [
+    module_variable_optional_attrs
+  ]
+}
 locals {
   service_account_name = kubernetes_service_account.service_account.metadata[0].name
 }
 resource "kubernetes_service_account" "service_account" {
   metadata {
-    name      = var.service_name
-    namespace = var.namespace_name
+    name        = var.service_name
+    namespace   = var.namespace_name
+    annotations = var.annotations
   }
   automount_service_account_token = true
 }

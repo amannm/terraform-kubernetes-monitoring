@@ -1,4 +1,11 @@
+terraform {
+  experiments = [
+    module_variable_optional_attrs
+  ]
+}
 locals {
+  store_type = contains(keys(var.storage_config.local), "local") ? "filesystem" : contains(keys(var.storage_config.local), "gcp") ? "gcs" : null
+
   worker_parallelism = 10
   etcd_kvstore = {
     store  = "etcd"
@@ -109,11 +116,8 @@ locals {
     storage = {
       engine = "blocks"
     }
-    blocks_storage = {
-      backend = "filesystem"
-      filesystem = {
-        dir = "${var.storage_path}/blocks"
-      }
+    blocks_storage = merge({
+      backend = local.store_type
       tsdb = {
         dir = "${var.storage_path}/tsdb"
       }
@@ -129,7 +133,15 @@ locals {
           enabled = true
         }
       }
-    }
+      }, contains(keys(var.storage_config.local), "gcp") ? {
+      gcs = {
+        bucket_name = var.storage_config.gcp.bucket_name
+      }
+      } : contains(keys(var.storage_config.local), "local") ? {
+      filesystem = {
+        dir = "${var.storage_path}/blocks"
+      }
+    } : {})
     compactor = {
       data_dir               = "${var.storage_path}/compactor"
       compaction_concurrency = 1

@@ -1,3 +1,8 @@
+terraform {
+  experiments = [
+    module_variable_optional_attrs
+  ]
+}
 locals {
   query_frontend_replicas = 1
   remote_write_url        = "http://${var.service_name}-distributor.${var.namespace_name}.svc.${var.cluster_domain}:${var.service_port}/loki/api/v1/push"
@@ -59,12 +64,14 @@ module "loki_config" {
   querier_hostname            = "${var.service_name}-querier.${var.namespace_name}.svc.${var.cluster_domain}"
   query_frontend_hostname     = "${var.service_name}-query-frontend-headless.${var.namespace_name}.svc.${var.cluster_domain}"
   max_query_frontend_replicas = local.query_frontend_replicas
+  storage_config              = var.storage_config
 }
 
 module "service_account" {
   source         = "../common/service-account"
   namespace_name = var.namespace_name
   service_name   = var.service_name
+  annotations    = var.storage_config.gcp != null ? var.storage_config.gcp.service_account_annotations : null
 }
 
 module "ingester" {

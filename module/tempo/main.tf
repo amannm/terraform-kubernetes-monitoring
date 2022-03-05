@@ -1,3 +1,8 @@
+terraform {
+  experiments = [
+    module_variable_optional_attrs
+  ]
+}
 locals {
   query_frontend_replicas = 1
   remote_write_endpoint   = "http://${var.service_name}-distributor.${var.namespace_name}.svc.${var.cluster_domain}:${var.service_port}/api/v1/push"
@@ -61,12 +66,14 @@ module "config" {
   config_filename         = "config.yaml"
   config_path             = "/etc/tempo/config"
   storage_path            = "/var/tempo"
+  storage_config          = var.storage_config
 }
 
 module "service_account" {
   source         = "../common/service-account"
   namespace_name = var.namespace_name
   service_name   = var.service_name
+  annotations    = var.storage_config.gcp != null ? var.storage_config.gcp.service_account_annotations : null
 }
 
 module "ingester" {

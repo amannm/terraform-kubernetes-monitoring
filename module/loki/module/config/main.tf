@@ -1,4 +1,12 @@
+terraform {
+  experiments = [
+    module_variable_optional_attrs
+  ]
+}
 locals {
+
+  store_type = contains(keys(var.storage_config.local), "local") ? "filesystem" : contains(keys(var.storage_config.local), "gcp") ? "gcs" : null
+
   worker_parallelism = 10
   etcd_kvstore = {
     store  = "etcd"
@@ -118,7 +126,7 @@ locals {
             prefix = "index_"
             period = "24h"
           }
-          object_store = "filesystem"
+          object_store = local.store_type
           chunks = {
             prefix = "chunks_"
             period = "24h"
@@ -130,24 +138,31 @@ locals {
       retention_deletes_enabled = true
       retention_period          = "0s"
     }
-    storage_config = {
+
+    storage_config = merge({
       index_queries_cache_config = local.fifo_cache["25"]
       boltdb_shipper = {
-        shared_store           = "filesystem"
+        shared_store           = local.store_type
         active_index_directory = "${var.storage_path}/index"
         cache_location         = "${var.storage_path}/cache"
         cache_ttl              = "24h"
       }
+      }, contains(keys(var.storage_config.local), "gcp") ? {
+      gcs = {
+        bucket_name = var.storage_config.gcp.bucket_name
+      }
+      } : contains(keys(var.storage_config.local), "local") ? {
       filesystem = {
         directory = "${var.storage_path}/chunks"
       }
-    }
+    } : {})
+
     chunk_store_config = {
       max_look_back_period = "0s"
       chunk_cache_config   = local.fifo_cache["26"]
     }
     compactor = {
-      shared_store               = "filesystem"
+      shared_store               = local.store_type
       working_directory          = "${var.storage_path}/compactor"
       shared_store_key_prefix    = "index/"
       max_compaction_parallelism = 1
