@@ -4,7 +4,7 @@ terraform {
   ]
 }
 locals {
-  store_type = contains(keys(var.storage_config), "local") ? "filesystem" : contains(keys(var.storage_config), "gcp") ? "gcs" : null
+  store_type = var.storage_config["local"] != null ? "filesystem" : var.storage_config["gcp"] != null ? "gcs" : null
 
   etcd_kvstore = {
     store  = "etcd"

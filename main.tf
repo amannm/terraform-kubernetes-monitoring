@@ -8,16 +8,11 @@ terraform {
     module_variable_optional_attrs
   ]
 }
-resource "kubernetes_namespace" "namespace" {
-  metadata {
-    name = var.namespace_name
-  }
-}
 
 module "grafana" {
   source                = "./module/grafana"
   cluster_domain        = var.cluster_domain
-  namespace_name        = kubernetes_namespace.namespace.metadata[0].name
+  namespace_name        = var.namespace_name
   service_name          = "grafana"
   service_port          = var.grafana_port
   container_image       = "grafana/grafana:latest"
@@ -29,7 +24,7 @@ module "grafana" {
 module "etcd" {
   source                = "./module/etcd"
   cluster_domain        = var.cluster_domain
-  namespace_name        = kubernetes_namespace.namespace.metadata[0].name
+  namespace_name        = var.namespace_name
   service_name          = "etcd"
   service_port          = var.etcd_port
   container_image       = "quay.io/coreos/etcd:v3.5.2"
@@ -41,7 +36,7 @@ module "etcd" {
 module "kube_state_metrics" {
   source                = "./module/kube-state-metrics"
   cluster_domain        = var.cluster_domain
-  namespace_name        = kubernetes_namespace.namespace.metadata[0].name
+  namespace_name        = var.namespace_name
   service_name          = "kube-state-metrics"
   service_port          = var.kube_state_metrics_port
   container_image       = "k8s.gcr.io/kube-state-metrics/kube-state-metrics:v2.3.0"
@@ -51,7 +46,7 @@ module "kube_state_metrics" {
 module "grafana_agent" {
   source                   = "./module/grafana-agent"
   cluster_domain           = var.cluster_domain
-  namespace_name           = kubernetes_namespace.namespace.metadata[0].name
+  namespace_name           = var.namespace_name
   service_name             = "grafana-agent"
   service_port             = var.grafana_agent_port
   receiver_port            = var.jaeger_receiver_port
@@ -70,7 +65,7 @@ module "grafana_agent" {
 module "cortex" {
   source                = "./module/cortex"
   cluster_domain        = var.cluster_domain
-  namespace_name        = kubernetes_namespace.namespace.metadata[0].name
+  namespace_name        = var.namespace_name
   service_name          = "cortex"
   service_port          = var.cortex_port
   service_account_name  = var.cortex_service_account_name
@@ -84,7 +79,7 @@ module "cortex" {
 module "loki" {
   source                = "./module/loki"
   cluster_domain        = var.cluster_domain
-  namespace_name        = kubernetes_namespace.namespace.metadata[0].name
+  namespace_name        = var.namespace_name
   service_name          = "loki"
   service_port          = var.loki_port
   service_account_name  = var.loki_service_account_name
@@ -98,7 +93,7 @@ module "loki" {
 module "tempo" {
   source                = "./module/tempo"
   cluster_domain        = var.cluster_domain
-  namespace_name        = kubernetes_namespace.namespace.metadata[0].name
+  namespace_name        = var.namespace_name
   service_name          = "tempo"
   service_port          = var.tempo_port
   service_account_name  = var.tempo_service_account_name
