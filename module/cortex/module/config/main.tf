@@ -86,6 +86,7 @@ locals {
       max_chunk_age        = "5m"
       max_chunk_idle_time  = "30m"
       flush_period         = "1m"
+      retain_period        = "5m"
       max_transfer_retries = 0
       lifecycler = {
         ring = {
@@ -100,13 +101,6 @@ locals {
         unregister_on_shutdown = true
         #        readiness_check_ring_health = false
       }
-      walconfig = {
-        wal_enabled = true
-        wal_dir     = "${var.storage_path}/wal"
-      }
-    }
-    flusher = {
-      wal_dir = "${var.storage_path}/wal"
     }
     storage = {
       engine = "blocks"
@@ -151,9 +145,6 @@ locals {
         wait_stability_max_duration  = "5s"
         wait_active_instance_timeout = "5s"
       }
-    }
-    purger = {
-      enable = false
     }
     store_gateway = {
       sharding_enabled = true
