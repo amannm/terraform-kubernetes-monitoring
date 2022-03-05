@@ -68,7 +68,7 @@ module "cortex" {
   namespace_name        = var.namespace_name
   service_name          = "cortex"
   service_port          = var.cortex_port
-  service_account_name  = var.cortex_service_account_name
+  service_account       = var.cortex_service_account
   container_image       = "quay.io/cortexproject/cortex:v1.11.0"
   stateless_node_labels = var.stateless_node_labels
   storage_volume_size   = 1
@@ -82,7 +82,7 @@ module "loki" {
   namespace_name        = var.namespace_name
   service_name          = "loki"
   service_port          = var.loki_port
-  service_account_name  = var.loki_service_account_name
+  service_account       = var.loki_service_account
   container_image       = "grafana/loki:2.4.2"
   stateless_node_labels = var.stateless_node_labels
   storage_volume_size   = 1
@@ -96,7 +96,7 @@ module "tempo" {
   namespace_name        = var.namespace_name
   service_name          = "tempo"
   service_port          = var.tempo_port
-  service_account_name  = var.tempo_service_account_name
+  service_account       = var.tempo_service_account
   container_image       = "grafana/tempo:1.3.2"
   stateless_node_labels = var.stateless_node_labels
   storage_volume_size   = 1

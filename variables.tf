@@ -50,8 +50,7 @@ variable "cortex_storage_config" {
       volume_size = number
     })
     gcp = object({
-      bucket_name                 = string
-      service_account_annotations = map(string)
+      bucket_name = string
     })
   })
   default = {
@@ -73,8 +72,7 @@ variable "loki_storage_config" {
       volume_size = number
     })
     gcp = object({
-      bucket_name                 = string
-      service_account_annotations = map(string)
+      bucket_name = string
     })
   })
   default = {
@@ -96,8 +94,7 @@ variable "tempo_storage_config" {
       volume_size = number
     })
     gcp = object({
-      bucket_name                 = string
-      service_account_annotations = map(string)
+      bucket_name = string
     })
   })
   default = {
@@ -112,15 +109,33 @@ variable "tempo_storage_config" {
   }
 }
 
-variable "cortex_service_account_name" {
-  type    = string
-  default = "cortex"
+variable "cortex_service_account" {
+  type = object({
+    name        = string
+    annotations = map(string)
+  })
+  default = {
+    name        = "cortex"
+    annotations = {}
+  }
 }
-variable "loki_service_account_name" {
-  type    = string
-  default = "loki"
+variable "loki_service_account" {
+  type = object({
+    name        = string
+    annotations = map(string)
+  })
+  default = {
+    name        = "loki"
+    annotations = {}
+  }
 }
-variable "tempo_service_account_name" {
-  type    = string
-  default = "tempo"
+variable "tempo_service_account" {
+  type = object({
+    name        = string
+    annotations = map(string)
+  })
+  default = {
+    name        = "tempo"
+    annotations = {}
+  }
 }

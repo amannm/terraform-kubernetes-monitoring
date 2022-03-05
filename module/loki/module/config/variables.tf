@@ -43,8 +43,7 @@ variable "storage_config" {
       volume_size = number
     })
     gcp = object({
-      bucket_name                 = string
-      service_account_annotations = map(string)
+      bucket_name = string
     })
   })
 }

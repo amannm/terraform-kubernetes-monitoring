@@ -68,8 +68,8 @@ module "config" {
 module "service_account" {
   source               = "../common/service-account"
   namespace_name       = var.namespace_name
-  service_account_name = var.service_account_name
-  annotations          = var.storage_config.gcp != null ? var.storage_config.gcp.service_account_annotations : null
+  service_account_name = var.service_account.name
+  annotations          = var.service_account.annotations
 }
 
 module "ingester" {

@@ -19,8 +19,11 @@ variable "container_image" {
 variable "service_port" {
   type = number
 }
-variable "service_account_name" {
-  type = string
+variable "service_account" {
+  type = object({
+    name        = string
+    annotations = map(string)
+  })
 }
 variable "etcd_host" {
   type = string
@@ -31,8 +34,7 @@ variable "storage_config" {
       volume_size = number
     })
     gcp = object({
-      bucket_name                 = string
-      service_account_annotations = map(string)
+      bucket_name = string
     })
   })
 }
