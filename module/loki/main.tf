@@ -103,7 +103,7 @@ module "querier" {
   pod_resources = {
     cpu_min    = 50
     memory_min = 40
-    memory_max = 100
+    memory_max = 999
   }
   namespace_name        = var.namespace_name
   service_account_name  = module.service_account.name
@@ -151,14 +151,18 @@ module "query_frontend" {
   pod_resources = {
     cpu_min    = 50
     memory_min = 16
-    memory_max = 40
+    memory_max = 999
   }
-  namespace_name        = var.namespace_name
-  service_account_name  = module.service_account.name
-  replicas              = 1
-  container_image       = var.container_image
-  ports                 = local.ports
-  pod_lifecycle         = local.pod_lifecycle
+  namespace_name       = var.namespace_name
+  service_account_name = module.service_account.name
+  replicas             = 1
+  container_image      = var.container_image
+  ports                = local.ports
+  pod_lifecycle = {
+    min_readiness_time = 5
+    max_readiness_time = 10
+    max_cleanup_time   = 5
+  }
   pod_probes            = local.pod_probes
   config_volumes        = local.config_volumes
   ephemeral_volumes     = local.storage_volumes
