@@ -8,10 +8,10 @@ locals {
         uuid      = "prometheus"
         orgId     = 1
         version   = 1
-        isDefault = true
-        editable  = false
+        editable  = true
         access    = "proxy"
         url       = var.prometheus_url
+        isDefault = true
       },
       {
         name     = "Loki"
@@ -19,7 +19,7 @@ locals {
         uuid     = "loki"
         orgId    = 1
         version  = 1
-        editable = false
+        editable = true
         access   = "proxy"
         url      = var.loki_url
       },
@@ -29,7 +29,7 @@ locals {
         uuid     = "tempo"
         orgId    = 1
         version  = 1
-        editable = false
+        editable = true
         access   = "proxy"
         url      = var.tempo_url
         jsonData = {
