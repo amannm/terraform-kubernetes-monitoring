@@ -9,10 +9,13 @@ locals {
           }
         ]
         receivers = {
+          zipkin = {
+            endpoint = "0.0.0.0:${var.zipkin_receiver_port}"
+          }
           jaeger = {
             protocols = {
               thrift_http = {
-                endpoint : "0.0.0.0:${var.receiver_port}"
+                endpoint = "0.0.0.0:${var.jaeger_receiver_port}"
               }
             }
           }

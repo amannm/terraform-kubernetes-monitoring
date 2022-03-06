@@ -16,7 +16,10 @@ variable "agent_container_image" {
 variable "service_port" {
   type = number
 }
-variable "receiver_port" {
+variable "jaeger_receiver_port" {
+  type = number
+}
+variable "zipkin_receiver_port" {
   type = number
 }
 variable "metrics_remote_write_url" {

@@ -26,6 +26,10 @@ variable "jaeger_receiver_port" {
   type    = number
   default = 14268
 }
+variable "zipkin_receiver_port" {
+  type    = number
+  default = 9411
+}
 variable "cortex_port" {
   type    = number
   default = 9090

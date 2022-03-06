@@ -1,5 +1,6 @@
 locals {
-  traces_receiver_url = "http://${module.service.non_headless_service_hostname}:${var.receiver_port}"
+  jaeger_endpoint = "http://${module.service.non_headless_service_hostname}:${var.jaeger_receiver_port}"
+  zipkin_endpoint = "http://${module.service.non_headless_service_hostname}:${var.zipkin_receiver_port}"
 
   config_filename = "agent.yaml"
   command         = ["/bin/agent"]
@@ -33,9 +34,13 @@ locals {
       port        = var.service_port
       target_port = var.service_port
     }
-    traces = {
-      port        = var.receiver_port
-      target_port = var.receiver_port
+    jaeger = {
+      port        = var.jaeger_receiver_port
+      target_port = var.jaeger_receiver_port
+    }
+    zipkin = {
+      port        = var.zipkin_receiver_port
+      target_port = var.zipkin_receiver_port
     }
   }
 
@@ -129,8 +134,9 @@ module "agent_config" {
     remote_write_url            = var.logs_remote_write_url
   }
   traces_config = {
-    receiver_port    = var.receiver_port
-    remote_write_url = var.traces_remote_write_url
+    jaeger_receiver_port = var.jaeger_receiver_port
+    zipkin_receiver_port = var.zipkin_receiver_port
+    remote_write_url     = var.traces_remote_write_url
   }
 }
 

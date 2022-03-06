@@ -50,9 +50,10 @@ module "logs" {
 }
 
 module "traces" {
-  count              = var.traces_config == null ? 0 : 1
-  source             = "./module/traces"
-  receiver_port      = var.traces_config.receiver_port
-  remote_write_url   = var.traces_config.remote_write_url
-  logs_instance_name = local.logs_instance_name
+  count                = var.traces_config == null ? 0 : 1
+  source               = "./module/traces"
+  jaeger_receiver_port = var.traces_config.jaeger_receiver_port
+  zipkin_receiver_port = var.traces_config.zipkin_receiver_port
+  remote_write_url     = var.traces_config.remote_write_url
+  logs_instance_name   = local.logs_instance_name
 }

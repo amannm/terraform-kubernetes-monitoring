@@ -1,3 +1,6 @@
-output "traces_receiver_url" {
-  value = local.traces_receiver_url
+output "jaeger_endpoint" {
+  value = local.jaeger_endpoint
+}
+output "zipkin_endpoint" {
+  value = local.zipkin_endpoint
 }

@@ -1,4 +1,7 @@
-variable "receiver_port" {
+variable "jaeger_receiver_port" {
+  type = number
+}
+variable "zipkin_receiver_port" {
   type = number
 }
 variable "remote_write_url" {

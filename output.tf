@@ -1,3 +1,6 @@
-output "traces_receiver_url" {
-  value = module.grafana_agent.traces_receiver_url
+output "jaeger_endpoint" {
+  value = module.grafana_agent.jaeger_endpoint
+}
+output "zipkin_endpoint" {
+  value = module.grafana_agent.zipkin_endpoint
 }
