@@ -4,34 +4,51 @@ locals {
     datasources = [
       {
         name      = "Prometheus"
+        type      = "prometheus"
+        uuid      = "prometheus"
         orgId     = 1
         version   = 1
         isDefault = true
         editable  = false
-        type      = "prometheus"
         access    = "proxy"
-        #uuid = ""
-        url = var.prometheus_url
+        url       = var.prometheus_url
       },
       {
         name     = "Loki"
+        type     = "loki"
+        uuid     = "loki"
         orgId    = 1
         version  = 1
         editable = false
-        type     = "loki"
         access   = "proxy"
-        #uuid = ""
-        url = var.loki_url
+        url      = var.loki_url
       },
       {
         name     = "Tempo"
+        type     = "tempo"
+        uuid     = "tempo"
         orgId    = 1
         version  = 1
         editable = false
-        type     = "tempo"
         access   = "proxy"
-        #uuid = ""
-        url = var.tempo_url
+        url      = var.tempo_url
+        jsonData = {
+          httpMethod = "GET"
+          tracesToLogs = {
+            datasourceUid = "loki"
+            tags          = ["job", "instance", "pod", "namespace"]
+            lokiSearch    = true
+          }
+          serviceMap = {
+            datasourceUid = "prometheus"
+          }
+          search = {
+            hide = false
+          }
+          nodeGraph = {
+            enabled = true
+          }
+        }
       },
     ]
   })
