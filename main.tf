@@ -97,6 +97,7 @@ module "tempo" {
   namespace_name        = var.namespace_name
   service_name          = "tempo"
   service_port          = var.tempo_port
+  otlp_grpc_port        = 4317
   service_account       = var.tempo_service_account
   container_image       = "grafana/tempo:1.3.2"
   stateless_node_labels = var.stateless_node_labels

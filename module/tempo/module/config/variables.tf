@@ -13,6 +13,9 @@ variable "etcd_host" {
 variable "grpc_port" {
   type = number
 }
+variable "otlp_grpc_port" {
+  type = number
+}
 variable "config_filename" {
   type = string
 }

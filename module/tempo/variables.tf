@@ -19,6 +19,9 @@ variable "container_image" {
 variable "service_port" {
   type = number
 }
+variable "otlp_grpc_port" {
+  type = number
+}
 variable "service_account" {
   type = object({
     name        = string

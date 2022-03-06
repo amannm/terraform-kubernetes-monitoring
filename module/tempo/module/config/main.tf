@@ -32,9 +32,11 @@ locals {
     }
     distributor = {
       receivers = {
-        jaeger = {
+        otlp = {
           protocols = {
-            grpc = {}
+            grpc = {
+              endpoint = "0.0.0.0:${var.otlp_grpc_port}"
+            }
           }
         }
       }
@@ -98,6 +100,7 @@ locals {
   http_port          = var.http_port
   grpc_port          = var.grpc_port
   etcd_host          = var.etcd_host
+  otlp_grpc_port     = var.otlp_grpc_port
 }
 resource "kubernetes_config_map" "config_map" {
   metadata {

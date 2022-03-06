@@ -1,6 +1,6 @@
 locals {
   query_frontend_replicas = 1
-  remote_write_endpoint   = "${var.service_name}-distributor.${var.namespace_name}.svc.${var.cluster_domain}:${module.config.service_grpc_port}"
+  remote_write_endpoint   = "${var.service_name}-distributor.${var.namespace_name}.svc.${var.cluster_domain}:${var.otlp_grpc_port}"
   tempo_url               = "http://${var.service_name}-query-frontend.${var.namespace_name}.svc.${var.cluster_domain}:${module.config.service_http_port}"
   pod_lifecycle = {
     min_readiness_time = 30
@@ -58,6 +58,7 @@ module "config" {
   etcd_host               = var.etcd_host
   http_port               = var.service_port
   grpc_port               = 9095
+  otlp_grpc_port          = var.otlp_grpc_port
   query_frontend_hostname = "${var.service_name}-query-frontend-headless.${var.namespace_name}.svc.${var.cluster_domain}"
   config_filename         = "config.yaml"
   config_path             = "/etc/tempo/config"
@@ -155,11 +156,16 @@ module "distributor" {
     memory_min = 20
     memory_max = 70
   }
-  namespace_name        = var.namespace_name
-  service_account_name  = module.service_account.name
-  replicas              = 1
-  container_image       = var.container_image
-  ports                 = local.ports
+  namespace_name       = var.namespace_name
+  service_account_name = module.service_account.name
+  replicas             = 1
+  container_image      = var.container_image
+  ports = merge(local.ports, {
+    otlp-grpc = {
+      port        = module.config.service_otlp_grpc_port
+      target_port = module.config.service_otlp_grpc_port
+    }
+  })
   pod_lifecycle         = local.pod_lifecycle
   pod_probes            = local.pod_probes
   config_volumes        = local.config_volumes

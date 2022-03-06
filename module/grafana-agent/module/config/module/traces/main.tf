@@ -8,6 +8,7 @@ locals {
             endpoint = var.remote_write_endpoint
             protocol = "grpc"
             format   = "otlp"
+            insecure = true
           }
         ]
         receivers = {
