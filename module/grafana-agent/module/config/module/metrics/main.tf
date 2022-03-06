@@ -16,6 +16,11 @@ locals {
     for resource_type in ["service", "pod"] : resource_type =>
     [
       {
+        source_labels : ["__meta_kubernetes_${resource_type}_annotation_prometheus_io_scrape"]
+        action = "drop"
+        regex  = "false"
+      },
+      {
         source_labels : ["__meta_kubernetes_${resource_type}_annotation_prometheus_io_scheme"]
         action       = "replace"
         target_label = "__scheme__"
