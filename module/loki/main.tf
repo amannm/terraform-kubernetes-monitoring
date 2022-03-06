@@ -83,7 +83,7 @@ module "ingester" {
   pod_resources = {
     cpu_min    = 75
     memory_min = 70
-    memory_max = 200
+    memory_max = 250
   }
   ports                 = local.ports
   pod_lifecycle         = local.pod_lifecycle
