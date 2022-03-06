@@ -4,7 +4,7 @@ variable "jaeger_receiver_port" {
 variable "zipkin_receiver_port" {
   type = number
 }
-variable "remote_write_url" {
+variable "remote_write_endpoint" {
   type = string
 }
 variable "logs_instance_name" {

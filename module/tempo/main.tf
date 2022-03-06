@@ -1,6 +1,6 @@
 locals {
   query_frontend_replicas = 1
-  remote_write_url        = "http://${var.service_name}-distributor.${var.namespace_name}.svc.${var.cluster_domain}:${var.service_port}"
+  remote_write_endpoint   = "${var.service_name}-distributor.${var.namespace_name}.svc.${var.cluster_domain}:${var.service_port}"
   tempo_url               = "http://${var.service_name}-query-frontend.${var.namespace_name}.svc.${var.cluster_domain}:${var.service_port}"
   pod_lifecycle = {
     min_readiness_time = 30

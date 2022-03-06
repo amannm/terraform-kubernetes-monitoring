@@ -59,8 +59,8 @@ module "grafana_agent" {
   partition_by_labels = {
     "app.kubernetes.io/name" = ["grafana", "etcd", "kube-state-metrics", "grafana-agent", "cortex", "loki"]
   }
-  logs_remote_write_url   = module.loki.remote_write_url
-  traces_remote_write_url = module.tempo.remote_write_url
+  logs_remote_write_url        = module.loki.remote_write_url
+  traces_remote_write_endpoint = module.tempo.remote_write_endpoint
 }
 
 module "cortex" {

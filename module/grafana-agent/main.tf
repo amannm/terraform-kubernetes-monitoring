@@ -134,9 +134,9 @@ module "agent_config" {
     remote_write_url            = var.logs_remote_write_url
   }
   traces_config = {
-    jaeger_receiver_port = var.jaeger_receiver_port
-    zipkin_receiver_port = var.zipkin_receiver_port
-    remote_write_url     = var.traces_remote_write_url
+    jaeger_receiver_port  = var.jaeger_receiver_port
+    zipkin_receiver_port  = var.zipkin_receiver_port
+    remote_write_endpoint = var.traces_remote_write_endpoint
   }
 }
 

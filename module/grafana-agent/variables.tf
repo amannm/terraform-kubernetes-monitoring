@@ -30,7 +30,7 @@ variable "logs_remote_write_url" {
   type    = string
   default = null
 }
-variable "traces_remote_write_url" {
+variable "traces_remote_write_endpoint" {
   type    = string
   default = null
 }

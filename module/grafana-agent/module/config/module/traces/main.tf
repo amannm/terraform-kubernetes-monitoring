@@ -5,7 +5,9 @@ locals {
         name = "default"
         remote_write = [
           {
-            endpoint = var.remote_write_url
+            endpoint = var.remote_write_endpoint
+            protocol = "grpc"
+            format   = "otlp"
           }
         ]
         receivers = {
