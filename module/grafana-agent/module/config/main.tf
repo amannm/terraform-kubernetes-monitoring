@@ -1,26 +1,30 @@
+locals {
+  rendered = yamlencode({
+    server = {
+      http_listen_port = var.agent_container_port
+      log_level        = "debug"
+    }
+    metrics = var.metrics_config == null ? null : module.metrics[0].agent_metrics_config
+    logs    = var.logs_config == null ? null : module.logs[0].agent_logs_config
+    traces  = var.traces_config == null ? null : module.traces[0].agent_traces_config
+    integrations = {
+      metrics = var.metrics_config == null ? null : module.metrics[0].agent_integrations_metrics_config
+      node_exporter = var.node_exporter_config == null ? null : {
+        rootfs_path = var.node_exporter_config.host_root_volume_mount_path
+        sysfs_path  = var.node_exporter_config.host_sys_volume_mount_path
+        procfs_path = var.node_exporter_config.host_proc_volume_mount_path
+      }
+    }
+  })
+}
+
 resource "kubernetes_config_map" "config_map" {
   metadata {
     namespace = var.namespace_name
     name      = var.service_name
   }
   data = {
-    (var.config_filename) = yamlencode({
-      server = {
-        http_listen_port = var.agent_container_port
-        log_level        = "debug"
-      }
-      metrics = var.metrics_config == null ? null : module.metrics[0].agent_metrics_config
-      logs    = var.logs_config == null ? null : module.logs[0].agent_logs_config
-      traces  = var.traces_config == null ? null : module.traces[0].agent_traces_config
-      integrations = {
-        metrics = var.metrics_config == null ? null : module.metrics[0].agent_integrations_metrics_config
-        node_exporter = var.node_exporter_config == null ? null : {
-          rootfs_path = var.node_exporter_config.host_root_volume_mount_path
-          sysfs_path  = var.node_exporter_config.host_sys_volume_mount_path
-          procfs_path = var.node_exporter_config.host_proc_volume_mount_path
-        }
-      }
-    })
+    (var.config_filename) = local.rendered
   }
 }
 

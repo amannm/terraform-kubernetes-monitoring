@@ -176,6 +176,9 @@ resource "kubernetes_daemonset" "daemonset" {
         labels = {
           "app.kubernetes.io/name" = var.service_name
         }
+        annotations = {
+          "checksum/config" = module.agent_config.config_checksum
+        }
       }
       spec {
         termination_grace_period_seconds = local.lifecycle.max_cleanup_time
