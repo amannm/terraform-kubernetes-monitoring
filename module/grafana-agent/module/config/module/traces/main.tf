@@ -6,21 +6,14 @@ locals {
         remote_write = [
           {
             endpoint = var.remote_write_endpoint
-            protocol = "grpc"
             format   = "otlp"
+            protocol = "grpc"
             insecure = true
           }
         ]
         receivers = {
           zipkin = {
             endpoint = "0.0.0.0:${var.zipkin_receiver_port}"
-          }
-          jaeger = {
-            protocols = {
-              thrift_http = {
-                endpoint = "0.0.0.0:${var.jaeger_receiver_port}"
-              }
-            }
           }
         }
         scrape_configs = [

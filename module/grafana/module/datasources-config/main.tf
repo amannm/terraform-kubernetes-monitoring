@@ -22,6 +22,16 @@ locals {
         editable = true
         access   = "proxy"
         url      = var.loki_url
+        jsonData = {
+          derivedFields = [
+            {
+              datasourceUid : "tempo"
+              matcherRegex = "(?:traceId|tid)=(\\w+)"
+              name         = "TraceID"
+              url          = "$${__value.raw}"
+            },
+          ]
+        }
       },
       {
         name     = "Tempo"
@@ -35,9 +45,17 @@ locals {
         jsonData = {
           httpMethod = "GET"
           tracesToLogs = {
-            datasourceUid = "loki"
-            tags          = ["job", "instance", "pod", "namespace"]
-            lokiSearch    = true
+            lokiSearch         = true
+            datasourceUid      = "loki"
+            mapTagNamesEnabled = true
+            mappedTags = [
+              {
+                key   = "service.name"
+                value = "app_kubernetes_io_name"
+              },
+            ]
+            #            spanStartTimeShift: "-1s"
+            #            spanEndTimeShift: "1s"
           }
           serviceMap = {
             datasourceUid = "prometheus"
