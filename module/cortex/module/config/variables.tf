@@ -10,8 +10,8 @@ variable "http_port" {
 variable "grpc_port" {
   type = number
 }
-variable "memberlist_hostname" {
-  type = string
+variable "gossip_hostnames" {
+  type = set(string)
 }
 variable "gossip_port" {
   type = number

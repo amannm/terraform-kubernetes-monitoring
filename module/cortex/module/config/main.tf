@@ -37,7 +37,7 @@ locals {
     memberlist = {
       randomize_node_name = false
       gossip_nodes        = 3
-      join_members        = [var.memberlist_hostname]
+      join_members        = var.gossip_hostnames
       bind_port           = var.gossip_port
     }
     frontend = {

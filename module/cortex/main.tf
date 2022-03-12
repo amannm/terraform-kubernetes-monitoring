@@ -55,27 +55,20 @@ locals {
   }
 }
 
-module "memberlist" {
-  source         = "../common/service"
-  namespace_name = var.namespace_name
-  app_name       = var.service_name
-  cluster_domain = var.cluster_domain
-  ports = {
-    gossip = local.ports.gossip
-  }
-  headless_only      = true
-  wait_for_readiness = false
-}
-
 module "cortex_config" {
-  source                      = "./module/config"
-  namespace_name              = var.namespace_name
-  service_name                = var.service_name
-  http_port                   = local.ports.http.port
-  grpc_port                   = local.ports.grpc.port
-  gossip_port                 = local.ports.gossip.port
-  query_frontend_hostname     = "${var.service_name}-query-frontend-headless.${var.namespace_name}.svc.${var.cluster_domain}"
-  memberlist_hostname         = module.memberlist.headless_service_hostname
+  source                  = "./module/config"
+  namespace_name          = var.namespace_name
+  service_name            = var.service_name
+  http_port               = local.ports.http.port
+  grpc_port               = local.ports.grpc.port
+  gossip_port             = local.ports.gossip.port
+  query_frontend_hostname = "${var.service_name}-query-frontend-headless.${var.namespace_name}.svc.${var.cluster_domain}"
+  gossip_hostnames = [
+    "${var.service_name}-distributor-headless.${var.namespace_name}.svc.${var.cluster_domain}",
+    "${var.service_name}-ingester-headless.${var.namespace_name}.svc.${var.cluster_domain}",
+    "${var.service_name}-compactor-headless.${var.namespace_name}.svc.${var.cluster_domain}",
+    "${var.service_name}-store-gateway-headless.${var.namespace_name}.svc.${var.cluster_domain}",
+  ]
   max_query_frontend_replicas = local.query_frontend_replicas
   prometheus_api_path         = local.prometheus_api_path
   storage_config              = var.storage_config
