@@ -83,7 +83,7 @@ module "ingester" {
   pod_resources = {
     cpu_min    = 75
     memory_min = 70
-    memory_max = 250
+    memory_max = 1000
   }
   ports                 = local.ports
   pod_lifecycle         = local.pod_lifecycle
@@ -103,7 +103,7 @@ module "querier" {
   pod_resources = {
     cpu_min    = 50
     memory_min = 40
-    memory_max = 999
+    memory_max = 1000
   }
   namespace_name        = var.namespace_name
   service_account_name  = module.service_account.name
@@ -127,7 +127,7 @@ module "distributor" {
   pod_resources = {
     cpu_min    = 50
     memory_min = 20
-    memory_max = 70
+    memory_max = 100
   }
   namespace_name        = var.namespace_name
   service_account_name  = module.service_account.name
@@ -151,7 +151,7 @@ module "query_frontend" {
   pod_resources = {
     cpu_min    = 50
     memory_min = 16
-    memory_max = 999
+    memory_max = 1000
   }
   namespace_name       = var.namespace_name
   service_account_name = module.service_account.name
