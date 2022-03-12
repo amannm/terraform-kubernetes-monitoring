@@ -13,12 +13,3 @@ output "config_mount_path" {
 output "storage_mount_path" {
   value = local.storage_mount_path
 }
-output "service_http_port" {
-  value = local.http_port
-}
-output "service_grpc_port" {
-  value = local.grpc_port
-}
-output "etcd_host" {
-  value = local.etcd_host
-}

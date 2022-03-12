@@ -8,7 +8,7 @@ locals {
     max_cleanup_time   = 30
   }
   pod_probes = {
-    port                   = module.loki_config.service_http_port
+    port                   = local.ports.http.port
     readiness_path         = "/ready"
     liveness_path          = "/ready"
     readiness_polling_rate = 5
@@ -16,14 +16,21 @@ locals {
   }
   ports = {
     http = {
-      port        = module.loki_config.service_http_port
-      target_port = module.loki_config.service_http_port
+      port        = var.service_port
+      target_port = var.service_port
     }
     grpc = {
-      port        = module.loki_config.service_grpc_port
-      target_port = module.loki_config.service_grpc_port
+      port        = 9095
+      target_port = 9095
     }
   }
+  gossip_port = {
+    port        = 7946
+    target_port = 7946
+  }
+  ports_with_gossip = merge(local.ports, {
+    gossip = local.gossip_port
+  })
   config_volumes = {
     config = {
       mount_path      = module.loki_config.config_mount_path
@@ -41,7 +48,7 @@ locals {
     uid                       = 10001
     read_only_root_filesystem = true
   }
-  components = ["ingester", "distributor", "querier", "query-frontend"]
+  components = ["distributor", "ingester", "compactor", "querier", "query-frontend"]
   component_args = {
     for c in local.components : c => [
       "-config.file=${module.loki_config.config_mount_path}/${module.loki_config.config_filename}",
@@ -51,14 +58,19 @@ locals {
 }
 
 module "loki_config" {
-  source                      = "./module/config"
-  namespace_name              = var.namespace_name
-  service_name                = var.service_name
-  etcd_host                   = var.etcd_host
-  http_port                   = var.service_port
-  grpc_port                   = 9095
-  querier_hostname            = "${var.service_name}-querier.${var.namespace_name}.svc.${var.cluster_domain}"
-  query_frontend_hostname     = "${var.service_name}-query-frontend-headless.${var.namespace_name}.svc.${var.cluster_domain}"
+  source                  = "./module/config"
+  namespace_name          = var.namespace_name
+  service_name            = var.service_name
+  http_port               = local.ports.http.port
+  grpc_port               = local.ports.grpc.port
+  querier_hostname        = "${var.service_name}-querier.${var.namespace_name}.svc.${var.cluster_domain}"
+  query_frontend_hostname = "${var.service_name}-query-frontend-headless.${var.namespace_name}.svc.${var.cluster_domain}"
+  gossip_port             = local.gossip_port.port
+  gossip_hostnames = [
+    "${var.service_name}-distributor-headless.${var.namespace_name}.svc.${var.cluster_domain}",
+    "${var.service_name}-ingester-headless.${var.namespace_name}.svc.${var.cluster_domain}",
+    "${var.service_name}-compactor-headless.${var.namespace_name}.svc.${var.cluster_domain}",
+  ]
   max_query_frontend_replicas = local.query_frontend_replicas
   storage_config              = var.storage_config
 }
@@ -68,6 +80,30 @@ module "service_account" {
   namespace_name       = var.namespace_name
   service_account_name = var.service_account.name
   annotations          = var.service_account.annotations
+}
+
+module "distributor" {
+  source         = "../common/stateless"
+  cluster_domain = var.cluster_domain
+  app_name       = var.service_name
+  component_name = "distributor"
+  args           = local.component_args["distributor"]
+  pod_resources = {
+    cpu_min    = 50
+    memory_min = 20
+    memory_max = 100
+  }
+  namespace_name        = var.namespace_name
+  service_account_name  = module.service_account.name
+  replicas              = 1
+  container_image       = var.container_image
+  ports                 = local.ports_with_gossip
+  pod_lifecycle         = local.pod_lifecycle
+  pod_probes            = local.pod_probes
+  config_volumes        = local.config_volumes
+  ephemeral_volumes     = local.storage_volumes
+  pod_security_context  = local.security_context
+  stateless_node_labels = var.stateless_node_labels
 }
 
 module "ingester" {
@@ -85,11 +121,35 @@ module "ingester" {
     memory_min = 70
     memory_max = 1000
   }
-  ports                 = local.ports
+  ports                 = local.ports_with_gossip
   pod_lifecycle         = local.pod_lifecycle
   pod_probes            = local.pod_probes
   config_volumes        = local.config_volumes
   persistent_volumes    = local.storage_volumes
+  pod_security_context  = local.security_context
+  stateless_node_labels = var.stateless_node_labels
+}
+
+module "compactor" {
+  source         = "../common/stateless"
+  cluster_domain = var.cluster_domain
+  app_name       = var.service_name
+  component_name = "compactor"
+  args           = local.component_args["compactor"]
+  pod_resources = {
+    cpu_min    = 50
+    memory_min = 26
+    memory_max = 100
+  }
+  namespace_name        = var.namespace_name
+  service_account_name  = module.service_account.name
+  replicas              = 1
+  container_image       = var.container_image
+  ports                 = local.ports_with_gossip
+  pod_lifecycle         = local.pod_lifecycle
+  pod_probes            = local.pod_probes
+  config_volumes        = local.config_volumes
+  ephemeral_volumes     = local.storage_volumes
   pod_security_context  = local.security_context
   stateless_node_labels = var.stateless_node_labels
 }
@@ -104,30 +164,6 @@ module "querier" {
     cpu_min    = 50
     memory_min = 40
     memory_max = 1000
-  }
-  namespace_name        = var.namespace_name
-  service_account_name  = module.service_account.name
-  replicas              = 1
-  container_image       = var.container_image
-  ports                 = local.ports
-  pod_lifecycle         = local.pod_lifecycle
-  pod_probes            = local.pod_probes
-  config_volumes        = local.config_volumes
-  ephemeral_volumes     = local.storage_volumes
-  pod_security_context  = local.security_context
-  stateless_node_labels = var.stateless_node_labels
-}
-
-module "distributor" {
-  source         = "../common/stateless"
-  cluster_domain = var.cluster_domain
-  app_name       = var.service_name
-  component_name = "distributor"
-  args           = local.component_args["distributor"]
-  pod_resources = {
-    cpu_min    = 50
-    memory_min = 20
-    memory_max = 100
   }
   namespace_name        = var.namespace_name
   service_account_name  = module.service_account.name

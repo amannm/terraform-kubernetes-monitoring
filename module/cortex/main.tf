@@ -9,7 +9,7 @@ locals {
     max_cleanup_time   = 30
   }
   pod_probes = {
-    port                   = module.cortex_config.service_http_port
+    port                   = local.ports.http.port
     readiness_path         = "/ready"
     liveness_path          = "/ready"
     readiness_polling_rate = 5
@@ -24,11 +24,14 @@ locals {
       port        = 9095
       target_port = 9095
     }
-    gossip = {
-      port        = 7946
-      target_port = 7946
-    }
   }
+  gossip_port = {
+    port        = 7946
+    target_port = 7946
+  }
+  ports_with_gossip = merge(local.ports, {
+    gossip = local.gossip_port
+  })
   config_volumes = {
     config = {
       mount_path      = module.cortex_config.config_mount_path
@@ -61,7 +64,7 @@ module "cortex_config" {
   service_name            = var.service_name
   http_port               = local.ports.http.port
   grpc_port               = local.ports.grpc.port
-  gossip_port             = local.ports.gossip.port
+  gossip_port             = local.gossip_port.port
   query_frontend_hostname = "${var.service_name}-query-frontend-headless.${var.namespace_name}.svc.${var.cluster_domain}"
   gossip_hostnames = [
     "${var.service_name}-distributor-headless.${var.namespace_name}.svc.${var.cluster_domain}",
@@ -96,7 +99,7 @@ module "ingester" {
     memory_min = 250
     memory_max = 1000
   }
-  ports                 = local.ports
+  ports                 = local.ports_with_gossip
   pod_lifecycle         = local.pod_lifecycle
   pod_probes            = local.pod_probes
   config_volumes        = local.config_volumes
@@ -120,7 +123,7 @@ module "compactor" {
   service_account_name  = module.service_account.name
   replicas              = 1
   container_image       = var.container_image
-  ports                 = local.ports
+  ports                 = local.ports_with_gossip
   pod_lifecycle         = local.pod_lifecycle
   pod_probes            = local.pod_probes
   config_volumes        = local.config_volumes
@@ -144,7 +147,7 @@ module "store-gateway" {
   service_account_name  = module.service_account.name
   replicas              = 1
   container_image       = var.container_image
-  ports                 = local.ports
+  ports                 = local.ports_with_gossip
   pod_lifecycle         = local.pod_lifecycle
   pod_probes            = local.pod_probes
   config_volumes        = local.config_volumes
@@ -192,7 +195,7 @@ module "distributor" {
   service_account_name  = module.service_account.name
   replicas              = 1
   container_image       = var.container_image
-  ports                 = local.ports
+  ports                 = local.ports_with_gossip
   pod_lifecycle         = local.pod_lifecycle
   pod_probes            = local.pod_probes
   config_volumes        = local.config_volumes

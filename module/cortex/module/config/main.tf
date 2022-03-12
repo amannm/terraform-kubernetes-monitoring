@@ -174,10 +174,6 @@ locals {
   config_filename    = var.config_filename
   storage_mount_path = var.storage_path
   config_mount_path  = var.config_path
-  http_port          = var.http_port
-  grpc_port          = var.grpc_port
-  #  etcd_host          = var.etcd_host
-  gossip_port = var.gossip_port
 }
 resource "kubernetes_config_map" "config_map" {
   metadata {

@@ -3,12 +3,15 @@ locals {
   store_type = var.storage_config["local"] != null ? "filesystem" : var.storage_config["gcp"] != null ? "gcs" : null
 
   worker_parallelism = 10
-  etcd_kvstore = {
-    store  = "etcd"
-    prefix = "${var.service_name}/collectors/"
-    etcd = {
-      endpoints = [var.etcd_host]
-    }
+  #  etcd_kvstore = {
+  #    store  = "etcd"
+  #    prefix = "${var.service_name}/collectors/"
+  #    etcd = {
+  #      endpoints = [var.etcd_host]
+  #    }
+  #  }
+  memberlist_kvstore = {
+    store = "memberlist"
   }
   fifo_cache = {
     for i in range(32) : i => {
@@ -76,7 +79,7 @@ locals {
     }
     distributor = {
       ring = {
-        kvstore           = local.etcd_kvstore
+        kvstore           = local.memberlist_kvstore
         heartbeat_timeout = "1m"
       }
     }
@@ -95,7 +98,7 @@ locals {
       max_transfer_retries = 0
       lifecycler = {
         ring = {
-          kvstore           = local.etcd_kvstore
+          kvstore           = local.memberlist_kvstore
           heartbeat_timeout = "1m"
           // distributor will refuse to write unless floor(replication_factor / 2) + 1 replicas are ACTIVE
           replication_factor = 1
@@ -163,7 +166,7 @@ locals {
       max_compaction_parallelism = 1
       compaction_interval        = "10m"
       compactor_ring = {
-        kvstore = local.etcd_kvstore
+        kvstore = local.memberlist_kvstore
       }
     }
     tracing = {
@@ -177,9 +180,6 @@ locals {
   config_filename    = var.config_filename
   config_mount_path  = var.config_path
   storage_mount_path = var.storage_path
-  http_port          = var.http_port
-  grpc_port          = var.grpc_port
-  etcd_host          = var.etcd_host
 }
 resource "kubernetes_config_map" "config_map" {
   metadata {

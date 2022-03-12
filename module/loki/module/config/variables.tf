@@ -7,10 +7,10 @@ variable "service_name" {
 variable "http_port" {
   type = number
 }
-variable "etcd_host" {
-  type = string
-}
 variable "grpc_port" {
+  type = number
+}
+variable "gossip_port" {
   type = number
 }
 variable "config_filename" {
@@ -33,6 +33,9 @@ variable "query_frontend_hostname" {
 #}
 variable "querier_hostname" {
   type = string
+}
+variable "gossip_hostnames" {
+  type = set(string)
 }
 variable "max_query_frontend_replicas" {
   type = number
