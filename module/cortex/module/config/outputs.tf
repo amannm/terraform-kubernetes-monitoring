@@ -19,6 +19,3 @@ output "service_http_port" {
 output "service_grpc_port" {
   value = local.grpc_port
 }
-output "etcd_host" {
-  value = local.etcd_host
-}

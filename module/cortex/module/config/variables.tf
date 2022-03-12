@@ -7,10 +7,13 @@ variable "service_name" {
 variable "http_port" {
   type = number
 }
-variable "etcd_host" {
+variable "grpc_port" {
+  type = number
+}
+variable "memberlist_hostname" {
   type = string
 }
-variable "grpc_port" {
+variable "gossip_port" {
   type = number
 }
 variable "config_filename" {

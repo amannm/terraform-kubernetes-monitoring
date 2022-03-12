@@ -17,12 +17,16 @@ locals {
   }
   ports = {
     http = {
-      port        = module.cortex_config.service_http_port
-      target_port = module.cortex_config.service_http_port
+      port        = var.service_port
+      target_port = var.service_port
     }
     grpc = {
-      port        = module.cortex_config.service_grpc_port
-      target_port = module.cortex_config.service_grpc_port
+      port        = 9095
+      target_port = 9095
+    }
+    gossip = {
+      port        = 7946
+      target_port = 7946
     }
   }
   config_volumes = {
@@ -51,15 +55,27 @@ locals {
   }
 }
 
+module "memberlist" {
+  source         = "../common/service"
+  namespace_name = var.namespace_name
+  app_name       = var.service_name
+  cluster_domain = var.cluster_domain
+  ports = {
+    gossip = local.ports.gossip
+  }
+  headless_only      = true
+  wait_for_readiness = false
+}
 
 module "cortex_config" {
   source                      = "./module/config"
   namespace_name              = var.namespace_name
   service_name                = var.service_name
-  etcd_host                   = var.etcd_host
-  http_port                   = var.service_port
-  grpc_port                   = 9095
+  http_port                   = local.ports.http.port
+  grpc_port                   = local.ports.grpc.port
+  gossip_port                 = local.ports.gossip.port
   query_frontend_hostname     = "${var.service_name}-query-frontend-headless.${var.namespace_name}.svc.${var.cluster_domain}"
+  memberlist_hostname         = module.memberlist.headless_service_hostname
   max_query_frontend_replicas = local.query_frontend_replicas
   prometheus_api_path         = local.prometheus_api_path
   storage_config              = var.storage_config
@@ -85,7 +101,7 @@ module "ingester" {
   pod_resources = {
     cpu_min    = 50
     memory_min = 250
-    memory_max = 350
+    memory_max = 1000
   }
   ports                 = local.ports
   pod_lifecycle         = local.pod_lifecycle
@@ -105,7 +121,7 @@ module "compactor" {
   pod_resources = {
     cpu_min    = 50
     memory_min = 26
-    memory_max = 50
+    memory_max = 100
   }
   namespace_name        = var.namespace_name
   service_account_name  = module.service_account.name
@@ -129,7 +145,7 @@ module "store-gateway" {
   pod_resources = {
     cpu_min    = 50
     memory_min = 17
-    memory_max = 30
+    memory_max = 50
   }
   namespace_name        = var.namespace_name
   service_account_name  = module.service_account.name

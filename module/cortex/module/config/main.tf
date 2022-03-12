@@ -2,12 +2,15 @@ locals {
   store_type = var.storage_config["local"] != null ? "filesystem" : var.storage_config["gcp"] != null ? "gcs" : null
 
   worker_parallelism = 10
-  etcd_kvstore = {
-    store  = "etcd"
-    prefix = "${var.service_name}/collectors/"
-    etcd = {
-      endpoints = [var.etcd_host]
-    }
+  #  etcd_kvstore = {
+  #    store  = "etcd"
+  #    prefix = "${var.service_name}/collectors/"
+  #    etcd = {
+  #      endpoints = [var.etcd_host]
+  #    }
+  #  }
+  memberlist_kvstore = {
+    store = "memberlist"
   }
   fifo_cache = {
     for i in range(32) : i => {
@@ -30,6 +33,12 @@ locals {
     api = {
       prometheus_http_prefix       = var.prometheus_api_path
       response_compression_enabled = true
+    }
+    memberlist = {
+      randomize_node_name = false
+      gossip_nodes        = 3
+      join_members        = [var.memberlist_hostname]
+      bind_port           = var.gossip_port
     }
     frontend = {
       max_outstanding_per_tenant   = 100
@@ -77,7 +86,7 @@ locals {
       shard_by_all_labels = false
       remote_timeout      = "5s"
       ring = {
-        kvstore           = local.etcd_kvstore
+        kvstore           = local.memberlist_kvstore
         heartbeat_period  = "5s"
         heartbeat_timeout = "1m"
       }
@@ -90,7 +99,7 @@ locals {
       max_transfer_retries = 0
       lifecycler = {
         ring = {
-          kvstore            = local.etcd_kvstore
+          kvstore            = local.memberlist_kvstore
           heartbeat_timeout  = "1m"
           replication_factor = 1
         }
@@ -138,7 +147,7 @@ locals {
       cleanup_interval       = "15m"
       sharding_enabled       = true
       sharding_ring = {
-        kvstore                      = local.etcd_kvstore
+        kvstore                      = local.memberlist_kvstore
         heartbeat_period             = "5s"
         heartbeat_timeout            = "1m"
         wait_stability_min_duration  = "1s"
@@ -149,7 +158,7 @@ locals {
     store_gateway = {
       sharding_enabled = true
       sharding_ring = {
-        kvstore                     = local.etcd_kvstore
+        kvstore                     = local.memberlist_kvstore
         heartbeat_period            = "15s"
         heartbeat_timeout           = "1m"
         wait_stability_min_duration = "1s"
@@ -167,7 +176,8 @@ locals {
   config_mount_path  = var.config_path
   http_port          = var.http_port
   grpc_port          = var.grpc_port
-  etcd_host          = var.etcd_host
+  #  etcd_host          = var.etcd_host
+  gossip_port = var.gossip_port
 }
 resource "kubernetes_config_map" "config_map" {
   metadata {

@@ -25,9 +25,6 @@ variable "service_account" {
     annotations = map(string)
   })
 }
-variable "etcd_host" {
-  type = string
-}
 variable "storage_config" {
   type = object({
     local = object({

@@ -49,7 +49,7 @@ resource "kubernetes_service" "headless_service" {
     type                        = "ClusterIP"
     session_affinity            = "None"
     cluster_ip                  = "None"
-    publish_not_ready_addresses = true
+    publish_not_ready_addresses = var.wait_for_readiness
     dynamic "port" {
       for_each = var.ports
       content {
