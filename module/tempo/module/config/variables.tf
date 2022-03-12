@@ -7,10 +7,13 @@ variable "service_name" {
 variable "http_port" {
   type = number
 }
-variable "etcd_host" {
-  type = string
+variable "gossip_hostnames" {
+  type = set(string)
 }
 variable "grpc_port" {
+  type = number
+}
+variable "gossip_port" {
   type = number
 }
 variable "otlp_grpc_port" {

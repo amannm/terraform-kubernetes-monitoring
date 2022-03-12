@@ -100,6 +100,5 @@ module "tempo" {
   container_image       = "grafana/tempo:1.3.2"
   stateless_node_labels = var.stateless_node_labels
   storage_volume_size   = 1
-  etcd_host             = module.etcd.client_endpoint_host
   storage_config        = var.tempo_storage_config
 }

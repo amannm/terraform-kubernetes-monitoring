@@ -1,12 +1,15 @@
 locals {
   store_type = var.storage_config["local"] != null ? "local" : var.storage_config["gcp"] != null ? "gcs" : null
 
-  etcd_kvstore = {
-    store  = "etcd"
-    prefix = "${var.service_name}/collectors/"
-    etcd = {
-      endpoints = [var.etcd_host]
-    }
+  #  etcd_kvstore = {
+  #    store  = "etcd"
+  #    prefix = "${var.service_name}/collectors/"
+  #    etcd = {
+  #      endpoints = [var.etcd_host]
+  #    }
+  #  }
+  memberlist_kvstore = {
+    store = "memberlist"
   }
 }
 locals {
@@ -45,7 +48,7 @@ locals {
     ingester = {
       lifecycler = {
         ring = {
-          kvstore            = local.etcd_kvstore
+          kvstore            = local.memberlist_kvstore
           heartbeat_timeout  = "1m"
           replication_factor = 1
         }
@@ -80,7 +83,7 @@ locals {
     }
     compactor = {
       ring = {
-        kvstore           = local.etcd_kvstore
+        kvstore           = local.memberlist_kvstore
         heartbeat_timeout = "1m"
       }
       compaction = {
@@ -97,10 +100,6 @@ locals {
   config_filename    = var.config_filename
   storage_mount_path = var.storage_path
   config_mount_path  = var.config_path
-  http_port          = var.http_port
-  grpc_port          = var.grpc_port
-  etcd_host          = var.etcd_host
-  otlp_grpc_port     = var.otlp_grpc_port
 }
 resource "kubernetes_config_map" "config_map" {
   metadata {

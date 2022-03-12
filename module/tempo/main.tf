@@ -1,14 +1,14 @@
 locals {
   query_frontend_replicas = 1
   remote_write_endpoint   = "${var.service_name}-distributor.${var.namespace_name}.svc.${var.cluster_domain}:${var.otlp_grpc_port}"
-  tempo_url               = "http://${var.service_name}-query-frontend.${var.namespace_name}.svc.${var.cluster_domain}:${module.config.service_http_port}"
+  tempo_url               = "http://${var.service_name}-query-frontend.${var.namespace_name}.svc.${var.cluster_domain}:${var.service_port}"
   pod_lifecycle = {
     min_readiness_time = 30
     max_readiness_time = 90
     max_cleanup_time   = 30
   }
   pod_probes = {
-    port                   = module.config.service_http_port
+    port                   = var.service_port
     readiness_path         = "/ready"
     liveness_path          = "/ready"
     readiness_polling_rate = 5
@@ -16,14 +16,21 @@ locals {
   }
   ports = {
     http = {
-      port        = module.config.service_http_port
-      target_port = module.config.service_http_port
+      port        = var.service_port
+      target_port = var.service_port
     }
     grpc = {
-      port        = module.config.service_grpc_port
-      target_port = module.config.service_grpc_port
+      port        = 9095
+      target_port = 9095
     }
   }
+  gossip_port = {
+    port        = 7946
+    target_port = 7946
+  }
+  ports_with_gossip = merge(local.ports, {
+    gossip = local.gossip_port
+  })
   config_volumes = {
     config = {
       mount_path      = module.config.config_mount_path
@@ -55,15 +62,19 @@ module "config" {
   source                  = "./module/config"
   namespace_name          = var.namespace_name
   service_name            = var.service_name
-  etcd_host               = var.etcd_host
-  http_port               = var.service_port
-  grpc_port               = 9095
+  http_port               = local.ports.http.port
+  grpc_port               = local.ports.grpc.port
+  gossip_port             = local.gossip_port.port
   otlp_grpc_port          = var.otlp_grpc_port
   query_frontend_hostname = "${var.service_name}-query-frontend-headless.${var.namespace_name}.svc.${var.cluster_domain}"
-  config_filename         = "config.yaml"
-  config_path             = "/etc/tempo/config"
-  storage_path            = "/var/tempo"
-  storage_config          = var.storage_config
+  gossip_hostnames = [
+    "${var.service_name}-ingester-headless.${var.namespace_name}.svc.${var.cluster_domain}",
+    "${var.service_name}-compactor-headless.${var.namespace_name}.svc.${var.cluster_domain}",
+  ]
+  config_filename = "config.yaml"
+  config_path     = "/etc/tempo/config"
+  storage_path    = "/var/tempo"
+  storage_config  = var.storage_config
 }
 
 module "service_account" {
@@ -88,7 +99,7 @@ module "ingester" {
     memory_min = 250
     memory_max = 300
   }
-  ports                 = local.ports
+  ports                 = local.ports_with_gossip
   pod_lifecycle         = local.pod_lifecycle
   pod_probes            = local.pod_probes
   config_volumes        = local.config_volumes
@@ -112,7 +123,7 @@ module "compactor" {
   service_account_name  = module.service_account.name
   replicas              = 1
   container_image       = var.container_image
-  ports                 = local.ports
+  ports                 = local.ports_with_gossip
   pod_lifecycle         = local.pod_lifecycle
   pod_probes            = local.pod_probes
   config_volumes        = local.config_volumes
@@ -162,8 +173,8 @@ module "distributor" {
   container_image      = var.container_image
   ports = merge(local.ports, {
     otlp-grpc = {
-      port        = module.config.service_otlp_grpc_port
-      target_port = module.config.service_otlp_grpc_port
+      port        = var.otlp_grpc_port
+      target_port = var.otlp_grpc_port
     }
   })
   pod_lifecycle         = local.pod_lifecycle
