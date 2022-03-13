@@ -31,7 +31,7 @@ module "etcd" {
   stateless_node_labels  = var.stateless_node_labels
   storage_volume_size    = 1
   cluster_size           = 1
-  otlp_receiver_endpoint = "http://grafana-agent.${var.namespace_name}.svc.${var.cluster_domain}:${var.otlp_grpc_receiver_port}"
+  otlp_receiver_endpoint = "grafana-agent.${var.namespace_name}.svc.${var.cluster_domain}:${var.otlp_grpc_receiver_port}"
 }
 
 module "kube_state_metrics" {

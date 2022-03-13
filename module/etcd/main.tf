@@ -19,7 +19,6 @@ locals {
     "snapshot-count"                                = 1000
     "auto-compaction-mode"                          = "periodic"
     "auto-compaction-retention"                     = 1
-    "experimental-enable-distributed-tracing"       = true
     "experimental-distributed-tracing-address"      = var.otlp_receiver_endpoint
     "experimental-distributed-tracing-service-name" = var.service_name
   }
@@ -51,7 +50,7 @@ locals {
               etcdctl member update --endpoints "$ALL_CLIENT_ENDPOINTS" "$MEMBER_ID" --peer-urls "http://$${HOSTNAME}:${local.peer_port}"
           else
               echo "cluster present, membership present, local state NOT present => joining as recreated member"
-              etcdctl member remove --endpoints "$ALL_CLIENT_ENDPOINTS" $MEMBER_ID
+              etcdctl member remove --endpoints "$ALL_CLIENT_ENDPOINTS" "$MEMBER_ID"
               etcdctl member add --endpoints "$ALL_CLIENT_ENDPOINTS" "$${${local.pod_name_env_var}}" --peer-urls "http://$${HOSTNAME}:${local.peer_port}" | grep "^ETCD_" > ${local.data_volume_mount_path}/new_member_envs
           fi
       else
@@ -67,6 +66,7 @@ locals {
   fi
   exec etcd --advertise-client-urls "http://$${HOSTNAME}:${var.service_port},http://${local.service_client_endpoint}" \
             --initial-advertise-peer-urls "http://$${HOSTNAME}:${local.peer_port}" \
+            --experimental-enable-distributed-tracing \
             --experimental-distributed-tracing-instance-id "$${${local.pod_name_env_var}}" \
             ${local.common_args_line}
   EOT
