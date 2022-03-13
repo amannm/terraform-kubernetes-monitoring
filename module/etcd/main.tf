@@ -1,6 +1,7 @@
 locals {
   pod_name_env_var         = "POD_NAME"
   snapshot_count           = 1000
+  client_port              = var.service_port
   peer_port                = var.service_port + 1
   config_filename          = "config.yaml"
   config_volume_mount_path = "/etc/etcd"
@@ -9,6 +10,20 @@ locals {
   data_volume_mount_path   = "/var/run/etcd"
   service_client_endpoint  = "${module.etcd.hostname}:${var.service_port}"
   domain_suffix            = "${var.service_name}-headless"
+
+  common_options = {
+    "data-dir"                                      = "${local.data_volume_mount_path}/default.etcd"
+    "listen-client-urls"                            = "http://0.0.0.0:${local.client_port}"
+    "listen-peer-urls"                              = "http://0.0.0.0:${local.peer_port}"
+    "initial-cluster-token"                         = "${var.service_name}-cluster"
+    "snapshot-count"                                = 1000
+    "auto-compaction-mode"                          = "periodic"
+    "auto-compaction-retention"                     = 1
+    "experimental-enable-distributed-tracing"       = true
+    "experimental-distributed-tracing-address"      = var.otlp_receiver_endpoint
+    "experimental-distributed-tracing-service-name" = var.service_name
+  }
+  common_args_line = join(" ", [for k, v in local.common_options : "--${k} \"${v}\""])
 
   script_globals = <<-EOT
   SET_ID="$${${local.pod_name_env_var}##*-}"
@@ -28,37 +43,32 @@ locals {
 
   startup_script = <<-EOT
   ${local.script_globals}
-  echo "name: $${${local.pod_name_env_var}}" >> ${local.config_path}
-  echo "advertise-client-urls: http://$${HOSTNAME}:${var.service_port},http://${local.service_client_endpoint}" >> ${local.config_path}
-  echo "initial-advertise-peer-urls: http://$${HOSTNAME}:${local.peer_port}" >> ${local.config_path}
-  echo "experimental-distributed-tracing-instance-id: $${${local.pod_name_env_var}}" >> ${local.config_path}
   if [ "$ALL_CLIENT_ENDPOINTS" != "" ]; then
-      MEMBER_ID=$(etcdctl member list --endpoints="$ALL_CLIENT_ENDPOINTS" | grep http://$${HOSTNAME}:${local.peer_port} | cut -d',' -f1 | cut -d'[' -f1)
+      MEMBER_ID=$(etcdctl member list --endpoints "$ALL_CLIENT_ENDPOINTS" | grep "http://$${HOSTNAME}:${local.peer_port}" | cut -d',' -f1 | cut -d'[' -f1)
       if [ "$MEMBER_ID" != "" ]; then
-          if [ -e ${local.data_volume_mount_path}/default.etcd ]; then
+          if [ -e ${local.data_volume_mount_path}/default.etcd ] && [ -e ${local.data_volume_mount_path}/new_member_envs ]; then
               echo "cluster present, membership present, local state present => joining as existing member"
-              etcdctl member update --endpoints="$ALL_CLIENT_ENDPOINTS" $MEMBER_ID --peer-urls=http://$${HOSTNAME}:${local.peer_port}
+              etcdctl member update --endpoints "$ALL_CLIENT_ENDPOINTS" "$MEMBER_ID" --peer-urls "http://$${HOSTNAME}:${local.peer_port}"
           else
               echo "cluster present, membership present, local state NOT present => joining as recreated member"
-              etcdctl member remove --endpoints="$ALL_CLIENT_ENDPOINTS" $MEMBER_ID
-              etcdctl member add --endpoints="$ALL_CLIENT_ENDPOINTS" $${${local.pod_name_env_var}} --peer-urls=http://$${HOSTNAME}:${local.peer_port} | grep "^ETCD_" > ${local.data_volume_mount_path}/new_member_envs
-              . ${local.data_volume_mount_path}/new_member_envs
-              echo "initial-cluster: $${ETCD_INITIAL_CLUSTER}" >> ${local.config_path}
-              echo "initial-cluster-state: $${ETCD_INITIAL_CLUSTER_STATE}" >> ${local.config_path}
+              etcdctl member remove --endpoints "$ALL_CLIENT_ENDPOINTS" $MEMBER_ID
+              etcdctl member add --endpoints "$ALL_CLIENT_ENDPOINTS" "$${${local.pod_name_env_var}}" --peer-urls "http://$${HOSTNAME}:${local.peer_port}" | grep "^ETCD_" > ${local.data_volume_mount_path}/new_member_envs
           fi
       else
           echo "cluster present, membership NOT present => joining as new member"
-          etcdctl member add --endpoints="$ALL_CLIENT_ENDPOINTS" $${${local.pod_name_env_var}} --peer-urls=http://$${HOSTNAME}:${local.peer_port} | grep "^ETCD_" > ${local.data_volume_mount_path}/new_member_envs
-          . ${local.data_volume_mount_path}/new_member_envs
-          echo "initial-cluster: $${ETCD_INITIAL_CLUSTER}" >> ${local.config_path}
-          echo "initial-cluster-state: $${ETCD_INITIAL_CLUSTER_STATE}" >> ${local.config_path}
+          etcdctl member add --endpoints "$ALL_CLIENT_ENDPOINTS" "$${${local.pod_name_env_var}}" --peer-urls "http://$${HOSTNAME}:${local.peer_port}" | grep "^ETCD_" > ${local.data_volume_mount_path}/new_member_envs
       fi
+      . ${local.data_volume_mount_path}/new_member_envs
   else
       echo "cluster NOT present => joining as initial member"
-      echo "initial-cluster: $${${local.pod_name_env_var}}=http://$${HOSTNAME}:${local.peer_port}" >> ${local.config_path}
-      echo "initial-cluster-state: new" >> ${local.config_path}
+      export ETCD_NAME="$${${local.pod_name_env_var}}"
+      export ETCD_INITIAL_CLUSTER="$${${local.pod_name_env_var}}=http://$${HOSTNAME}:${local.peer_port}"
+      export ETCD_INITIAL_CLUSTER_STATE="new"
   fi
-  exec etcd --config-file ${local.config_path}
+  exec etcd --advertise-client-urls "http://$${HOSTNAME}:${var.service_port},http://${local.service_client_endpoint}" \
+            --initial-advertise-peer-urls "http://$${HOSTNAME}:${local.peer_port}" \
+            --experimental-distributed-tracing-instance-id "$${${local.pod_name_env_var}}" \
+            ${local.common_args_line}
   EOT
 
   pre_stop_script = <<-EOT
