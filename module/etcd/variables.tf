@@ -22,3 +22,6 @@ variable "cluster_size" {
 variable "storage_volume_size" {
   type = number
 }
+variable "otlp_receiver_endpoint" {
+  type = string
+}

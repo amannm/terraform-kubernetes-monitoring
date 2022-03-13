@@ -22,15 +22,16 @@ module "grafana" {
 }
 
 module "etcd" {
-  source                = "./module/etcd"
-  cluster_domain        = var.cluster_domain
-  namespace_name        = var.namespace_name
-  service_name          = "etcd"
-  service_port          = var.etcd_port
-  container_image       = "quay.io/coreos/etcd:v3.5.2"
-  stateless_node_labels = var.stateless_node_labels
-  storage_volume_size   = 1
-  cluster_size          = 1
+  source                 = "./module/etcd"
+  cluster_domain         = var.cluster_domain
+  namespace_name         = var.namespace_name
+  service_name           = "etcd"
+  service_port           = var.etcd_port
+  container_image        = "quay.io/coreos/etcd:v3.5.2"
+  stateless_node_labels  = var.stateless_node_labels
+  storage_volume_size    = 1
+  cluster_size           = 1
+  otlp_receiver_endpoint = "http://grafana-agent.${var.namespace_name}.svc.${var.cluster_domain}:${var.otlp_grpc_receiver_port}"
 }
 
 module "kube_state_metrics" {
@@ -51,6 +52,7 @@ module "grafana_agent" {
   service_port             = var.grafana_agent_port
   jaeger_receiver_port     = var.jaeger_receiver_port
   zipkin_receiver_port     = var.zipkin_receiver_port
+  otlp_grpc_receiver_port  = var.otlp_grpc_receiver_port
   agent_container_image    = "grafana/agent:latest"
   agentctl_container_image = "grafana/agentctl:latest"
   stateless_node_labels    = var.stateless_node_labels

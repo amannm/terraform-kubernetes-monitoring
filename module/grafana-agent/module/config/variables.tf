@@ -40,9 +40,10 @@ variable "logs_config" {
 }
 variable "traces_config" {
   type = object({
-    jaeger_receiver_port  = number
-    zipkin_receiver_port  = number
-    remote_write_endpoint = string
+    jaeger_receiver_port    = number
+    zipkin_receiver_port    = number
+    otlp_grpc_receiver_port = number
+    remote_write_endpoint   = string
   })
   default = null
 }

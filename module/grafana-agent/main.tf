@@ -42,6 +42,10 @@ locals {
       port        = var.zipkin_receiver_port
       target_port = var.zipkin_receiver_port
     }
+    otlp-grpc = {
+      port        = var.otlp_grpc_receiver_port
+      target_port = var.otlp_grpc_receiver_port
+    }
   }
 
   volumes = {
@@ -134,9 +138,10 @@ module "agent_config" {
     remote_write_url            = var.logs_remote_write_url
   }
   traces_config = {
-    jaeger_receiver_port  = var.jaeger_receiver_port
-    zipkin_receiver_port  = var.zipkin_receiver_port
-    remote_write_endpoint = var.traces_remote_write_endpoint
+    jaeger_receiver_port    = var.jaeger_receiver_port
+    zipkin_receiver_port    = var.zipkin_receiver_port
+    otlp_grpc_receiver_port = var.otlp_grpc_receiver_port
+    remote_write_endpoint   = var.traces_remote_write_endpoint
   }
 }
 

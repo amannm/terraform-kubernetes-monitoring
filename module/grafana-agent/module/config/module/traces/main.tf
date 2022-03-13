@@ -15,6 +15,13 @@ locals {
           zipkin = {
             endpoint = "0.0.0.0:${var.zipkin_receiver_port}"
           }
+          otlp = {
+            protocols = {
+              grpc = {
+                endpoint = "0.0.0.0:${var.otlp_grpc_receiver_port}"
+              }
+            }
+          }
         }
         scrape_configs = [
           {

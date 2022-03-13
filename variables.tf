@@ -30,6 +30,10 @@ variable "zipkin_receiver_port" {
   type    = number
   default = 9411
 }
+variable "otlp_grpc_receiver_port" {
+  type    = number
+  default = 4317
+}
 variable "cortex_port" {
   type    = number
   default = 9090

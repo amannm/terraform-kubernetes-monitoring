@@ -65,7 +65,8 @@ module "loki_config" {
   grpc_port               = local.ports.grpc.port
   querier_hostname        = "${var.service_name}-querier.${var.namespace_name}.svc.${var.cluster_domain}"
   query_frontend_hostname = "${var.service_name}-query-frontend-headless.${var.namespace_name}.svc.${var.cluster_domain}"
-  gossip_port             = local.gossip_port.port
+  #  index_gateway_hostname = "${var.service_name}-index-gateway-headless.${var.namespace_name}.svc.${var.cluster_domain}"
+  gossip_port = local.gossip_port.port
   gossip_hostnames = [
     "${var.service_name}-distributor-headless.${var.namespace_name}.svc.${var.cluster_domain}",
     "${var.service_name}-ingester-headless.${var.namespace_name}.svc.${var.cluster_domain}",
@@ -119,7 +120,7 @@ module "ingester" {
   pod_resources = {
     cpu_min    = 75
     memory_min = 70
-    memory_max = 1000
+    memory_max = 300
   }
   ports                 = local.ports_with_gossip
   pod_lifecycle         = local.pod_lifecycle

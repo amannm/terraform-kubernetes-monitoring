@@ -22,6 +22,9 @@ variable "jaeger_receiver_port" {
 variable "zipkin_receiver_port" {
   type = number
 }
+variable "otlp_grpc_receiver_port" {
+  type = number
+}
 variable "metrics_remote_write_url" {
   type    = string
   default = null
