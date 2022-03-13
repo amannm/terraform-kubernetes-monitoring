@@ -97,7 +97,7 @@ module "etcd" {
   service_account_name = module.service_account.name
   replicas             = 1
   container_image      = var.container_image
-  command              = ["/bin/sh", "-ec", local.startup_script]
+  command              = ["/bin/sh", "-exc", local.startup_script]
   pod_resources = {
     cpu_min    = 50
     memory_min = 100
@@ -107,7 +107,7 @@ module "etcd" {
     min_readiness_time    = 15
     max_readiness_time    = 90
     max_cleanup_time      = 30
-    shutdown_exec_command = ["/bin/sh", "-ec", local.pre_stop_script]
+    shutdown_exec_command = ["/bin/sh", "-exc", local.pre_stop_script]
   }
   pod_probes = {
     port                   = var.service_port
