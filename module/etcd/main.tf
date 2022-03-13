@@ -31,7 +31,7 @@ locals {
   IP=$(hostname -i)
   ALL_CLIENT_ENDPOINTS=""
   for i in $(seq 0 $(($${SET_ID} - 1))); do
-      ALL_CLIENT_ENDPOINTS="$${ALL_CLIENT_ENDPOINTS}$${ALL_CLIENT_ENDPOINTS:+,}http://$${SET_NAME}-$${i}.${local.domain_suffix}:${var.service_port}"
+      ALL_CLIENT_ENDPOINTS="$${ALL_CLIENT_ENDPOINTS}$${ALL_CLIENT_ENDPOINTS:+,}http://$${SET_NAME}-$${i}.${local.domain_suffix}:${local.client_port}"
   done
   echo "SET_ID: $SET_ID"
   echo "SET_NAME: $SET_NAME"
@@ -64,7 +64,7 @@ locals {
       export ETCD_INITIAL_CLUSTER="$${${local.pod_name_env_var}}=http://$${HOSTNAME}:${local.peer_port}"
       export ETCD_INITIAL_CLUSTER_STATE="new"
   fi
-  exec etcd --advertise-client-urls "http://$${HOSTNAME}:${var.service_port},http://${local.service_client_endpoint}" \
+  exec etcd --advertise-client-urls "http://$${HOSTNAME}:${local.client_port}" \
             --initial-advertise-peer-urls "http://$${HOSTNAME}:${local.peer_port}" \
             --experimental-enable-distributed-tracing \
             --experimental-distributed-tracing-instance-id "$${${local.pod_name_env_var}}" \
@@ -76,7 +76,7 @@ locals {
   MEMBER_ID=$(etcdctl member list | grep http://$${IP}:${local.peer_port} | cut -d',' -f1 | cut -d'[' -f1)
   echo "removing $${${local.pod_name_env_var}} from cluster"
   if [ "$ALL_CLIENT_ENDPOINTS" != "" ]; then
-      etcdctl member remove --endpoints="$ALL_CLIENT_ENDPOINTS" $MEMBER_ID
+      etcdctl member remove --endpoints="$ALL_CLIENT_ENDPOINTS" "$MEMBER_ID"
   fi
   rm -rf ${local.data_volume_mount_path}/*
   EOT
