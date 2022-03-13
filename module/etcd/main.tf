@@ -83,17 +83,6 @@ locals {
 
 }
 
-module "config" {
-  source                 = "./module/config"
-  namespace_name         = var.namespace_name
-  service_name           = var.service_name
-  client_port            = var.service_port
-  peer_port              = local.peer_port
-  config_filename        = local.config_filename
-  data_volume_mount_path = local.data_volume_mount_path
-  otlp_receiver_endpoint = var.otlp_receiver_endpoint
-}
-
 module "service_account" {
   source               = "../common/service-account"
   namespace_name       = var.namespace_name
@@ -131,13 +120,6 @@ module "etcd" {
     data = {
       mount_path = local.data_volume_mount_path
       size       = 1
-    }
-  }
-  config_volumes = {
-    config = {
-      mount_path      = local.config_volume_mount_path
-      config_map_name = module.config.config_map_name
-      config_checksum = module.config.config_checksum
     }
   }
   stateless_node_labels = var.stateless_node_labels
