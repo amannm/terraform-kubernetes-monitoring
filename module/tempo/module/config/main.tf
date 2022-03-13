@@ -22,6 +22,12 @@ locals {
       log_level                 = "debug"
       graceful_shutdown_timeout = "30s"
     }
+    memberlist = {
+      randomize_node_name = false
+      gossip_nodes        = 3
+      join_members        = var.gossip_hostnames
+      bind_port           = var.gossip_port
+    }
     query_frontend = {
       search = {
         concurrent_jobs = 50

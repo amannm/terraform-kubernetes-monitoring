@@ -32,6 +32,12 @@ locals {
       grpc_listen_port = var.grpc_port
       log_level        = "info"
     }
+    memberlist = {
+      randomize_node_name = false
+      gossip_nodes        = 3
+      join_members        = var.gossip_hostnames
+      bind_port           = var.gossip_port
+    }
     frontend = {
       #scheduler_address            = "${var.query_scheduler_hostname}:${var.grpc_port}"
       max_outstanding_per_tenant   = 100
