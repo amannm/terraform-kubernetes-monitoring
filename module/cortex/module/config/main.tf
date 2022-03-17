@@ -118,7 +118,17 @@ locals {
     blocks_storage = merge({
       backend = local.store_type
       tsdb = {
-        dir = "${var.storage_path}/tsdb"
+        dir                                 = "${var.storage_path}/tsdb"
+        block_ranges_period                 = "1h0m0s"
+        retention_period                    = "2h"
+        ship_interval                       = "1m"
+        head_compaction_interval            = "15m"
+        head_compaction_idle_timeout        = "30m"
+        head_chunks_write_buffer_size_bytes = 4194304
+        stripe_size                         = pow(2, 12)
+        wal_compression_enabled             = false
+        wal_segment_size_bytes              = 134217728
+        flush_blocks_on_shutdown            = true
       }
       bucket_store = {
         sync_dir = "${var.storage_path}/tsdb-sync"
