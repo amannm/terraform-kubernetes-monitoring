@@ -12,15 +12,13 @@ locals {
   headless_service_name    = "${var.service_name}-headless"
 
   common_options = {
-    "data-dir"                                      = "${local.data_volume_mount_path}/default.etcd"
-    "listen-client-urls"                            = "http://0.0.0.0:${local.client_port}"
-    "listen-peer-urls"                              = "http://0.0.0.0:${local.peer_port}"
-    "initial-cluster-token"                         = "${var.service_name}-cluster"
-    "snapshot-count"                                = 1000
-    "auto-compaction-mode"                          = "periodic"
-    "auto-compaction-retention"                     = 1
-    "experimental-distributed-tracing-address"      = var.otlp_receiver_endpoint
-    "experimental-distributed-tracing-service-name" = var.service_name
+    "data-dir"                  = "${local.data_volume_mount_path}/default.etcd"
+    "listen-client-urls"        = "http://0.0.0.0:${local.client_port}"
+    "listen-peer-urls"          = "http://0.0.0.0:${local.peer_port}"
+    "initial-cluster-token"     = "${var.service_name}-cluster"
+    "snapshot-count"            = 1000
+    "auto-compaction-mode"      = "periodic"
+    "auto-compaction-retention" = 1
   }
   common_args_line = join(" ", [for k, v in local.common_options : "--${k} \"${v}\""])
 
@@ -69,8 +67,6 @@ locals {
   fi
   exec etcd --advertise-client-urls "http://$${HOSTNAME}:${local.client_port}" \
             --initial-advertise-peer-urls "http://$${HOSTNAME}:${local.peer_port}" \
-            --experimental-enable-distributed-tracing \
-            --experimental-distributed-tracing-instance-id "$${${local.pod_name_env_var}}" \
             ${local.common_args_line}
   EOT
 
