@@ -119,7 +119,7 @@ locals {
       backend = local.store_type
       tsdb = {
         dir                                 = "${var.storage_path}/tsdb"
-        block_ranges_period                 = "1h0m0s"
+        block_ranges_period                 = "1h"
         retention_period                    = "2h"
         ship_interval                       = "1m"
         head_compaction_interval            = "15m"
