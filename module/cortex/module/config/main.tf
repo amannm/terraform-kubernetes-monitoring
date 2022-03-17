@@ -28,7 +28,7 @@ locals {
     server = {
       http_listen_port = var.http_port
       grpc_listen_port = var.grpc_port
-      log_level        = "debug"
+      log_level        = "info"
     }
     api = {
       prometheus_http_prefix       = var.prometheus_api_path

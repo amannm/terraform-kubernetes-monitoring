@@ -19,7 +19,7 @@ locals {
     server = {
       http_listen_port          = var.http_port
       grpc_listen_port          = var.grpc_port
-      log_level                 = "debug"
+      log_level                 = "info"
       graceful_shutdown_timeout = "30s"
     }
     memberlist = {
