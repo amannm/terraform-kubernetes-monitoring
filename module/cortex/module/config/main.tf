@@ -92,11 +92,12 @@ locals {
       }
     }
     ingester = {
-      max_chunk_age        = "5m"
-      max_chunk_idle_time  = "30m"
-      flush_period         = "1m"
-      retain_period        = "5m"
-      max_transfer_retries = 0
+      max_stale_chunk_idle_time = 0
+      max_chunk_idle_time       = "1m"
+      max_chunk_age             = "2m"
+      retain_period             = "1m"
+      flush_period              = "1m"
+      max_transfer_retries      = 0
       lifecycler = {
         ring = {
           kvstore            = local.memberlist_kvstore
