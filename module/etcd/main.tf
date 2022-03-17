@@ -9,7 +9,7 @@ locals {
   data_volume_name         = "data"
   data_volume_mount_path   = "/var/run/etcd"
   service_client_endpoint  = "${module.etcd.hostname}:${var.service_port}"
-  domain_suffix            = "${var.service_name}-headless"
+  headless_service_name    = "${var.service_name}-headless"
 
   common_options = {
     "data-dir"                                      = "${local.data_volume_mount_path}/default.etcd"
@@ -26,12 +26,15 @@ locals {
 
   script_globals = <<-EOT
   SET_ID="$${${local.pod_name_env_var}##*-}"
+  SET_SIZE=$(getent hosts ${local.headless_service_name}.${var.namespace_name}.svc.${var.cluster_domain} | wc -l)
   SET_NAME="$${${local.pod_name_env_var}%%-*}"
-  HOSTNAME="$${${local.pod_name_env_var}}.${local.domain_suffix}"
+  HOSTNAME="$${${local.pod_name_env_var}}.${local.headless_service_name}"
   IP=$(hostname -i)
   ALL_CLIENT_ENDPOINTS=""
-  for i in $(seq 0 $(($${SET_ID} - 1))); do
-      ALL_CLIENT_ENDPOINTS="$${ALL_CLIENT_ENDPOINTS}$${ALL_CLIENT_ENDPOINTS:+,}http://$${SET_NAME}-$${i}.${local.domain_suffix}:${local.client_port}"
+  for i in $(seq 0 $(($${SET_SIZE} - 1))); do
+      if [ "$i" != "$${SET_ID}" ]; then
+          ALL_CLIENT_ENDPOINTS="$${ALL_CLIENT_ENDPOINTS}$${ALL_CLIENT_ENDPOINTS:+,}http://$${SET_NAME}-$${i}.${local.headless_service_name}:${local.client_port}"
+      fi
   done
   echo "SET_ID: $SET_ID"
   echo "SET_NAME: $SET_NAME"
