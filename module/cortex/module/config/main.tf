@@ -72,6 +72,7 @@ locals {
     limits = {
       max_label_names_per_series        = 50
       enforce_metric_name               = false
+      ingestion_rate                    = 50000
       ingestion_rate_strategy           = "global"
       compactor_blocks_retention_period = "24h"
       max_cache_freshness               = "10m"
