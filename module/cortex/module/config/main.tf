@@ -122,7 +122,7 @@ locals {
         block_ranges_period                 = ["1h"]
         retention_period                    = "2h"
         ship_interval                       = "1m"
-        head_compaction_interval            = "15m"
+        head_compaction_interval            = "1m"
         head_compaction_idle_timeout        = "30m"
         head_chunks_write_buffer_size_bytes = 4194304
         stripe_size                         = pow(2, 12)
